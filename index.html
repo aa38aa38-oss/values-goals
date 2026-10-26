@@ -744,9 +744,11 @@
         if (keyInput) keyInput.value = this.syncApiKey;
         this.updateSyncBadge();
 
-        if (this.syncBinId) {
-          setTimeout(() => this.syncCloud(false), 800);
-          setInterval(() => this.syncCloud(false), 25000);
+       // 修改後：移除定時輪詢，改為只在開網頁時對齊一次
+if (this.syncBinId) {
+  setTimeout(() => this.syncCloud(false), 800);
+  // 已關閉每 25 秒自動扣次數的背景輪詢，節省配額
+}
         }
       }
 
