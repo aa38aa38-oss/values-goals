@@ -285,7 +285,7 @@
       line-height: 1.45;
       font-family: monospace;
       resize: vertical;
-      min-height: 90px;
+      min-height: 110px;
       white-space: pre-wrap;
     }
 
@@ -889,6 +889,7 @@
       }
 
       shiftDay(delta) {
+        this.flushCurrentFormToMemory();
         const parts = this.currentDate.split('-');
         const d = new Date(parts[0], parts[1] - 1, parts[2]);
         d.setDate(d.getDate() + delta);
@@ -901,6 +902,7 @@
       }
 
       setTodayDate() {
+        this.flushCurrentFormToMemory();
         this.currentDate = this.getTodayStr();
         document.getElementById('selected-date').value = this.currentDate;
         this.onDateChange();
@@ -973,7 +975,7 @@
                 </div>
                 <div class="score-meaning">${currentScore ? scoreDesc[currentScore] : '點選 1-5 分以反映今日狀態'}</div>
 
-                <textarea class="ref-note-input" placeholder="有具體事件或心理雜音時可隨手記錄（可選填）..." 
+                <textarea class="ref-note-input" id="note-input-${g.id}" placeholder="有具體事件或心理雜音時可隨手記錄（可選填）..." 
                           oninput="app.saveGoalNote('${g.id}', this.value)">${currentNote}</textarea>
               </div>
             `;
@@ -1011,6 +1013,7 @@
 
         this.saveRecords(true);
         this.renderDailyCompass();
+        this.refreshAiPrompts();
         this.showToast('分數已更新');
       }
 
@@ -1040,6 +1043,25 @@
         }
         this.records[this.currentDate][field] = val;
         this.saveRecords(true);
+      }
+
+      // 強制將畫面上的最新輸入框內容寫回資料庫物件
+      flushCurrentFormToMemory() {
+        if (!this.records[this.currentDate]) {
+          this.records[this.currentDate] = { scores: {}, notes: {} };
+        }
+        const w = document.getElementById('daily-weight')?.value;
+        const e = document.getElementById('daily-energy')?.value;
+        const f = document.getElementById('cbt-fact')?.value;
+        const a = document.getElementById('cbt-action')?.value;
+        const c = document.getElementById('cbt-clear')?.value;
+
+        if (w !== undefined) this.records[this.currentDate].weight = w;
+        if (e !== undefined) this.records[this.currentDate].energy = e;
+        if (f !== undefined) this.records[this.currentDate].cbtFact = f;
+        if (a !== undefined) this.records[this.currentDate].cbtAction = a;
+        if (c !== undefined) this.records[this.currentDate].cbtClear = c;
+        this.saveRecords(false);
       }
 
       renderWeeklyQuestions() {
@@ -1085,6 +1107,9 @@
 
       // =================== AI 提示詞自動生成與匯出引擎 ===================
       refreshAiPrompts() {
+        // 先同步畫面當前的輸入欄位
+        this.flushCurrentFormToMemory();
+
         const dailyArea = document.getElementById('ai-prompt-daily');
         const weeklyArea = document.getElementById('ai-prompt-weekly');
         const allArea = document.getElementById('ai-prompt-all');
@@ -1094,17 +1119,24 @@
         if (allArea) allArea.value = this.generateAllTimeAiPrompt();
       }
 
-      // 1. 生成今日提示詞
+      // 1. 生成今日提示詞 (優先抓取畫面上的即時值)
       generateDailyAiPrompt() {
         const dateStr = this.currentDate;
         const r = this.records[dateStr] || {};
         const scores = r.scores || {};
         const notes = r.notes || {};
 
+        // 即時從 DOM 抓取，杜絕沒抓到文字的問題
+        const liveWeight = document.getElementById('daily-weight')?.value || r.weight || '';
+        const liveEnergy = document.getElementById('daily-energy')?.value || r.energy || '4';
+        const liveFact = (document.getElementById('cbt-fact')?.value !== undefined ? document.getElementById('cbt-fact').value : r.cbtFact) || '';
+        const liveAction = (document.getElementById('cbt-action')?.value !== undefined ? document.getElementById('cbt-action').value : r.cbtAction) || '';
+        const liveClear = (document.getElementById('cbt-clear')?.value !== undefined ? document.getElementById('cbt-clear').value : r.cbtClear) || '';
+
         let prompt = `你是一位專業的生活秩序教練與心理成長導師。請根據我今日（${dateStr}）填寫的個人生活心智對齊數據，進行客觀剖析，指出我的盲點、值得肯定的防守，並給我具體的調整建議。\n\n`;
         prompt += `【一、 今日身體數據與清醒度】\n`;
-        prompt += `- 晨起空腹體重: ${r.weight ? r.weight + ' kg' : '未記錄'}\n`;
-        prompt += `- 大腦精力狀態: ${r.energy ? r.energy + ' 分 (滿分5分)' : '4分'}\n\n`;
+        prompt += `- 晨起空腹體重: ${liveWeight ? liveWeight + ' kg' : '未記錄'}\n`;
+        prompt += `- 大腦精力狀態: ${liveEnergy}分\n\n`;
 
         prompt += `【二、 價值觀與心理檢查對齊評分 (1-5分)】\n`;
         this.values.forEach(v => {
@@ -1112,15 +1144,18 @@
           prompt += `  指引: ${v.anchor}\n`;
           (v.goals || []).forEach(g => {
             const sc = scores[g.id] || '未評';
-            const nt = notes[g.id] ? ` (備註: ${notes[g.id]})` : '';
+            // 優先讀取 DOM 裡的 note
+            const domNote = document.getElementById(`note-input-${g.id}`)?.value;
+            const currentNote = domNote !== undefined ? domNote : (notes[g.id] || '');
+            const nt = currentNote ? ` (備註: ${currentNote})` : '';
             prompt += `  - ${g.title}: ${sc}分${nt}\n`;
           });
         });
 
         prompt += `\n【三、 睡前心智清零 (CBT 客觀化筆記)】\n`;
-        prompt += `- 客觀事實: ${r.cbtFact || '無特別事件'}\n`;
-        prompt += `- 理性應對: ${r.cbtAction || '守住平靜'}\n`;
-        prompt += `- 睡前清空: ${r.cbtClear || '安然入眠'}\n\n`;
+        prompt += `- 客觀事實: ${liveFact || '無特別事件'}\n`;
+        prompt += `- 理性應對: ${liveAction || '守住平靜'}\n`;
+        prompt += `- 睡前清空: ${liveClear || '安然入眠'}\n\n`;
 
         prompt += `【我的提問】\n`;
         prompt += `請從佐藤舞《為什麼越忙越空虛？》中「拒絕內耗、守住自主與平靜」的視角，為我診斷今日的心理與能量狀態：\n`;
@@ -1234,6 +1269,9 @@
       }
 
       copyAiPrompt(type) {
+        // 點擊複製前，強制即時重新刷新所有提示詞內容
+        this.refreshAiPrompts();
+
         let elId = 'ai-prompt-daily';
         let name = '今日心智摘要';
         if (type === 'weekly') { elId = 'ai-prompt-weekly'; name = '本週生活複盤'; }
@@ -1621,6 +1659,9 @@ END:VCALENDAR`;
       }
 
       switchTab(tabKey, btn) {
+        // 切換分頁時，先將當前畫面的文字寫入暫存記憶體
+        this.flushCurrentFormToMemory();
+
         document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         
@@ -1628,6 +1669,7 @@ END:VCALENDAR`;
         if (target) target.classList.add('active');
         if (btn) btn.classList.add('active');
 
+        // 若切換到 AI 分析，立刻重新計算並填入包含剛才輸入內容的提示詞
         if (tabKey === 'ai-export') this.refreshAiPrompts();
         if (tabKey === 'history') this.renderHistoryList();
         if (tabKey === 'config') this.renderConfigValues();
