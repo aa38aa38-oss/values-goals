@@ -133,16 +133,16 @@
       align-items: center;
       margin-bottom: 6px;
     }
-    .val-tag { font-size: 0.86rem; font-weight: 700; color: var(--primary); }
+    .val-tag { font-size: 0.9rem; font-weight: 700; color: var(--primary); }
     .val-anchor {
       font-size: 0.76rem;
       color: #cbd5e1;
       background: rgba(56, 189, 248, 0.08);
       border-left: 3px solid var(--primary);
-      padding: 6px 10px;
+      padding: 8px 10px;
       border-radius: 0 6px 6px 0;
       margin-bottom: 12px;
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     /* Target Reflection Card with 1-5 Score */
@@ -161,7 +161,7 @@
       margin-bottom: 4px;
     }
     .ref-title { font-size: 0.88rem; font-weight: 700; color: #f1f5f9; }
-    .ref-prompt { font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4; }
+    .ref-prompt { font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px; line-height: 1.45; }
 
     /* Score Selector Buttons (1 to 5) */
     .score-group {
@@ -368,7 +368,7 @@
           <span class="card-title">🧭 內在心智對齊 ‧ 每日照鏡子</span>
           <span class="card-subtitle" id="compass-summary-badge">平均對齊: -- 分</span>
         </div>
-        <p style="font-size:0.73rem; color:var(--text-muted); margin-bottom:12px;">閱讀上方指引，自評 1-5 分（1:嚴重內耗 / 3:未觸發或平穩 / 5:行雲流水挺拔）。若有感悟可選填短筆記。</p>
+        <p style="font-size:0.73rem; color:var(--text-muted); margin-bottom:12px;">閱讀各維度錨定語，自評 1-5 分（1:嚴重內耗 / 3:平穩未觸發 / 5:挺拔自主）。有具體雜音或感悟可記在短筆記中。</p>
         <div id="dynamic-compass-container">
           <!-- Rendered via JS -->
         </div>
@@ -382,11 +382,11 @@
         </div>
         <div class="cbt-box">
           <label>1. 客觀事實 (今天發生了什麼？不帶評判)</label>
-          <textarea id="cbt-fact" class="text-input" placeholder="例：下午四點出現嘴饞衝動；與父親通話時感到指導壓力。" oninput="app.saveDailyField('cbtFact', this.value)"></textarea>
+          <textarea id="cbt-fact" class="text-input" placeholder="例：下午四點出現嘴饞衝動；父親在通話中提出指導意見。" oninput="app.saveDailyField('cbtFact', this.value)"></textarea>
         </div>
         <div class="cbt-box">
           <label>2. 理性應對 (我的客觀回應 / 守住的防線)</label>
-          <textarea id="cbt-action" class="text-input" placeholder="例：吃了桌上預置的堅果；語氣平靜表達理解但維持自主決定。" oninput="app.saveDailyField('cbtAction', this.value)"></textarea>
+          <textarea id="cbt-action" class="text-input" placeholder="例：吃了桌上預備好的堅果；語氣平靜確認理解，但立場堅定不妥協。" oninput="app.saveDailyField('cbtAction', this.value)"></textarea>
         </div>
         <div class="cbt-box">
           <label>3. 睡前清空宣告 (給大腦的關機指令)</label>
@@ -419,7 +419,7 @@
           <span class="card-title">🧭 六大核心價值觀與指引設定</span>
           <button class="btn" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.showAddValueModal()">+ 新增價值觀</button>
         </div>
-        <p class="val-desc">隨時點擊即可編輯價值觀定義、每日靈魂指引句，或增減心理檢查提問。變更將即刻聯動至每日羅盤。</p>
+        <p class="val-desc">隨時點擊即可編輯價值觀定義、每日核心錨定語，或增減檢查提問量表。變更將即刻聯動至每日羅盤。</p>
         <div id="config-values-list"></div>
       </div>
     </div>
@@ -503,88 +503,143 @@
   </nav>
 
   <script>
-    // 預設六大核心價值觀、每日靈魂指引、反思提示與週末複盤題
+    // 預設六大核心價值觀，各內建 3 道心理檢查提問量表
     const DEFAULT_VALUES = [
       {
         id: 'val_1',
-        title: '個體尊嚴與平權尊重',
-        anchor: '「我是一個獨立完整的成年人。面對權威或長輩的傲慢，不必順從討好，也不必憤怒抗辯。平靜是最高的尊嚴。」',
-        weeklyQuestion: '本週最讓我感到被壓制或產生情緒波動的對話是什麼？我是如何回應的？下一次如何更早啟動平靜邊界？',
+        title: '第一項：個體尊嚴與平權尊重',
+        anchor: '我是一個獨立且完整的成年人。面對任何權威、長輩或上位者的傲慢，我不必以順從換取認可，也不必以憤怒自我消耗。平靜是最高的尊嚴。',
+        weeklyQuestion: '本週最讓我感到被壓制或產生情緒波動的對話是什麼？事後回看，我是如何回應的？下一次我可以如何更早啟動「大人對大人」的平靜邊界？',
         goals: [
           {
             id: 'g_1_1',
-            title: '家庭平權對話邊界',
-            prompt: '今日在與長輩或主管互動時，我的內在是挺拔平靜的，還是不自覺陷入了討好或委屈？'
+            title: '平權心態觀照',
+            prompt: '今天在與長輩、主管或外界互動時，我的內在是挺拔平靜的，還是不自覺陷入了討好或委屈？'
+          },
+          {
+            id: 'g_1_2',
+            title: '客觀立場守護',
+            prompt: '今天我有沒有為了維持表面和諧，而出賣了自己的客觀立場或專業原則？'
+          },
+          {
+            id: 'g_1_3',
+            title: '非對抗性平靜',
+            prompt: '面對不合理要求或指責時，我是否成功做到「不順從迎合，亦不憤怒辯駁」的優雅抽離？'
           }
         ]
       },
       {
         id: 'val_2',
-        title: '絕對自主與清晰邊界',
-        anchor: '「白天的體制合約已結束，下班後的時空由我 100% 賦予意義。主權在手，不容外界雜訊任意入侵。」',
-        weeklyQuestion: '這週我的時間被誰偷走了（無效社交/工作殘留/下意識滑手機）？下週我該把哪一塊時間邊界重新鎖緊？',
+        title: '第二項：絕對自主與清晰邊界',
+        anchor: '我的時間與精力是生命中最稀缺的資源。白天的合約已經結束，下班後的時間由我 100% 賦予意義，不容外界任意入侵。',
+        weeklyQuestion: '這週我的時間被誰偷走了？是無效社交、工作焦慮，還是下意識的滑手機？下週我該把哪一塊邊界重新封閉起來？',
         goals: [
           {
             id: 'g_2_1',
-            title: '神聖自主探索心流',
-            prompt: '下班後我的大腦有順利完成「主權交接」嗎？今晚是否有保留一段時間全然投入熱愛的事（琴/日文/創作）？'
+            title: '下班主權切換',
+            prompt: '今天下班關上電腦的那一刻，我的大腦有順利完成「主權交接」，將職場雜訊徹底放下嗎？'
+          },
+          {
+            id: 'g_2_2',
+            title: '神聖心流投入',
+            prompt: '今晚我有保留至少 30-60 分鐘，全然沉浸在自己真正喜歡的事情（如彈琴、日文或創作）中嗎？'
+          },
+          {
+            id: 'g_2_3',
+            title: '數位與社交界線',
+            prompt: '在私人休息時段，我是否穩穩守住了防線，未被非緊急的訊息或演算法綁架注意力？'
           }
         ]
       },
       {
         id: 'val_3',
-        title: '理性獨立與求真智慧',
-        anchor: '「不被大眾盲從的焦慮裹挾，看清事物的底層本質。用客觀事實代替腦內幻想，做一個清醒的探路者。」',
+        title: '第三項：理性獨立與求真智慧',
+        anchor: '不被盲從的社會標準裹挾，看清事物的底層邏輯。用客觀事實代替腦內幻想，做一個清醒且通透的探路者。',
         weeklyQuestion: '本週我對世界的運作規律、某本書、或是某項新知，有沒有產生哪怕一個「看透本質」的微小頓悟？',
         goals: [
           {
             id: 'g_3_1',
-            title: '本質解構與盲從過濾',
-            prompt: '今天是否有事情引發了我的焦慮？這份焦慮是源自客觀事實，還是來自社會或他人的情緒投射？'
+            title: '焦慮本質過濾',
+            prompt: '今天有沒有哪件事讓我產生了焦慮？這份焦慮是來自客觀事實，還是來自社會或他人的情緒投射？'
+          },
+          {
+            id: 'g_3_2',
+            title: '底層邏輯求真',
+            prompt: '今天面對複雜問題或世俗輿論時，我是否能跳脫表面現象，用理性與第一性原理看透本質？'
+          },
+          {
+            id: 'g_3_3',
+            title: '知行合一無自欺',
+            prompt: '今天在做決定時，我是基於清楚的自知之明與客觀現實，還是試圖自欺欺人？'
           }
         ]
       },
       {
         id: 'val_4',
-        title: '深層連結與真實安全感',
-        anchor: '「生命有限，只把最真摯的溫度留給懂我、接納我的核心圈。推掉無效的熱鬧，擁抱真實的深邃。」',
-        weeklyQuestion: '這週我與身邊重要的人（伴侶、核心家人）有過一次高品質的對話嗎？是否有任何需要修復或感謝的連結？',
+        title: '第四項：深層連結與真實安全感',
+        anchor: '生命有限，只把最真摯的溫度留給懂我、接納我的少數核心圈。推掉無效的熱鬧，擁抱真實的深邃。',
+        weeklyQuestion: '這週我與身邊重要的人有過一次高質量的對話嗎？是否有任何需要修復或主動表達感謝的連結？',
         goals: [
           {
             id: 'g_4_1',
-            title: '核心關係的高純度陪伴',
-            prompt: '今天我有沒有把神經能量浪費在不重要的人身上？面對核心圈時，我的陪伴是否足夠真誠放鬆？'
+            title: '能量損耗停損',
+            prompt: '今天我有沒有把寶貴的時間與神經能量，浪費在無效的社交場合或不重要的人身上？'
+          },
+          {
+            id: 'g_4_2',
+            title: '核心圈高純度陪伴',
+            prompt: '面對最重要的人（伴侶、核心家人、知己），我有展現出純粹、放鬆且無防禦的真摯陪伴嗎？'
+          },
+          {
+            id: 'g_4_3',
+            title: '表達感謝與理解',
+            prompt: '今天是否有對身邊真正支持我的人，適時傳遞內心的溫暖、感謝或深層同理？'
           }
         ]
       },
       {
         id: 'val_5',
-        title: '深度的平靜與內在秩序',
-        anchor: '「外在風浪再大，內心自有避風港。今日之事已成定局，分清什麼是我能掌控的、什麼不是。安頓自心。」',
+        title: '第五項：深度的平靜與內在秩序',
+        anchor: '外面風浪再大，內心自有避風港。今日之事已成定局，分清什麼是我能掌控的、什麼不是。放下掌控欲，安心安頓自心。',
         weeklyQuestion: '本週我的心靈平均秩序感如何？是什麼事情最常打破我的平靜？我該如何調整看待它的視角？',
         goals: [
           {
             id: 'g_5_1',
-            title: '睡前心智清空與關機',
-            prompt: '此刻我的內在天氣如何？今晚我準備好帶著清空的大腦，將今天的一切徹底落地關機、安心入睡了嗎？'
+            title: '內在天氣觀照',
+            prompt: '此刻我的內在天氣是什麼？是晴朗、陰霾，還是心底仍留有未消散的躁動雜音？'
+          },
+          {
+            id: 'g_5_2',
+            title: '控制二分法實踐',
+            prompt: '面對不可控的外在環境或他人行為，我是否能坦然接納，只專注於自己 100% 可控的選擇？'
+          },
+          {
+            id: 'g_5_3',
+            title: '睡前心智徹底關機',
+            prompt: '今晚我準備好帶著清空的大腦，將今天的一切徹底落地歸零，平靜安心地入眠了嗎？'
           }
         ]
       },
       {
         id: 'val_6',
-        title: '打造高能量載體與身心秩序',
-        anchor: '「身體是靈魂唯一的棲息地。不靠意志力苦撐對抗食慾，而是用環境工程與低阻力系統溫柔守護體魄。」',
-        weeklyQuestion: '回顧這週的飲食、睡眠與運動節奏，我的身體能量是在被滋養還是透支？有哪些環境細節下週可以微調？',
+        title: '第六項：打造高能量載體與身心秩序',
+        anchor: '身體是靈魂唯一的棲息地。我不用意志力苦苦對抗食慾，而是用環境工程與低阻力系統溫柔地守護它。',
+        weeklyQuestion: '回顧這一週的飲食、睡眠與運動節奏，我的身體能量是在被滋養，還是在被透支？有哪些環境小細節下週可以微調？',
         goals: [
           {
             id: 'g_6_1',
-            title: '工作日無糖手搖防線',
-            prompt: '今日工作日是否順利守住無糖純水/黑咖啡防線？身體體感是否輕盈少負擔？'
+            title: '大腦澄澈度評估',
+            prompt: '今天我的大腦體感是清醒敏銳的，還是充滿沉重腦霧？白天精神能量是否維持充沛？'
           },
           {
             id: 'g_6_2',
-            title: '下午 15:00 零決策預防進食',
-            prompt: '下午血糖波動前，是否以預置好的堅果或水果平穩過渡，成功避免了精緻甜點或暴飲暴食？'
+            title: '下午嘴饞防線運轉',
+            prompt: '面對下午 15:00 嘴饞或壓力時，系統防禦是否有平穩運轉，以預置食物阻斷了精緻糖誘惑？'
+          },
+          {
+            id: 'g_6_3',
+            title: '無糖水循環恪守',
+            prompt: '今天在飲食與飲水上，是否 100% 恪守純水、黑咖啡或無糖茶原則，避免了多餘的身體發炎？'
           }
         ]
       }
@@ -610,7 +665,6 @@
         return `${y}-${m}-${day}`;
       }
 
-      // 取得日期所屬的週一作為週代碼 (例: 2026-W44)
       getWeekKey(dateStr) {
         const parts = dateStr.split('-');
         const d = new Date(parts[0], parts[1] - 1, parts[2]);
@@ -626,7 +680,13 @@
       loadValues() {
         const local = localStorage.getItem('rl_values');
         if (local) {
-          try { return JSON.parse(local); } catch (e) {}
+          try {
+            const parsed = JSON.parse(local);
+            // 若為舊格式且各項目標少於3個，優先使用新版架構
+            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].goals && parsed[0].goals.length >= 3) {
+              return parsed;
+            }
+          } catch (e) {}
         }
         return DEFAULT_VALUES;
       }
@@ -702,7 +762,7 @@
       updateDateBadge() {
         const badge = document.getElementById('is-today-badge');
         if (this.currentDate === this.getTodayStr()) {
-          badge.innerText = '今日羅盤 (對齊中)';
+          badge.innerText = '今日羅盤 (觀照中)';
           badge.style.color = 'var(--accent)';
         } else {
           badge.innerText = `補登/檢視 (${this.currentDate})`;
@@ -752,11 +812,11 @@
         let html = '';
 
         const scoreDesc = {
-          1: '1 - 嚴重內耗/被外界裹挾',
-          2: '2 - 略感委屈/防線鬆動',
-          3: '3 - 平穩/未特別觸發',
-          4: '4 - 清醒覺察/守住原則',
-          5: '5 - 行雲流水/挺拔自主'
+          1: '1 - 嚴重偏離 / 內在耗損',
+          2: '2 - 略感委屈 / 防線鬆動',
+          3: '3 - 狀況平穩 / 未特別觸發',
+          4: '4 - 清醒覺察 / 守住原則',
+          5: '5 - 行雲流水 / 挺拔自主'
         };
 
         this.values.forEach(val => {
@@ -767,7 +827,7 @@
               <div class="val-header">
                 <span class="val-tag">${val.title}</span>
               </div>
-              <div class="val-anchor">${val.anchor || '守住核心秩序，安頓自心。'}</div>
+              <div class="val-anchor"><b>每日核心錨定語：</b><br>${val.anchor}</div>
           `;
 
           val.goals.forEach(g => {
@@ -783,7 +843,7 @@
                 <div class="ref-header">
                   <span class="ref-title">${g.title}</span>
                 </div>
-                <div class="ref-prompt">${g.prompt}</div>
+                <div class="ref-prompt">💭 ${g.prompt}</div>
 
                 <div class="score-group">
                   ${[1, 2, 3, 4, 5].map(num => `
@@ -793,7 +853,7 @@
                     </button>
                   `).join('')}
                 </div>
-                <div class="score-meaning">${currentScore ? scoreDesc[currentScore] : '點選 1-5 分以反映今日體感'}</div>
+                <div class="score-meaning">${currentScore ? scoreDesc[currentScore] : '點選 1-5 分以反映今日狀態'}</div>
 
                 <textarea class="ref-note-input" placeholder="有具體事件或心理雜音時可隨手記錄（可選填）..." 
                           oninput="app.saveGoalNote('${g.id}', this.value)">${currentNote}</textarea>
@@ -825,7 +885,6 @@
           this.records[this.currentDate].scores = {};
         }
 
-        // 再次點擊相同分數則清除
         if (this.records[this.currentDate].scores[goalId] === scoreVal) {
           delete this.records[this.currentDate].scores[goalId];
         } else {
@@ -880,9 +939,9 @@
           const answer = reviewData[v.id] || '';
           html += `
             <div style="background:#0b1120; border:1px solid var(--card-border); border-radius:10px; padding:12px; margin-bottom:12px;">
-              <div style="font-size:0.86rem; font-weight:700; color:var(--primary); margin-bottom:4px;">${v.title}</div>
-              <div style="font-size:0.75rem; color:#cbd5e1; margin-bottom:8px; line-height:1.45;">💭 ${v.weeklyQuestion || '回顧本週在此維度的體感與秩序如何？'}</div>
-              <textarea class="text-input weekly-review-input" data-valid="${v.id}" placeholder="倒一杯茶，安靜寫下本週的真實感悟..." style="min-height:55px;">${answer}</textarea>
+              <div style="font-size:0.88rem; font-weight:700; color:var(--primary); margin-bottom:4px;">${v.title}</div>
+              <div style="font-size:0.75rem; color:#cbd5e1; margin-bottom:8px; line-height:1.45;">💭 <b>週末檢討深度提問：</b><br>${v.weeklyQuestion}</div>
+              <textarea class="text-input weekly-review-input" data-valid="${v.id}" placeholder="倒一杯茶，安靜寫下本週的真實感悟..." style="min-height:65px;">${answer}</textarea>
             </div>
           `;
         });
@@ -917,15 +976,15 @@
             <div class="val-block" style="margin-bottom:16px;">
               <div class="val-header">
                 <span class="val-tag" style="font-size:0.95rem;">${v.title}</span>
-                <button class="btn btn-outline" style="width:auto; padding:2px 8px; font-size:0.75rem;" onclick="app.editValueHeader(${vIndex})">編輯定義與指引</button>
+                <button class="btn btn-outline" style="width:auto; padding:2px 8px; font-size:0.75rem;" onclick="app.editValueHeader(${vIndex})">編輯標題/錨定/週末提問</button>
               </div>
-              <p style="font-size:0.75rem; color:#cbd5e1; margin-bottom:8px;"><b>指引：</b>${v.anchor}</p>
+              <p style="font-size:0.75rem; color:#cbd5e1; margin-bottom:6px;"><b>核心錨定語：</b>${v.anchor}</p>
               <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:10px;"><b>週末提問：</b>${v.weeklyQuestion}</p>
               
               <div>
                 <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; justify-content:space-between;">
-                  <span>對應檢查目標與提問：</span>
-                  <a href="javascript:void(0)" style="color:var(--primary); text-decoration:none;" onclick="app.addGoalToValue(${vIndex})">+ 新增目標提問</a>
+                  <span>心理檢查提問量表（目前共 ${(v.goals||[]).length} 題）：</span>
+                  <a href="javascript:void(0)" style="color:var(--primary); text-decoration:none;" onclick="app.addGoalToValue(${vIndex})">+ 新增提問</a>
                 </div>
           `;
 
@@ -953,8 +1012,8 @@
       showAddValueModal() {
         const title = prompt('請輸入新價值觀名稱：');
         if (!title) return;
-        const anchor = prompt('請輸入每日靈魂指引句（例如：平靜是最高的尊嚴...）：', '');
-        const weeklyQ = prompt('請輸入週末複盤提問：', '');
+        const anchor = prompt('請輸入每日核心錨定語：', '');
+        const weeklyQ = prompt('請輸入週末檢討深度提問：', '');
         this.values.push({
           id: 'val_' + Date.now(),
           title: title,
@@ -969,8 +1028,8 @@
         const v = this.values[idx];
         const newTitle = prompt('修改價值觀名稱：', v.title);
         if (newTitle) {
-          const newAnchor = prompt('修改每日靈魂指引句：', v.anchor);
-          const newWeeklyQ = prompt('修改週末深度提問：', v.weeklyQuestion);
+          const newAnchor = prompt('修改每日核心錨定語：', v.anchor);
+          const newWeeklyQ = prompt('修改週末檢討深度提問：', v.weeklyQuestion);
           v.title = newTitle;
           v.anchor = newAnchor !== null ? newAnchor : v.anchor;
           v.weeklyQuestion = newWeeklyQ !== null ? newWeeklyQ : v.weeklyQuestion;
@@ -979,9 +1038,9 @@
       }
 
       addGoalToValue(valIdx) {
-        const title = prompt('輸入檢核目標名稱（例如：家庭平權對話邊界）：');
+        const title = prompt('輸入檢查量表標題：');
         if (!title) return;
-        const promptText = prompt('輸入每日覺察提問（例如：今天我的內在是挺拔的還是委屈的？）：', '');
+        const promptText = prompt('輸入每日心理檢查提問內容：', '');
         if (!this.values[valIdx].goals) this.values[valIdx].goals = [];
         this.values[valIdx].goals.push({
           id: 'g_' + Date.now(),
@@ -993,9 +1052,9 @@
 
       editGoal(vIdx, gIdx) {
         const g = this.values[vIdx].goals[gIdx];
-        const t = prompt('修改目標名稱：', g.title);
+        const t = prompt('修改標題：', g.title);
         if (t) {
-          const p = prompt('修改覺察提問：', g.prompt);
+          const p = prompt('修改提問內容：', g.prompt);
           g.title = t;
           g.prompt = p !== null ? p : g.prompt;
           this.saveValues();
@@ -1003,7 +1062,7 @@
       }
 
       deleteGoal(vIdx, gIdx) {
-        if (confirm('確定要刪除此目標提問嗎？')) {
+        if (confirm('確定要刪除此提問量表嗎？')) {
           this.values[vIdx].goals.splice(gIdx, 1);
           this.saveValues();
         }
