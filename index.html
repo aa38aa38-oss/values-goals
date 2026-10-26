@@ -29,10 +29,10 @@
       color: var(--text-main);
       font-family: var(--font-stack);
       line-height: 1.5;
-      padding-bottom: 90px;
+      padding-bottom: 95px;
     }
 
-    /* 置頂固定導航 Header (Sticky Header) */
+    /* 置頂固定導航 Header */
     header.sticky-header {
       position: sticky;
       top: 0;
@@ -259,6 +259,36 @@
     .cbt-box label { font-size: 0.75rem; color: var(--primary); display: block; margin-bottom: 3px; font-weight: 600; }
     textarea.text-input { resize: vertical; min-height: 48px; }
 
+    /* AI Prompts Section */
+    .ai-box {
+      background: #0b1120;
+      border: 1px solid #22324d;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .ai-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .ai-box-title { font-size: 0.9rem; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 6px; }
+    .ai-prompt-area {
+      width: 100%;
+      background: #070c18;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: #cbd5e1;
+      padding: 8px 10px;
+      font-size: 0.76rem;
+      line-height: 1.45;
+      font-family: monospace;
+      resize: vertical;
+      min-height: 90px;
+      white-space: pre-wrap;
+    }
+
     /* Bottom Navigation */
     .nav-tabs {
       position: fixed;
@@ -280,15 +310,17 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 4px;
       cursor: pointer;
-      padding: 4px 10px;
+      padding: 4px 6px;
+      flex: 1;
     }
     .nav-btn.active { color: var(--primary); font-weight: 700; }
+    .nav-btn.ai-tab-btn.active { color: var(--gold); }
     .nav-btn svg { width: 20px; height: 20px; stroke-width: 2; }
 
     /* Buttons */
@@ -308,6 +340,11 @@
       width: 100%;
     }
     .btn:hover { background: var(--primary-hover); }
+    .btn-gold {
+      background: var(--gold);
+      color: #0b1120;
+    }
+    .btn-gold:hover { background: #f59e0b; }
     .btn-outline {
       background: transparent;
       border: 1px solid var(--card-border);
@@ -427,7 +464,48 @@
       </div>
     </div>
 
-    <!-- TAB 2: 週末總檢閱 (WEEKLY REVIEW) -->
+    <!-- TAB 2: AI 深度對齊分析 (AI EXPORT VAULT) -->
+    <div id="view-ai-export" class="tab-view">
+      <div class="card" style="border: 1px solid var(--gold);">
+        <div class="card-header">
+          <span class="card-title" style="color:var(--gold);">🤖 AI 成長導師 ‧ 一鍵快速總結</span>
+          <button class="btn btn-outline" style="width:auto; padding:3px 8px; font-size:0.75rem;" onclick="app.refreshAiPrompts()">🔄 重新整理</button>
+        </div>
+        <p class="val-desc">點擊下方任一按鈕，系統會將你的數據與心理筆記自動打包成結構化的 AI 分析提示詞。複製後直接貼進 ChatGPT、Gemini 等 AI 窗口即可展開深度討論：</p>
+        
+        <!-- 窗口 1: 今日總結 -->
+        <div class="ai-box">
+          <div class="ai-box-header">
+            <span class="ai-box-title"><span>📅</span> 1. 今日心智狀況快速總結</span>
+            <button class="btn btn-gold" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.copyAiPrompt('daily')">📋 一鍵複製今日摘要</button>
+          </div>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">包含今日體重、大腦狀態、18道心理檢查自評與 CBT 筆記，請 AI 擔任教練點評：</p>
+          <textarea id="ai-prompt-daily" class="ai-prompt-area" readonly></textarea>
+        </div>
+
+        <!-- 窗口 2: 本週總結 -->
+        <div class="ai-box">
+          <div class="ai-box-header">
+            <span class="ai-box-title"><span>📊</span> 2. 本週生活秩序與趨勢總結</span>
+            <button class="btn btn-gold" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.copyAiPrompt('weekly')">📋 一鍵複製本週複盤</button>
+          </div>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">自動抓取本週週一至週日的各項平均得分、身體趨勢與週末深度檢討：</p>
+          <textarea id="ai-prompt-weekly" class="ai-prompt-area" readonly></textarea>
+        </div>
+
+        <!-- 窗口 3: 10/26 以來全期總結 -->
+        <div class="ai-box">
+          <div class="ai-box-header">
+            <span class="ai-box-title"><span>🌌</span> 3. 自 10/26 啟動以來全期總結</span>
+            <button class="btn btn-gold" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.copyAiPrompt('all')">📋 一鍵複製全期報告</button>
+          </div>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">匯總自 2026/10/26 系統正式上線以來的整體累積數據，請 AI 分析心智成長軌跡與盲點：</p>
+          <textarea id="ai-prompt-all" class="ai-prompt-area" readonly></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: 週末總檢閱 (WEEKLY REVIEW) -->
     <div id="view-weekly-review" class="tab-view">
       <div class="card">
         <div class="card-header">
@@ -444,7 +522,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: 價值觀與目標指引設定 (CONFIG) -->
+    <!-- TAB 4: 價值觀與目標指引設定 (CONFIG) -->
     <div id="view-config" class="tab-view">
       <div class="card">
         <div class="card-header">
@@ -456,7 +534,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: 歷史時空膠囊 (HISTORY) -->
+    <!-- TAB 5: 歷史時空膠囊 (HISTORY) -->
     <div id="view-history" class="tab-view">
       <div class="card">
         <div class="card-header">
@@ -467,7 +545,7 @@
       </div>
     </div>
 
-    <!-- TAB 5: GitHub Gist 雲端同步與 iPhone 提醒 (SETTINGS) -->
+    <!-- TAB 6: GitHub Gist 雲端同步與 iPhone 提醒 (SETTINGS) -->
     <div id="view-sync" class="tab-view">
       <div class="card" style="border: 1px solid var(--primary);">
         <div class="card-header">
@@ -510,11 +588,15 @@
     </div>
   </div>
 
-  <!-- Bottom Nav (5 Tabs) -->
+  <!-- Bottom Nav (6 Tabs) -->
   <nav class="nav-tabs">
     <button class="nav-btn active" onclick="app.switchTab('today', this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
       每日羅盤
+    </button>
+    <button class="nav-btn ai-tab-btn" onclick="app.switchTab('ai-export', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+      AI分析
     </button>
     <button class="nav-btn" onclick="app.switchTab('weekly-review', this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
@@ -708,6 +790,15 @@
         return `W_${y}_${m}_${dt}`;
       }
 
+      getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        d.setDate(diff);
+        d.setHours(0,0,0,0);
+        return d;
+      }
+
       loadValues() {
         const local = localStorage.getItem('rl_values');
         if (local) {
@@ -764,6 +855,7 @@
         this.renderWeeklyQuestions();
         this.renderConfigValues();
         this.renderHistoryList();
+        this.refreshAiPrompts();
 
         const tokenInput = document.getElementById('sync-gh-token');
         const gistInput = document.getElementById('sync-gist-id');
@@ -821,6 +913,7 @@
           this.updateDateBadge();
           this.renderDailyCompass();
           this.loadDailyData();
+          this.refreshAiPrompts();
         }
       }
 
@@ -987,8 +1080,176 @@
 
         this.saveWeeklyReviews(true);
         this.showToast('🎉 週末總檢閱報告已存檔！');
+        this.refreshAiPrompts();
       }
 
+      // =================== AI 提示詞自動生成與匯出引擎 ===================
+      refreshAiPrompts() {
+        const dailyArea = document.getElementById('ai-prompt-daily');
+        const weeklyArea = document.getElementById('ai-prompt-weekly');
+        const allArea = document.getElementById('ai-prompt-all');
+
+        if (dailyArea) dailyArea.value = this.generateDailyAiPrompt();
+        if (weeklyArea) weeklyArea.value = this.generateWeeklyAiPrompt();
+        if (allArea) allArea.value = this.generateAllTimeAiPrompt();
+      }
+
+      // 1. 生成今日提示詞
+      generateDailyAiPrompt() {
+        const dateStr = this.currentDate;
+        const r = this.records[dateStr] || {};
+        const scores = r.scores || {};
+        const notes = r.notes || {};
+
+        let prompt = `你是一位專業的生活秩序教練與心理成長導師。請根據我今日（${dateStr}）填寫的個人生活心智對齊數據，進行客觀剖析，指出我的盲點、值得肯定的防守，並給我具體的調整建議。\n\n`;
+        prompt += `【一、 今日身體數據與清醒度】\n`;
+        prompt += `- 晨起空腹體重: ${r.weight ? r.weight + ' kg' : '未記錄'}\n`;
+        prompt += `- 大腦精力狀態: ${r.energy ? r.energy + ' 分 (滿分5分)' : '4分'}\n\n`;
+
+        prompt += `【二、 價值觀與心理檢查對齊評分 (1-5分)】\n`;
+        this.values.forEach(v => {
+          prompt += `■ ${v.title}\n`;
+          prompt += `  指引: ${v.anchor}\n`;
+          (v.goals || []).forEach(g => {
+            const sc = scores[g.id] || '未評';
+            const nt = notes[g.id] ? ` (備註: ${notes[g.id]})` : '';
+            prompt += `  - ${g.title}: ${sc}分${nt}\n`;
+          });
+        });
+
+        prompt += `\n【三、 睡前心智清零 (CBT 客觀化筆記)】\n`;
+        prompt += `- 客觀事實: ${r.cbtFact || '無特別事件'}\n`;
+        prompt += `- 理性應對: ${r.cbtAction || '守住平靜'}\n`;
+        prompt += `- 睡前清空: ${r.cbtClear || '安然入眠'}\n\n`;
+
+        prompt += `【我的提問】\n`;
+        prompt += `請從佐藤舞《為什麼越忙越空虛？》中「拒絕內耗、守住自主與平靜」的視角，為我診斷今日的心理與能量狀態：\n`;
+        prompt += `1. 今天哪一個維度有耗損或防線鬆動的跡象？原因可能出在哪裡？\n`;
+        prompt += `2. 今天最值得保持的秩序是什麼？\n`;
+        prompt += `3. 明天我可以做的一個微小行動調整是什麼？`;
+
+        return prompt;
+      }
+
+      // 2. 生成本週提示詞
+      generateWeeklyAiPrompt() {
+        const parts = this.currentDate.split('-');
+        const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        const monday = this.getMonday(targetDate);
+        
+        let weekDates = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday);
+          d.setDate(d.getDate() + i);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          weekDates.push(`${y}-${m}-${day}`);
+        }
+
+        const currentWeekKey = this.getWeekKey(this.currentDate);
+        const review = this.weeklyReviews[currentWeekKey] || {};
+
+        let prompt = `你是一位高階個人成長導師與心智秩序顧問。請分析我本週（${weekDates[0]} 至 ${weekDates[6]}）的生活秩序與價值觀落實趨勢，協助我進行深度週末複盤。\n\n`;
+        prompt += `【一、 本週 7 天身體與心智概況】\n`;
+        
+        let totalScores = [];
+        let weightList = [];
+        weekDates.forEach(dStr => {
+          const r = this.records[dStr];
+          if (r) {
+            if (r.weight) weightList.push(parseFloat(r.weight));
+            if (r.scores) {
+              const scs = Object.values(r.scores);
+              totalScores = totalScores.concat(scs);
+            }
+          }
+        });
+
+        const avgScore = totalScores.length > 0 ? (totalScores.reduce((a,b)=>a+b,0) / totalScores.length).toFixed(1) : '--';
+        const avgWeight = weightList.length > 0 ? (weightList.reduce((a,b)=>a+b,0) / weightList.length).toFixed(1) : '--';
+
+        prompt += `- 本週平均心智對齊分數: ${avgScore} / 5.0 (共記錄 ${totalScores.length} 次評分)\n`;
+        prompt += `- 本週平均晨起體重: ${avgWeight} kg (記錄天數: ${weightList.length} 天)\n\n`;
+
+        prompt += `【二、 本週週末深度檢討回覆】\n`;
+        this.values.forEach(v => {
+          const ans = review[v.id] || '本週未填寫深度文字';
+          prompt += `■ ${v.title}\n`;
+          prompt += `  提問: ${v.weeklyQuestion}\n`;
+          prompt += `  我的感悟: ${ans}\n\n`;
+        });
+
+        prompt += `【我的提問】\n`;
+        prompt += `請針對我這一整週的心理走向與秩序落實情況進行綜合分析：\n`;
+        prompt += `1. 本週六大價值觀中，表現最穩健的是哪一項？最容易受到現實衝擊的是哪一項？\n`;
+        prompt += `2. 檢視我的週末感悟，我有沒有陷入「自我批判」或「過度承擔不可控事物」的盲點？\n`;
+        prompt += `3. 請為我下週的生活秩序，提出 2 個最具槓桿效應的關鍵建議。`;
+
+        return prompt;
+      }
+
+      // 3. 生成自 10/26 啟動以來的全期提示詞
+      generateAllTimeAiPrompt() {
+        const startDate = "2026-10-26";
+        const dates = Object.keys(this.records).filter(d => d >= startDate).sort();
+        
+        let prompt = `你是一位資深心理諮商與個人心智系統架構師。我自 2026 年 10 月 26 日開始建立個人的「生活秩序心智羅盤系統」，旨在實踐佐藤舞的低內耗自主生活哲學。以下是我自 ${startDate} 以來的全期累積數據，請為我進行全盤深度剖析。\n\n`;
+        prompt += `【一、 全期數據統計】\n`;
+        prompt += `- 系統啟動日: ${startDate}\n`;
+        prompt += `- 累積記錄天數: ${dates.length} 天\n`;
+
+        let allScores = [];
+        let weightEntries = [];
+        let cbtFacts = [];
+
+        dates.forEach(dStr => {
+          const r = this.records[dStr];
+          if (r.weight) weightEntries.push(`${dStr}: ${r.weight}kg`);
+          if (r.scores) allScores = allScores.concat(Object.values(r.scores));
+          if (r.cbtFact) cbtFacts.push(`[${dStr}] 事實: ${r.cbtFact} ｜ 應對: ${r.cbtAction || '守住原則'}`);
+        });
+
+        const overallAvg = allScores.length > 0 ? (allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1) : '--';
+        prompt += `- 全期心智對齊平均分: ${overallAvg} / 5.0 (累計 ${allScores.length} 次自評)\n`;
+        prompt += `- 體重追蹤數據範例: ${weightEntries.slice(-5).join(', ') || '暫無足夠記錄'}\n\n`;
+
+        prompt += `【二、 核心 CBT 情緒與事實歷史精選 (近幾次)】\n`;
+        if (cbtFacts.length > 0) {
+          prompt += cbtFacts.slice(-5).join('\n') + '\n\n';
+        } else {
+          prompt += `尚無特別記錄。\n\n`;
+        }
+
+        prompt += `【三、 週末複盤報告留存數量】\n`;
+        prompt += `已累計完成 ${Object.keys(this.weeklyReviews).length} 週深度複盤。\n\n`;
+
+        prompt += `【我的提問】\n`;
+        prompt += `請站在客觀第三方視角，為我進行整體體檢：\n`;
+        prompt += `1. 自 10/26 啟動至今，我的行為模式與情緒防線是否呈現「趨於穩定與清晰」的成長軌跡？\n`;
+        prompt += `2. 從我的客觀事實與應對紀錄中，最常誘發我內在消耗的模式是什麼（例如長輩溝通、飲食防守、下班邊界）？\n`;
+        prompt += `3. 為確保這套系統能在未來 90 天內真正自運轉，你對我的心態與環境工程有何終極指引？`;
+
+        return prompt;
+      }
+
+      copyAiPrompt(type) {
+        let elId = 'ai-prompt-daily';
+        let name = '今日心智摘要';
+        if (type === 'weekly') { elId = 'ai-prompt-weekly'; name = '本週生活複盤'; }
+        if (type === 'all') { elId = 'ai-prompt-all'; name = '自10/26全期報告'; }
+
+        const text = document.getElementById(elId)?.value || '';
+        if (!text) return alert('內容為空');
+
+        navigator.clipboard.writeText(text).then(() => {
+          this.showToast(`已複製「${name}」！請貼至 AI 窗口對話`);
+        }).catch(() => {
+          alert('請手動選取複製：\n' + text);
+        });
+      }
+
+      // =================== 管理與設定 ===================
       renderConfigValues() {
         const container = document.getElementById('config-values-list');
         if (!container) return;
@@ -1209,7 +1470,7 @@
 
       async syncCloudManual() {
         if (!this.ghToken || !this.gistId) {
-          this.switchTab('sync', document.querySelectorAll('.nav-btn')[4]);
+          this.switchTab('sync', document.querySelectorAll('.nav-btn')[5]);
           alert('請先在「同步提醒」分頁填入 GitHub Token 與 Gist ID，或點擊「自動建立新 Gist 雲端庫」！');
           return;
         }
@@ -1256,6 +1517,7 @@
             this.renderWeeklyQuestions();
             this.renderConfigValues();
             this.renderHistoryList();
+            this.refreshAiPrompts();
             if (isManual) this.showToast('已自 GitHub 拉取最新進度！');
           } else {
             const newTimestamp = Date.now();
@@ -1366,6 +1628,7 @@ END:VCALENDAR`;
         if (target) target.classList.add('active');
         if (btn) btn.classList.add('active');
 
+        if (tabKey === 'ai-export') this.refreshAiPrompts();
         if (tabKey === 'history') this.renderHistoryList();
         if (tabKey === 'config') this.renderConfigValues();
         if (tabKey === 'weekly-review') this.renderWeeklyQuestions();
