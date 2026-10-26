@@ -232,10 +232,10 @@
       border: 1px solid var(--card-border);
       border-radius: 6px;
       color: #fff;
-      padding: 6px 8px;
-      font-size: 0.78rem;
+      padding: 8px 10px;
+      font-size: 0.82rem;
       resize: vertical;
-      min-height: 38px;
+      min-height: 44px;
     }
     .ref-note-input:focus { outline: none; border-color: var(--primary); }
 
@@ -285,7 +285,7 @@
       line-height: 1.45;
       font-family: monospace;
       resize: vertical;
-      min-height: 110px;
+      min-height: 120px;
       white-space: pre-wrap;
     }
 
@@ -471,7 +471,7 @@
           <span class="card-title" style="color:var(--gold);">🤖 AI 成長導師 ‧ 一鍵快速總結</span>
           <button class="btn btn-outline" style="width:auto; padding:3px 8px; font-size:0.75rem;" onclick="app.refreshAiPrompts()">🔄 重新整理</button>
         </div>
-        <p class="val-desc">點擊下方任一按鈕，系統會將你的數據與心理筆記自動打包成結構化的 AI 分析提示詞。複製後直接貼進 ChatGPT、Gemini 等 AI 窗口即可展開深度討論：</p>
+        <p class="val-desc">點擊下方任一按鈕，系統會將你的數據、選填自省筆記與 CBT 記錄自動打包成結構化的 AI 分析提示詞。複製後直接貼進 ChatGPT、Gemini 等 AI 窗口即可展開深度討論：</p>
         
         <!-- 窗口 1: 今日總結 -->
         <div class="ai-box">
@@ -479,7 +479,7 @@
             <span class="ai-box-title"><span>📅</span> 1. 今日心智狀況快速總結</span>
             <button class="btn btn-gold" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.copyAiPrompt('daily')">📋 一鍵複製今日摘要</button>
           </div>
-          <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">包含今日體重、大腦狀態、18道心理檢查自評與 CBT 筆記，請 AI 擔任教練點評：</p>
+          <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">包含今日體重、大腦狀態、18道心理檢查自評（含每題選填文字）與 CBT 筆記，請 AI 擔任教練點評：</p>
           <textarea id="ai-prompt-daily" class="ai-prompt-area" readonly></textarea>
         </div>
 
@@ -1045,11 +1045,15 @@
         this.saveRecords(true);
       }
 
-      // 強制將畫面上的最新輸入框內容寫回資料庫物件
+      // 強制將畫面上的最新輸入框內容（包含18道題的自省筆記）同步寫回資料庫
       flushCurrentFormToMemory() {
         if (!this.records[this.currentDate]) {
           this.records[this.currentDate] = { scores: {}, notes: {} };
         }
+        if (!this.records[this.currentDate].notes) {
+          this.records[this.currentDate].notes = {};
+        }
+
         const w = document.getElementById('daily-weight')?.value;
         const e = document.getElementById('daily-energy')?.value;
         const f = document.getElementById('cbt-fact')?.value;
@@ -1061,6 +1065,17 @@
         if (f !== undefined) this.records[this.currentDate].cbtFact = f;
         if (a !== undefined) this.records[this.currentDate].cbtAction = a;
         if (c !== undefined) this.records[this.currentDate].cbtClear = c;
+
+        // 徹底掃描所有在畫面上已渲染的自省筆記輸入框
+        this.values.forEach(v => {
+          (v.goals || []).forEach(g => {
+            const noteEl = document.getElementById(`note-input-${g.id}`);
+            if (noteEl) {
+              this.records[this.currentDate].notes[g.id] = noteEl.value;
+            }
+          });
+        });
+
         this.saveRecords(false);
       }
 
@@ -1107,7 +1122,6 @@
 
       // =================== AI 提示詞自動生成與匯出引擎 ===================
       refreshAiPrompts() {
-        // 先同步畫面當前的輸入欄位
         this.flushCurrentFormToMemory();
 
         const dailyArea = document.getElementById('ai-prompt-daily');
@@ -1119,14 +1133,13 @@
         if (allArea) allArea.value = this.generateAllTimeAiPrompt();
       }
 
-      // 1. 生成今日提示詞 (優先抓取畫面上的即時值)
+      // 1. 生成今日提示詞 (優先抓取畫面上的即時值，包含選填筆記)
       generateDailyAiPrompt() {
         const dateStr = this.currentDate;
         const r = this.records[dateStr] || {};
         const scores = r.scores || {};
         const notes = r.notes || {};
 
-        // 即時從 DOM 抓取，杜絕沒抓到文字的問題
         const liveWeight = document.getElementById('daily-weight')?.value || r.weight || '';
         const liveEnergy = document.getElementById('daily-energy')?.value || r.energy || '4';
         const liveFact = (document.getElementById('cbt-fact')?.value !== undefined ? document.getElementById('cbt-fact').value : r.cbtFact) || '';
@@ -1138,17 +1151,16 @@
         prompt += `- 晨起空腹體重: ${liveWeight ? liveWeight + ' kg' : '未記錄'}\n`;
         prompt += `- 大腦精力狀態: ${liveEnergy}分\n\n`;
 
-        prompt += `【二、 價值觀與心理檢查對齊評分 (1-5分)】\n`;
+        prompt += `【二、 價值觀與心理檢查對齊評分 (1-5分及自省筆記)】\n`;
         this.values.forEach(v => {
           prompt += `■ ${v.title}\n`;
           prompt += `  指引: ${v.anchor}\n`;
           (v.goals || []).forEach(g => {
             const sc = scores[g.id] || '未評';
-            // 優先讀取 DOM 裡的 note
             const domNote = document.getElementById(`note-input-${g.id}`)?.value;
-            const currentNote = domNote !== undefined ? domNote : (notes[g.id] || '');
-            const nt = currentNote ? ` (備註: ${currentNote})` : '';
-            prompt += `  - ${g.title}: ${sc}分${nt}\n`;
+            const currentNote = (domNote !== undefined ? domNote : (notes[g.id] || '')).trim();
+            const noteText = currentNote ? ` 【自省筆記: ${currentNote}】` : '';
+            prompt += `  - ${g.title}: ${sc}分${noteText}\n`;
           });
         });
 
@@ -1159,7 +1171,7 @@
 
         prompt += `【我的提問】\n`;
         prompt += `請從佐藤舞《為什麼越忙越空虛？》中「拒絕內耗、守住自主與平靜」的視角，為我診斷今日的心理與能量狀態：\n`;
-        prompt += `1. 今天哪一個維度有耗損或防線鬆動的跡象？原因可能出在哪裡？\n`;
+        prompt += `1. 結合我填寫的分數與【自省筆記】，今天哪一個維度有耗損或防線鬆動的跡象？原因可能出在哪裡？\n`;
         prompt += `2. 今天最值得保持的秩序是什麼？\n`;
         prompt += `3. 明天我可以做的一個微小行動調整是什麼？`;
 
@@ -1190,13 +1202,19 @@
         
         let totalScores = [];
         let weightList = [];
+        let weekNotesList = [];
+
         weekDates.forEach(dStr => {
           const r = this.records[dStr];
           if (r) {
             if (r.weight) weightList.push(parseFloat(r.weight));
-            if (r.scores) {
-              const scs = Object.values(r.scores);
-              totalScores = totalScores.concat(scs);
+            if (r.scores) totalScores = totalScores.concat(Object.values(r.scores));
+            if (r.notes) {
+              Object.entries(r.notes).forEach(([gid, nVal]) => {
+                if (nVal && nVal.trim()) {
+                  weekNotesList.push(`[${dStr}] ${nVal.trim()}`);
+                }
+              });
             }
           }
         });
@@ -1206,6 +1224,10 @@
 
         prompt += `- 本週平均心智對齊分數: ${avgScore} / 5.0 (共記錄 ${totalScores.length} 次評分)\n`;
         prompt += `- 本週平均晨起體重: ${avgWeight} kg (記錄天數: ${weightList.length} 天)\n\n`;
+
+        if (weekNotesList.length > 0) {
+          prompt += `【本週日常自省筆記摘要】\n${weekNotesList.join('\n')}\n\n`;
+        }
 
         prompt += `【二、 本週週末深度檢討回覆】\n`;
         this.values.forEach(v => {
@@ -1218,7 +1240,7 @@
         prompt += `【我的提問】\n`;
         prompt += `請針對我這一整週的心理走向與秩序落實情況進行綜合分析：\n`;
         prompt += `1. 本週六大價值觀中，表現最穩健的是哪一項？最容易受到現實衝擊的是哪一項？\n`;
-        prompt += `2. 檢視我的週末感悟，我有沒有陷入「自我批判」或「過度承擔不可控事物」的盲點？\n`;
+        prompt += `2. 檢視我的日常筆記與週末感悟，我有沒有陷入「自我批判」或「過度承擔不可控事物」的盲點？\n`;
         prompt += `3. 請為我下週的生活秩序，提出 2 個最具槓桿效應的關鍵建議。`;
 
         return prompt;
@@ -1237,17 +1259,29 @@
         let allScores = [];
         let weightEntries = [];
         let cbtFacts = [];
+        let allNotesList = [];
 
         dates.forEach(dStr => {
           const r = this.records[dStr];
           if (r.weight) weightEntries.push(`${dStr}: ${r.weight}kg`);
           if (r.scores) allScores = allScores.concat(Object.values(r.scores));
           if (r.cbtFact) cbtFacts.push(`[${dStr}] 事實: ${r.cbtFact} ｜ 應對: ${r.cbtAction || '守住原則'}`);
+          if (r.notes) {
+            Object.entries(r.notes).forEach(([gid, nVal]) => {
+              if (nVal && nVal.trim()) {
+                allNotesList.push(`[${dStr}] ${nVal.trim()}`);
+              }
+            });
+          }
         });
 
         const overallAvg = allScores.length > 0 ? (allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1) : '--';
         prompt += `- 全期心智對齊平均分: ${overallAvg} / 5.0 (累計 ${allScores.length} 次自評)\n`;
         prompt += `- 體重追蹤數據範例: ${weightEntries.slice(-5).join(', ') || '暫無足夠記錄'}\n\n`;
+
+        if (allNotesList.length > 0) {
+          prompt += `【日常自省微筆記精選 (近幾次)】\n${allNotesList.slice(-6).join('\n')}\n\n`;
+        }
 
         prompt += `【二、 核心 CBT 情緒與事實歷史精選 (近幾次)】\n`;
         if (cbtFacts.length > 0) {
@@ -1262,14 +1296,13 @@
         prompt += `【我的提問】\n`;
         prompt += `請站在客觀第三方視角，為我進行整體體檢：\n`;
         prompt += `1. 自 10/26 啟動至今，我的行為模式與情緒防線是否呈現「趨於穩定與清晰」的成長軌跡？\n`;
-        prompt += `2. 從我的客觀事實與應對紀錄中，最常誘發我內在消耗的模式是什麼（例如長輩溝通、飲食防守、下班邊界）？\n`;
+        prompt += `2. 從我的客觀事實、選填自省筆記與應對紀錄中，最常誘發我內在消耗的模式是什麼？\n`;
         prompt += `3. 為確保這套系統能在未來 90 天內真正自運轉，你對我的心態與環境工程有何終極指引？`;
 
         return prompt;
       }
 
       copyAiPrompt(type) {
-        // 點擊複製前，強制即時重新刷新所有提示詞內容
         this.refreshAiPrompts();
 
         let elId = 'ai-prompt-daily';
@@ -1659,7 +1692,6 @@ END:VCALENDAR`;
       }
 
       switchTab(tabKey, btn) {
-        // 切換分頁時，先將當前畫面的文字寫入暫存記憶體
         this.flushCurrentFormToMemory();
 
         document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
@@ -1669,7 +1701,6 @@ END:VCALENDAR`;
         if (target) target.classList.add('active');
         if (btn) btn.classList.add('active');
 
-        // 若切換到 AI 分析，立刻重新計算並填入包含剛才輸入內容的提示詞
         if (tabKey === 'ai-export') this.refreshAiPrompts();
         if (tabKey === 'history') this.renderHistoryList();
         if (tabKey === 'config') this.renderConfigValues();
