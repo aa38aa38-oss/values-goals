@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>退休實驗室 ‧ 生活秩序系統</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="退休實驗室">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      line-height: 1.5;
+      padding-bottom: 90px;
+    }
+
+    .container { max-width: 640px; margin: 0 auto; padding: 16px; }
+    
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 16px;
+    }
+    .header-title h1 { font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .header-title p { font-size: 0.8rem; color: var(--text-muted); }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+    /* Date Controller */
+    .date-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .date-nav-btn {
+      background: #334155;
+      color: var(--text-main);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .date-nav-btn:hover { background: #475569; }
+    .current-date-info { text-align: center; }
+    .current-date-info input[type="date"] {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      color-scheme: dark;
+    }
+    .current-time-badge { font-size: 0.75rem; color: var(--primary); display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .card-title { font-size: 1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .card-subtitle { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Inputs */
+    .weight-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .input-group { flex: 1; }
+    .input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+    .text-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+    }
+    .text-input:focus { outline: none; border-color: var(--primary); }
+
+    /* Checkbox list */
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .custom-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .checklist-item.checked .custom-check {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .custom-check::after {
+      content: '✓';
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      display: none;
+    }
+    .checklist-item.checked .custom-check::after { display: block; }
+    .check-content { flex: 1; }
+    .check-title { font-size: 0.92rem; font-weight: 600; color: #f1f5f9; }
+    .checklist-item.checked .check-title { text-decoration: line-through; color: var(--text-muted); }
+    .check-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Value section styling */
+    .val-block {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .val-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .val-tag { font-size: 0.8rem; font-weight: 700; color: var(--primary); }
+    .val-desc { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; }
+
+    /* CBT inputs */
+    .cbt-box { margin-bottom: 10px; }
+    .cbt-box label { font-size: 0.75rem; color: var(--primary); display: block; margin-bottom: 4px; font-weight: 600; }
+    textarea.text-input { resize: vertical; min-height: 55px; }
+
+    /* Bottom Navigation */
+    .nav-tabs {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 env(safe-area-inset-bottom);
+      z-index: 100;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 4px 12px;
+    }
+    .nav-btn.active { color: var(--primary); font-weight: 700; }
+    .nav-btn svg { width: 20px; height: 20px; stroke-width: 2; }
+
+    /* Button styles */
+    .btn {
+      background: var(--primary);
+      color: #0f172a;
+      border: none;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+    }
+    .btn-outline:hover { background: #334155; }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+
+    /* History & Review */
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat-card {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat-val { font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #10b981;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .toast.show { opacity: 1; }
+
+    .tab-view { display: none; }
+    .tab-view.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <div id="toast" class="toast">已儲存</div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-title">
+        <h1><span>🧭</span> 退休實驗室 ‧ 個人秩序</h1>
+        <p id="live-clock">2026/10/26 載入中...</p>
+      </div>
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span id="storage-status">極速本機已就緒</span>
+      </div>
+    </header>
+
+    <!-- TAB 1: 每日執行 (TODAY) -->
+    <div id="view-today" class="tab-view active">
+      <!-- Date switcher -->
+      <div class="date-bar">
+        <button class="date-nav-btn" onclick="app.shiftDay(-1)">◀ 前一天</button>
+        <div class="current-date-info">
+          <input type="date" id="selected-date" onchange="app.onDateChange()">
+          <span class="current-time-badge" id="is-today-badge">今日紀錄</span>
+        </div>
+        <button class="date-nav-btn" onclick="app.shiftDay(1)">後一天 ▶</button>
+      </div>
+
+      <!-- Quick Stats Card: Weight -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">⚖️ 身體數據 (高能量載體)</span>
+          <button class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.75rem;" onclick="app.setTodayDate()">回到今天</button>
+        </div>
+        <div class="weight-row">
+          <div class="input-group">
+            <label>晨起空腹體重 (kg)</label>
+            <input type="number" step="0.1" id="daily-weight" class="text-input" placeholder="例: 74.5" oninput="app.saveDailyField('weight', this.value)">
+          </div>
+          <div class="input-group">
+            <label>當日精力狀態 (1-5)</label>
+            <select id="daily-energy" class="text-input" onchange="app.saveDailyField('energy', this.value)">
+              <option value="5">⚡ 5 - 極致澄澈充沛</option>
+              <option value="4" selected>✨ 4 - 清醒平穩</option>
+              <option value="3">🌤 3 - 普通尚可</option>
+              <option value="2">🌧 2 - 略感沉重腦霧</option>
+              <option value="1">⛈ 1 - 極度耗損疲累</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Goals Checklists Dynamic Grouped by Values -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🎯 價值觀對齊 ‧ 90天行動檢核</span>
+          <span class="card-subtitle" id="checked-progress">0 / 0 已完成</span>
+        </div>
+        <div id="dynamic-goals-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- CBT Mind clearing -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🧠 睡前心智清零 ‧ CBT思維解毒</span>
+          <span class="card-subtitle">將情緒卸載，清空暫存區</span>
+        </div>
+        <div class="cbt-box">
+          <label>1. 客觀事實 (發生了什麼？不帶形容詞與評判)</label>
+          <textarea id="cbt-fact" class="text-input" placeholder="例：今天父親在電話中提出指導；下午四點出現嘴饞衝動。" oninput="app.saveDailyField('cbtFact', this.value)"></textarea>
+        </div>
+        <div class="cbt-box">
+          <label>2. 理性應對與邊界 (我的客觀回應 / 已經落實的防線)</label>
+          <textarea id="cbt-action" class="text-input" placeholder="例：平靜表達理解但不順從討好；吃了預置在桌上的堅果，未喝含糖飲料。" oninput="app.saveDailyField('cbtAction', this.value)"></textarea>
+        </div>
+        <div class="cbt-box">
+          <label>3. 睡前清空宣告 (給大腦的關機指令)</label>
+          <textarea id="cbt-clear" class="text-input" placeholder="例：今日之事已成定局。白天的體制妥協已終結，此刻完全屬於我自己，安心入眠。" oninput="app.saveDailyField('cbtClear', this.value)"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: 價值觀與目標設定 (CONFIG) -->
+    <div id="view-config" class="tab-view">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🧭 六大核心價值觀與目標管理</span>
+          <button class="btn" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.showAddValueModal()">+ 新增價值觀</button>
+        </div>
+        <p class="val-desc">隨時點擊即可編輯價值觀定義，或為其增減 90 天行動目標。變更將即刻聯動至每日清單。</p>
+        <div id="config-values-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: 歷史回顧 (HISTORY) -->
+    <div id="view-history" class="tab-view">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📊 過去 7 天生活秩序回顧</span>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-val" id="stat-drink-rate">0%</div>
+            <div class="stat-label">無糖飲料防守率</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-snack-rate">0%</div>
+            <div class="stat-label">下午點心預防率</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="stat-avg-weight">--</div>
+            <div class="stat-label">7天平均體重</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📜 全歷史時空膠囊</span>
+          <input type="text" id="history-search" class="text-input" style="width:140px; padding:4px 8px; font-size:0.75rem;" placeholder="搜尋筆記關鍵字" oninput="app.renderHistoryList()">
+        </div>
+        <div id="history-records-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: iPhone 提醒與同步 (SETTINGS) -->
+    <div id="view-sync" class="tab-view">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📱 iPhone 自動提醒事項設定</span>
+        </div>
+        <p class="val-desc">點擊以下按鈕，可直接下載標準 Apple 行事曆/提醒設定檔（.ics），點開即可將「15:00 下午預置食物」與「21:30 睡前心智清空」加入 iPhone 循環提醒：</p>
+        <button class="btn btn-outline" onclick="app.downloadIcsReminder()" style="margin-bottom: 10px;">📅 下載 iPhone 每日提醒設定檔 (.ics)</button>
+        <p style="font-size:0.72rem; color:var(--text-muted);">提示：在 iPhone Safari 下載後點擊「加入行事曆」即可每日收到提醒。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🔄 跨裝置防丟失備份 (電腦 ⇄ iPhone)</span>
+        </div>
+        <p class="val-desc">為杜絕 iOS 清理快取造成資料遺失，提供雙重保險：</p>
+        <button class="btn" onclick="app.exportJsonBackup()" style="margin-bottom:8px;">💾 匯出完整備份檔案 (JSON)</button>
+        <button class="btn btn-outline" onclick="app.copySyncCode()" style="margin-bottom:8px;">📋 複製跨裝置轉移字串</button>
+        <div class="input-group" style="margin-top:12px;">
+          <label>從另一台裝置貼上轉移字串還原：</label>
+          <textarea id="import-code-area" class="text-input" placeholder="在此貼上複製的字串..." style="min-height:50px;"></textarea>
+          <button class="btn btn-outline" style="margin-top:6px;" onclick="app.importSyncCode()">📥 執行還原並覆蓋</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="nav-tabs">
+    <button class="nav-btn active" onclick="app.switchTab('today', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      今日執行
+    </button>
+    <button class="nav-btn" onclick="app.switchTab('config', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+      價值與目標
+    </button>
+    <button class="nav-btn" onclick="app.switchTab('history', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      歷史檢視
+    </button>
+    <button class="nav-btn" onclick="app.switchTab('sync', this)">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      提醒與備份
+    </button>
+  </nav>
+
+  <script>
+    // 預設六大核心價值觀與衍生目標
+    const DEFAULT_VALUES = [
+      {
+        id: 'val_1',
+        title: '個體尊嚴與平權尊重',
+        definition: '拒絕威權、傲慢與剝削，絕不委曲討好，也誓不壓迫他人。',
+        goals: [
+          { id: 'g_1_1', title: '家庭平權對話防線', desc: '面對長輩強勢指導時，維持「平靜確認、不順從討好、不憤怒抗辯」' }
+        ]
+      },
+      {
+        id: 'val_2',
+        title: '絕對自主與清晰邊界',
+        definition: '牢牢掌握時間與人生的主導權，各安其位、互不越界干擾。',
+        goals: [
+          { id: 'g_2_1', title: '神聖自主探索時段', desc: '晚間或週末保留 60-90 分鐘完全由自己主宰的心流（彈琴、日文或筆記）' }
+        ]
+      },
+      {
+        id: 'val_3',
+        title: '理性獨立與求真智慧',
+        definition: '不盲從、不自欺，憑客觀事實與底層規律做一個清醒通透的人。',
+        goals: [
+          { id: 'g_3_1', title: '本質解構思維累積', desc: '拆解一個生活或體制盲從迷思，記錄於思維筆記中' }
+        ]
+      },
+      {
+        id: 'val_4',
+        title: '深層連結與真實安全感',
+        definition: '屏除表面社交與人情包袱，將珍貴的情感留給能徹底卸下武裝的核心圈。',
+        goals: [
+          { id: 'g_4_1', title: '拒絕無效表面應酬', desc: '杜絕人情負擔聚會，專注於少數高品質摯友與家人陪伴' }
+        ]
+      },
+      {
+        id: 'val_5',
+        title: '深度的平靜與內在秩序',
+        definition: '追求極簡低內耗的生活基調，在混亂世界中守護可控的心靈淨土。',
+        goals: [
+          { id: 'g_5_1', title: '睡前 30 分鐘心智關機', desc: '切斷藍光螢幕，完成紙上 CBT 事實客觀化，清空大腦雜訊' }
+        ]
+      },
+      {
+        id: 'val_6',
+        title: '打造高能量載體與身心秩序',
+        definition: '以低阻力系統與環境工程照顧肉體，自然維持充沛精力與澄澈大腦。',
+        goals: [
+          { id: 'g_6_1', title: '工作日 100% 杜絕含糖手搖', desc: '嚴守純水、黑咖啡或無糖茶防線' },
+          { id: 'g_6_2', title: '下午預防嘴饞零決策進食', desc: '以桌上預備好的堅果或水果化解 15:00 飢餓感，完全避開甜食' }
+        ]
+      }
+    ];
+
+    class RetirementLabApp {
+      constructor() {
+        this.currentDate = this.getTodayStr();
+        this.values = this.loadValues();
+        this.records = this.loadRecords();
+        this.init();
+      }
+
+      getTodayStr() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      loadValues() {
+        const local = localStorage.getItem('rl_values');
+        if (local) {
+          try { return JSON.parse(local); } catch (e) {}
+        }
+        return DEFAULT_VALUES;
+      }
+
+      saveValues() {
+        localStorage.setItem('rl_values', JSON.stringify(this.values));
+        this.renderDailyGoals();
+        this.renderConfigValues();
+        this.showToast('價值觀與目標已更新');
+      }
+
+      loadRecords() {
+        const local = localStorage.getItem('rl_daily_records');
+        if (local) {
+          try { return JSON.parse(local); } catch (e) {}
+        }
+        return {};
+      }
+
+      saveRecords() {
+        localStorage.setItem('rl_daily_records', JSON.stringify(this.records));
+      }
+
+      init() {
+        // 更新時間
+        this.updateClock();
+        setInterval(() => this.updateClock(), 1000);
+
+        // 綁定當日日期選取器
+        document.getElementById('selected-date').value = this.currentDate;
+        this.updateDateBadge();
+
+        // 渲染主畫面
+        this.renderDailyGoals();
+        this.loadDailyData();
+        this.renderConfigValues();
+        this.renderHistoryList();
+      }
+
+      updateClock() {
+        const now = new Date();
+        const clockEl = document.getElementById('live-clock');
+        if (clockEl) {
+          const str = now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }) + ' ' + now.toLocaleTimeString('zh-TW', { hour12: false });
+          clockEl.innerText = str;
+        }
+      }
+
+      updateDateBadge() {
+        const badge = document.getElementById('is-today-badge');
+        if (this.currentDate === this.getTodayStr()) {
+          badge.innerText = '今日紀錄 (自動同步)';
+          badge.style.color = 'var(--primary)';
+        } else {
+          badge.innerText = `補登/檢視 (${this.currentDate})`;
+          badge.style.color = 'var(--warning)';
+        }
+      }
+
+      shiftDay(delta) {
+        const parts = this.currentDate.split('-');
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        d.setDate(d.getDate() + delta);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        this.currentDate = `${y}-${m}-${day}`;
+        document.getElementById('selected-date').value = this.currentDate;
+        this.onDateChange();
+      }
+
+      setTodayDate() {
+        this.currentDate = this.getTodayStr();
+        document.getElementById('selected-date').value = this.currentDate;
+        this.onDateChange();
+      }
+
+      onDateChange() {
+        const val = document.getElementById('selected-date').value;
+        if (val) {
+          this.currentDate = val;
+          this.updateDateBadge();
+          this.renderDailyGoals();
+          this.loadDailyData();
+        }
+      }
+
+      // 載入指定日期的資料到表單
+      loadDailyData() {
+        const rec = this.records[this.currentDate] || {};
+        document.getElementById('daily-weight').value = rec.weight || '';
+        document.getElementById('daily-energy').value = rec.energy || '4';
+        document.getElementById('cbt-fact').value = rec.cbtFact || '';
+        document.getElementById('cbt-action').value = rec.cbtAction || '';
+        document.getElementById('cbt-clear').value = rec.cbtClear || '';
+      }
+
+      saveDailyField(field, val) {
+        if (!this.records[this.currentDate]) {
+          this.records[this.currentDate] = { checks: {} };
+        }
+        this.records[this.currentDate][field] = val;
+        this.saveRecords();
+        this.showToast('已即時儲存');
+      }
+
+      toggleGoalCheck(goalId) {
+        if (!this.records[this.currentDate]) {
+          this.records[this.currentDate] = { checks: {} };
+        }
+        if (!this.records[this.currentDate].checks) {
+          this.records[this.currentDate].checks = {};
+        }
+        const cur = !!this.records[this.currentDate].checks[goalId];
+        this.records[this.currentDate].checks[goalId] = !cur;
+        this.saveRecords();
+        this.renderDailyGoals();
+        this.showToast(!cur ? '目標達成 ✓' : '已取消');
+      }
+
+      renderDailyGoals() {
+        const container = document.getElementById('dynamic-goals-container');
+        if (!container) return;
+
+        const rec = this.records[this.currentDate] || { checks: {} };
+        const checks = rec.checks || {};
+
+        let totalGoals = 0;
+        let checkedCount = 0;
+        let html = '';
+
+        this.values.forEach(val => {
+          if (!val.goals || val.goals.length === 0) return;
+
+          html += `
+            <div class="val-block">
+              <div class="val-header">
+                <span class="val-tag">${val.title}</span>
+              </div>
+          `;
+
+          val.goals.forEach(g => {
+            totalGoals++;
+            const isChecked = !!checks[g.id];
+            if (isChecked) checkedCount++;
+
+            html += `
+              <div class="checklist-item ${isChecked ? 'checked' : ''}" onclick="app.toggleGoalCheck('${g.id}')">
+                <div class="custom-check"></div>
+                <div class="check-content">
+                  <div class="check-title">${g.title}</div>
+                  <div class="check-desc">${g.desc}</div>
+                </div>
+              </div>
+            `;
+          });
+
+          html += `</div>`;
+        });
+
+        container.innerHTML = html;
+        document.getElementById('checked-progress').innerText = `${checkedCount} / ${totalGoals} 已完成`;
+      }
+
+      // 管理介面：編輯價值觀與目標
+      renderConfigValues() {
+        const container = document.getElementById('config-values-list');
+        if (!container) return;
+
+        let html = '';
+        this.values.forEach((v, vIndex) => {
+          html += `
+            <div class="val-block" style="margin-bottom:16px;">
+              <div class="val-header">
+                <span class="val-tag" style="font-size:0.95rem;">${v.title}</span>
+                <button class="btn btn-outline" style="width:auto; padding:2px 8px; font-size:0.75rem;" onclick="app.editValueTitle(${vIndex})">編輯名稱</button>
+              </div>
+              <p class="val-desc">${v.definition}</p>
+              
+              <div style="margin-top:10px;">
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; justify-content:space-between;">
+                  <span>對應 90 天行動目標：</span>
+                  <a href="javascript:void(0)" style="color:var(--primary); text-decoration:none;" onclick="app.addGoalToValue(${vIndex})">+ 新增目標</a>
+                </div>
+          `;
+
+          (v.goals || []).forEach((g, gIndex) => {
+            html += `
+              <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:8px 10px; border-radius:6px; margin-bottom:6px; border:1px solid rgba(255,255,255,0.05);">
+                <div>
+                  <div style="font-size:0.85rem; font-weight:600;">${g.title}</div>
+                  <div style="font-size:0.72rem; color:var(--text-muted);">${g.desc}</div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-outline" style="width:auto; padding:2px 6px; font-size:0.7rem;" onclick="app.editGoal(${vIndex}, ${gIndex})">改</button>
+                  <button class="btn btn-danger" style="width:auto; padding:2px 6px; font-size:0.7rem;" onclick="app.deleteGoal(${vIndex}, ${gIndex})">刪</button>
+                </div>
+              </div>
+            `;
+          });
+
+          html += `</div></div>`;
+        });
+
+        container.innerHTML = html;
+      }
+
+      showAddValueModal() {
+        const title = prompt('請輸入新價值觀名稱：');
+        if (!title) return;
+        const def = prompt('請輸入核心定義/北極星原則：', '');
+        this.values.push({
+          id: 'val_' + Date.now(),
+          title: title,
+          definition: def || '',
+          goals: []
+        });
+        this.saveValues();
+      }
+
+      editValueTitle(idx) {
+        const v = this.values[idx];
+        const newTitle = prompt('修改價值觀名稱：', v.title);
+        if (newTitle) {
+          const newDef = prompt('修改定義：', v.definition);
+          v.title = newTitle;
+          v.definition = newDef !== null ? newDef : v.definition;
+          this.saveValues();
+        }
+      }
+
+      addGoalToValue(valIdx) {
+        const title = prompt('輸入 90 天具體行動目標名稱：');
+        if (!title) return;
+        const desc = prompt('輸入驗證細節/SOP描述：', '');
+        if (!this.values[valIdx].goals) this.values[valIdx].goals = [];
+        this.values[valIdx].goals.push({
+          id: 'g_' + Date.now(),
+          title: title,
+          desc: desc || ''
+        });
+        this.saveValues();
+      }
+
+      editGoal(vIdx, gIdx) {
+        const g = this.values[vIdx].goals[gIdx];
+        const t = prompt('修改目標名稱：', g.title);
+        if (t) {
+          const d = prompt('修改細節描述：', g.desc);
+          g.title = t;
+          g.desc = d !== null ? d : g.desc;
+          this.saveValues();
+        }
+      }
+
+      deleteGoal(vIdx, gIdx) {
+        if (confirm('確定要刪除此目標嗎？')) {
+          this.values[vIdx].goals.splice(gIdx, 1);
+          this.saveValues();
+        }
+      }
+
+      // 歷史與回顧計算
+      renderHistoryList() {
+        const container = document.getElementById('history-records-list');
+        if (!container) return;
+
+        const keyword = (document.getElementById('history-search')?.value || '').trim();
+        const dates = Object.keys(this.records).sort().reverse();
+
+        // 計算過去 7 天統計
+        let last7Days = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          last7Days.push(`${y}-${m}-${day}`);
+        }
+
+        let drinkHits = 0, snackHits = 0, weightSum = 0, weightCount = 0;
+        last7Days.forEach(dStr => {
+          const r = this.records[dStr];
+          if (r && r.checks) {
+            if (r.checks['g_6_1']) drinkHits++;
+            if (r.checks['g_6_2']) snackHits++;
+            if (r.weight) {
+              weightSum += parseFloat(r.weight);
+              weightCount++;
+            }
+          }
+        });
+
+        document.getElementById('stat-drink-rate').innerText = Math.round((drinkHits / 7) * 100) + '%';
+        document.getElementById('stat-snack-rate').innerText = Math.round((snackHits / 7) * 100) + '%';
+        document.getElementById('stat-avg-weight').innerText = weightCount > 0 ? (weightSum / weightCount).toFixed(1) + ' kg' : '--';
+
+        // 渲染列表
+        let html = '';
+        dates.forEach(dStr => {
+          const r = this.records[dStr];
+          const fact = r.cbtFact || '';
+          const action = r.cbtAction || '';
+          const clear = r.cbtClear || '';
+          const textFull = `${dStr} ${r.weight || ''} ${fact} ${action} ${clear}`;
+
+          if (keyword && !textFull.includes(keyword)) return;
+
+          const checkedNum = r.checks ? Object.values(r.checks).filter(Boolean).length : 0;
+
+          html += `
+            <div style="background:#0f172a; border:1px solid var(--card-border); border-radius:8px; padding:12px; margin-bottom:10px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-weight:700; color:var(--primary); font-size:0.9rem;">${dStr}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted);">體重: ${r.weight ? r.weight + ' kg' : '未記'} ‧ 達成: ${checkedNum} 項</span>
+              </div>
+              ${fact ? `<p style="font-size:0.75rem; color:#cbd5e1; margin-top:2px;"><b>客觀事實:</b> ${fact}</p>` : ''}
+              ${action ? `<p style="font-size:0.75rem; color:#94a3b8; margin-top:2px;"><b>理性應對:</b> ${action}</p>` : ''}
+              ${clear ? `<p style="font-size:0.75rem; color:#38bdf8; margin-top:2px;"><b>清空心態:</b> ${clear}</p>` : ''}
+            </div>
+          `;
+        });
+
+        if (!html) html = '<p style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding:16px;">尚無紀錄或查無符合關鍵字資料</p>';
+        container.innerHTML = html;
+      }
+
+      // 產生標準 iPhone 提醒 / 行事曆檔案 (.ics)
+      downloadIcsReminder() {
+        const icsContent = 
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Retirement Lab//Daily Habit//TW
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+SUMMARY:☕ 退休實驗室：下午健康點心防線
+DESCRIPTION:血糖下降前預防嘴饞！吃桌上備妥的堅果或水果，杜絕精緻糖。
+RRULE:FREQ=DAILY
+DTSTART;TZID=Asia/Taipei:20261026T150000
+DTEND;TZID=Asia/Taipei:20261026T151500
+BEGIN:VALARM
+TRIGGER:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:提醒吃下午優質點心
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:🌙 退休實驗室：睡前心智清零與關機
+DESCRIPTION:切斷藍光，打開系統寫下客觀事實，大腦清空安心入睡。
+RRULE:FREQ=DAILY
+DTSTART;TZID=Asia/Taipei:20261026T213000
+DTEND;TZID=Asia/Taipei:20261026T214500
+BEGIN:VALARM
+TRIGGER:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:睡前清零打卡
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', '退休實驗室_每日提醒.ics');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showToast('已產生 iPhone 提醒設定檔');
+      }
+
+      // 備份與轉移
+      exportJsonBackup() {
+        const data = {
+          values: this.values,
+          records: this.records,
+          exportAt: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.setAttribute('download', `退休實驗室備份_${this.getTodayStr()}.json`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.showToast('備份檔案已下載');
+      }
+
+      copySyncCode() {
+        const payload = btoa(encodeURIComponent(JSON.stringify({ values: this.values, records: this.records })));
+        navigator.clipboard.writeText(payload).then(() => {
+          this.showToast('同步代碼已複製到剪貼簿！');
+        }).catch(() => {
+          alert('請手動選取代碼：\n' + payload);
+        });
+      }
+
+      importSyncCode() {
+        const code = document.getElementById('import-code-area').value.trim();
+        if (!code) return alert('請先貼上代碼');
+        try {
+          const parsed = JSON.parse(decodeURIComponent(atob(code)));
+          if (parsed.values && parsed.records) {
+            this.values = parsed.values;
+            this.records = parsed.records;
+            this.saveValues();
+            this.saveRecords();
+            this.renderDailyGoals();
+            this.loadDailyData();
+            this.renderConfigValues();
+            this.renderHistoryList();
+            alert('還原成功！所有價值觀與歷史紀錄已更新。');
+          } else {
+            alert('格式不符');
+          }
+        } catch (e) {
+          alert('代碼無效或損毀：' + e.message);
+        }
+      }
+
+      switchTab(tabKey, btn) {
+        document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        const target = document.getElementById('view-' + tabKey);
+        if (target) target.classList.add('active');
+        if (btn) btn.classList.add('active');
+
+        if (tabKey === 'history') this.renderHistoryList();
+        if (tabKey === 'config') this.renderConfigValues();
+      }
+
+      showToast(msg) {
+        const el = document.getElementById('toast');
+        if (el) {
+          el.innerText = msg;
+          el.classList.add('show');
+          setTimeout(() => el.classList.remove('show'), 1500);
+        }
+      }
+    }
+
+    // 啟動 App
+    window.app = new RetirementLabApp();
+  </script>
+</body>
+</html>
