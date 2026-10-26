@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>退休實驗室 ‧ 個人秩序系統</title>
+  <title>退休實驗室 ‧ 個人秩序系統 (週執行版)</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="退休實驗室">
@@ -17,8 +17,10 @@
       --primary: #38bdf8;
       --primary-hover: #0284c7;
       --accent: #10b981;
+      --accent-dim: rgba(16, 185, 129, 0.2);
       --danger: #ef4444;
       --warning: #f59e0b;
+      --today-highlight: #38bdf8;
       --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
@@ -31,18 +33,18 @@
       padding-bottom: 90px;
     }
 
-    .container { max-width: 640px; margin: 0 auto; padding: 16px; }
+    .container { max-width: 680px; margin: 0 auto; padding: 14px; }
     
     /* Header */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 14px;
+      padding-bottom: 12px;
       border-bottom: 1px solid var(--card-border);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .header-title h1 { font-size: 1.2rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .header-title h1 { font-size: 1.18rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
     .header-title p { font-size: 0.78rem; color: var(--text-muted); }
     
     .sync-btn-header {
@@ -63,115 +65,97 @@
 
     @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 
-    /* Date Controller */
-    .date-bar {
+    /* Week Navigator Bar */
+    .week-nav-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .week-controls {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      padding: 10px 14px;
-      border-radius: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     }
-    .date-nav-btn {
+    .nav-btn-sm {
       background: #334155;
       color: var(--text-main);
       border: none;
       padding: 6px 12px;
       border-radius: 8px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
+      font-weight: 600;
     }
-    .date-nav-btn:hover { background: #475569; }
-    .current-date-info { text-align: center; }
-    .current-date-info input[type="date"] {
-      background: transparent;
-      border: none;
-      color: var(--text-main);
+    .nav-btn-sm:hover { background: #475569; }
+    
+    .week-title-wrap { text-align: center; }
+    .week-number-badge {
       font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      text-align: center;
-      color-scheme: dark;
+      font-weight: 800;
+      color: var(--primary);
+      display: block;
+      letter-spacing: 0.5px;
     }
-    .current-time-badge { font-size: 0.72rem; color: var(--accent); display: block; font-weight: 600; }
+    .week-range-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Day Picker Pills (用於切換下方焦點日期的體重與 CBT) */
+    .day-selector-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .day-pill {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 6px 2px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .day-pill:hover { background: #334155; }
+    .day-pill.active {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.15);
+    }
+    .day-pill.is-today {
+      border-color: var(--accent);
+    }
+    .day-pill-name { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; display: block; }
+    .day-pill.active .day-pill-name { color: var(--primary); }
+    .day-pill.is-today .day-pill-name { color: var(--accent); }
+    .day-pill-date { font-size: 0.8rem; font-weight: 700; color: #fff; display: block; }
 
     /* Cards */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
     }
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .card-title { font-size: 1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .card-title { font-size: 0.96rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px; }
     .card-subtitle { font-size: 0.75rem; color: var(--text-muted); }
 
-    /* Inputs */
-    .weight-row { display: flex; gap: 12px; align-items: center; }
-    .input-group { flex: 1; }
-    .input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
-    .text-input {
-      width: 100%;
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      color: #fff;
-      padding: 8px 12px;
-      font-size: 0.95rem;
-    }
-    .text-input:focus { outline: none; border-color: var(--primary); }
-
-    /* Checkbox list */
-    .checklist-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      cursor: pointer;
-    }
-    .checklist-item:last-child { border-bottom: none; }
-    .custom-check {
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      border: 2px solid var(--card-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 2px;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-    .checklist-item.checked .custom-check {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-    .custom-check::after {
-      content: '✓';
-      color: #fff;
-      font-size: 13px;
-      font-weight: 800;
-      display: none;
-    }
-    .checklist-item.checked .custom-check::after { display: block; }
-    .check-content { flex: 1; }
-    .check-title { font-size: 0.92rem; font-weight: 600; color: #f1f5f9; }
-    .checklist-item.checked .check-title { text-decoration: line-through; color: var(--text-muted); }
-    .check-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
-
-    /* Value section styling */
+    /* 週執行檢核卡片 */
     .val-block {
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--card-border);
@@ -183,15 +167,77 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .val-tag { font-size: 0.82rem; font-weight: 700; color: var(--primary); }
-    .val-desc { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; }
+    .val-desc { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; }
+
+    /* Goal item with 7 days check box */
+    .goal-week-row {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .goal-info { margin-bottom: 8px; }
+    .goal-title { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
+    .goal-desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
+
+    .week-checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+    .day-check-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 6px 2px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .day-check-btn:hover { border-color: var(--primary); }
+    .day-check-btn.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .day-check-btn.is-today-col {
+      box-shadow: 0 0 0 1.5px var(--today-highlight);
+    }
+    .d-label { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px; font-weight: 600; }
+    .day-check-btn.checked .d-label { color: rgba(255,255,255,0.9); }
+    .d-box {
+      font-size: 0.85rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    /* Inputs */
+    .weight-row { display: flex; gap: 10px; align-items: center; }
+    .input-group { flex: 1; }
+    .input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+    .text-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+    .text-input:focus { outline: none; border-color: var(--primary); }
 
     /* CBT inputs */
-    .cbt-box { margin-bottom: 10px; }
-    .cbt-box label { font-size: 0.75rem; color: var(--primary); display: block; margin-bottom: 4px; font-weight: 600; }
-    textarea.text-input { resize: vertical; min-height: 55px; }
+    .cbt-box { margin-bottom: 8px; }
+    .cbt-box label { font-size: 0.75rem; color: var(--primary); display: block; margin-bottom: 3px; font-weight: 600; }
+    textarea.text-input { resize: vertical; min-height: 50px; }
 
     /* Bottom Navigation */
     .nav-tabs {
@@ -199,14 +245,14 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(15, 23, 42, 0.95);
+      background: rgba(15, 23, 42, 0.96);
       backdrop-filter: blur(12px);
       border-top: 1px solid var(--card-border);
       display: flex;
       justify-content: space-around;
       padding: 8px 0 env(safe-area-inset-bottom);
       z-index: 100;
-      max-width: 640px;
+      max-width: 680px;
       margin: 0 auto;
     }
     .nav-btn {
@@ -224,13 +270,13 @@
     .nav-btn.active { color: var(--primary); font-weight: 700; }
     .nav-btn svg { width: 20px; height: 20px; stroke-width: 2; }
 
-    /* Button styles */
+    /* Buttons */
     .btn {
       background: var(--primary);
       color: #0f172a;
       border: none;
       font-weight: 700;
-      padding: 10px 16px;
+      padding: 9px 14px;
       border-radius: 8px;
       cursor: pointer;
       font-size: 0.85rem;
@@ -249,8 +295,8 @@
     .btn-outline:hover { background: #334155; }
     .btn-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
 
-    /* History & Review */
-    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    /* History Grid */
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
     .stat-card {
       background: #0f172a;
       border: 1px solid var(--card-border);
@@ -258,7 +304,7 @@
       padding: 10px;
       text-align: center;
     }
-    .stat-val { font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+    .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--accent); }
     .stat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
 
     /* Toast */
@@ -301,22 +347,42 @@
       </button>
     </header>
 
-    <!-- TAB 1: 每日執行 (TODAY) -->
+    <!-- TAB 1: 週執行 (WEEKLY DASHBOARD) -->
     <div id="view-today" class="tab-view active">
-      <div class="date-bar">
-        <button class="date-nav-btn" onclick="app.shiftDay(-1)">◀ 前一天</button>
-        <div class="current-date-info">
-          <input type="date" id="selected-date" onchange="app.onDateChange()">
-          <span class="current-time-badge" id="is-today-badge">今日紀錄</span>
+      <!-- Week Navigation & Date Range Header -->
+      <div class="week-nav-bar">
+        <div class="week-controls">
+          <button class="nav-btn-sm" onclick="app.shiftWeek(-1)">◀ 上一週</button>
+          <div class="week-title-wrap">
+            <span class="week-number-badge" id="week-badge-text">2026年 10月 第 5 週</span>
+            <span class="week-range-text" id="week-range-text">10/26 (週一) ～ 11/01 (週日)</span>
+          </div>
+          <button class="nav-btn-sm" onclick="app.shiftWeek(1)">下一週 ▶</button>
         </div>
-        <button class="date-nav-btn" onclick="app.shiftDay(1)">後一天 ▶</button>
+        
+        <!-- Day Pills: 切換當前檢視/編輯的焦點日期 -->
+        <div class="day-selector-row" id="week-day-pills">
+          <!-- Rendered via JS -->
+        </div>
       </div>
 
-      <!-- Quick Stats Card: Weight -->
+      <!-- Weekly Values & Goals Checklist (7 Days Grid) -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">⚖️ 身體數據 (高能量載體)</span>
-          <button class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.75rem;" onclick="app.setTodayDate()">回到今天</button>
+          <span class="card-title">🎯 價值觀對齊 ‧ 90天行動週檢核</span>
+          <span class="card-subtitle" id="week-checked-summary">本週完成: 0 次</span>
+        </div>
+        <p style="font-size:0.73rem; color:var(--text-muted); margin-bottom:10px;">點擊任意一天的方塊直接打勾；藍框為「今天」，選中綠色為「已達成」。</p>
+        <div id="dynamic-weekly-goals-container">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Single Day Focus: Weight & Energy -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="focus-day-card-title">⚖️ 10/26 (週一) 身體數據</span>
+          <button class="btn btn-outline" style="width:auto; padding:3px 8px; font-size:0.75rem;" onclick="app.setTodayDate()">回到今天</button>
         </div>
         <div class="weight-row">
           <div class="input-group">
@@ -324,7 +390,7 @@
             <input type="number" step="0.1" id="daily-weight" class="text-input" placeholder="例: 74.5" oninput="app.saveDailyField('weight', this.value)">
           </div>
           <div class="input-group">
-            <label>當日精力狀態 (1-5)</label>
+            <label>精力狀態 (1-5)</label>
             <select id="daily-energy" class="text-input" onchange="app.saveDailyField('energy', this.value)">
               <option value="5">⚡ 5 - 極致澄澈充沛</option>
               <option value="4" selected>✨ 4 - 清醒平穩</option>
@@ -336,32 +402,23 @@
         </div>
       </div>
 
-      <!-- Goals Checklists Dynamic Grouped by Values -->
+      <!-- CBT Mind clearing for Focus Day -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">🎯 價值觀對齊 ‧ 90天行動檢核</span>
-          <span class="card-subtitle" id="checked-progress">0 / 0 已完成</span>
-        </div>
-        <div id="dynamic-goals-container"></div>
-      </div>
-
-      <!-- CBT Mind clearing -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">🧠 睡前心智清零 ‧ CBT思維解毒</span>
-          <span class="card-subtitle">將情緒卸載，清空暫存區</span>
+          <span class="card-title" id="focus-cbt-card-title">🧠 10/26 睡前心智清零 ‧ CBT思維解毒</span>
+          <span class="card-subtitle">清空當日大腦暫存區</span>
         </div>
         <div class="cbt-box">
-          <label>1. 客觀事實 (發生了什麼？不帶形容詞與評判)</label>
-          <textarea id="cbt-fact" class="text-input" placeholder="例：今天父親在電話中提出指導；下午四點出現嘴饞衝動。" oninput="app.saveDailyField('cbtFact', this.value)"></textarea>
+          <label>1. 客觀事實 (發生了什麼？不帶評判)</label>
+          <textarea id="cbt-fact" class="text-input" placeholder="例：下午四點出現嘴饞衝動；父親在通話中提出強勢指導。" oninput="app.saveDailyField('cbtFact', this.value)"></textarea>
         </div>
         <div class="cbt-box">
-          <label>2. 理性應對與邊界 (我的客觀回應 / 已經落實的防線)</label>
-          <textarea id="cbt-action" class="text-input" placeholder="例：平靜表達理解但不順從討好；吃了預置在桌上的堅果，未喝含糖飲料。" oninput="app.saveDailyField('cbtAction', this.value)"></textarea>
+          <label>2. 理性應對 (我的客觀界線 / 執行的防線)</label>
+          <textarea id="cbt-action" class="text-input" placeholder="例：吃了桌上預置的堅果；語氣平靜表達理解但維持自主。" oninput="app.saveDailyField('cbtAction', this.value)"></textarea>
         </div>
         <div class="cbt-box">
           <label>3. 睡前清空宣告 (給大腦的關機指令)</label>
-          <textarea id="cbt-clear" class="text-input" placeholder="例：今日之事已成定局。白天的體制妥協已終結，此刻完全屬於我自己，安心入眠。" oninput="app.saveDailyField('cbtClear', this.value)"></textarea>
+          <textarea id="cbt-clear" class="text-input" placeholder="例：今日之事已成定局。此刻時間完全屬於我自己，安心入眠。" oninput="app.saveDailyField('cbtClear', this.value)"></textarea>
         </div>
       </div>
     </div>
@@ -373,7 +430,7 @@
           <span class="card-title">🧭 六大核心價值觀與目標管理</span>
           <button class="btn" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.showAddValueModal()">+ 新增價值觀</button>
         </div>
-        <p class="val-desc">隨時點擊即可編輯價值觀定義，或為其增減 90 天行動目標。變更將即刻聯動至每日清單。</p>
+        <p class="val-desc">隨時點擊即可編輯價值觀定義，或為其增減 90 天行動目標。變更將即刻聯動至週檢核清單。</p>
         <div id="config-values-list"></div>
       </div>
     </div>
@@ -411,13 +468,12 @@
 
     <!-- TAB 4: 雲端同步與 iPhone 提醒 (SETTINGS) -->
     <div id="view-sync" class="tab-view">
-      <!-- Cloud Direct Sync Card -->
       <div class="card" style="border: 1px solid var(--primary);">
         <div class="card-header">
           <span class="card-title">☁️ 跨裝置一鍵雙向雲端同步</span>
           <span class="status-badge" id="cloud-status-badge">未設定金鑰</span>
         </div>
-        <p class="val-desc">告別複製貼上代碼！只需在此輸入自訂的「雲端房間鑰匙」，電腦與手機設同一組，點一下頂部按鈕即刻雙向更新：</p>
+        <p class="val-desc">告別複製貼上！只需輸入自訂的「雲端房間鑰匙」，電腦與手機設同一組，點擊頂部按鈕即可雙向即時更新：</p>
         
         <div class="input-group" style="margin-bottom:10px;">
           <label>專屬同步房間金鑰 (Sync Room Key)：</label>
@@ -432,7 +488,7 @@
           <button class="btn" onclick="app.syncCloudManual()">🚀 立即執行雙向同步</button>
           <button class="btn btn-outline" onclick="app.initCloudBin()">🔑 建立新雲端存儲庫</button>
         </div>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:8px;">提示：系統會每隔 20 秒在背景自動比對最新版本，無縫同步。</p>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:8px;">提示：系統每隔 25 秒會在背景自動比對最新版本，無縫同步。</p>
       </div>
 
       <div class="card">
@@ -456,15 +512,15 @@
   <!-- Bottom Nav -->
   <nav class="nav-tabs">
     <button class="nav-btn active" onclick="app.switchTab('today', this)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      今日執行
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+      週執行
     </button>
     <button class="nav-btn" onclick="app.switchTab('config', this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
       價值與目標
     </button>
     <button class="nav-btn" onclick="app.switchTab('history', this)">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
       歷史檢視
     </button>
     <button class="nav-btn" onclick="app.switchTab('sync', this)">
@@ -474,7 +530,6 @@
   </nav>
 
   <script>
-    // 預設核心架構
     const DEFAULT_VALUES = [
       {
         id: 'val_1',
@@ -529,22 +584,55 @@
 
     class RetirementLabApp {
       constructor() {
-        this.currentDate = this.getTodayStr();
+        this.todayStr = this.getTodayStr();
+        this.selectedDate = this.todayStr; // 當前聚焦檢視的特定日
+        this.currentMonday = this.getMonday(new Date()); // 當前週的週一 Date 物件
+        
         this.values = this.loadValues();
         this.records = this.loadRecords();
         this.syncBinId = localStorage.getItem('rl_bin_id') || '';
         this.syncApiKey = localStorage.getItem('rl_bin_key') || '';
         this.lastCloudUpdated = localStorage.getItem('rl_cloud_updated') || 0;
         this.isSyncing = false;
+        
         this.init();
       }
 
       getTodayStr() {
         const d = new Date();
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        return `${y}-${m}-${day}`;
+      }
+
+      // 取得給定日期該週的週一
+      getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // 週日為 0，轉成以週一為起點
+        d.setDate(diff);
+        d.setHours(0,0,0,0);
+        return d;
+      }
+
+      formatDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      // 計算此週是該月的第幾週 (以週一所在月為準)
+      getWeekOfMonth(date) {
+        const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        let firstMonday = this.getMonday(firstDayOfMonth);
+        // 若該月 1 號不是週一，且週一落在上個月，從下一個週一算第一週
+        if (firstMonday.getMonth() !== date.getMonth()) {
+          firstMonday.setDate(firstMonday.getDate() + 7);
+        }
+        const diffDays = Math.round((date - firstMonday) / (24 * 3600 * 1000));
+        return Math.floor(diffDays / 7) + 1;
       }
 
       loadValues() {
@@ -557,7 +645,7 @@
 
       saveValues(triggerCloud = true) {
         localStorage.setItem('rl_values', JSON.stringify(this.values));
-        this.renderDailyGoals();
+        this.renderWeeklyBoard();
         this.renderConfigValues();
         if (triggerCloud) this.debounceAutoCloudSync();
       }
@@ -579,25 +667,20 @@
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
 
-        document.getElementById('selected-date').value = this.currentDate;
-        this.updateDateBadge();
-
-        this.renderDailyGoals();
-        this.loadDailyData();
+        this.renderWeekHeader();
+        this.renderWeeklyBoard();
+        this.loadFocusDayData();
         this.renderConfigValues();
         this.renderHistoryList();
 
-        // 載入同步金鑰設定
         const binInput = document.getElementById('sync-room-key');
         const keyInput = document.getElementById('sync-api-key');
         if (binInput) binInput.value = this.syncBinId;
         if (keyInput) keyInput.value = this.syncApiKey;
         this.updateSyncBadge();
 
-        // 開啟時立即嘗試自動靜默對齊一次
         if (this.syncBinId) {
           setTimeout(() => this.syncCloud(false), 800);
-          // 背景每隔 25 秒自動同步
           setInterval(() => this.syncCloud(false), 25000);
         }
       }
@@ -611,85 +694,89 @@
         }
       }
 
-      updateDateBadge() {
-        const badge = document.getElementById('is-today-badge');
-        if (this.currentDate === this.getTodayStr()) {
-          badge.innerText = '今日紀錄 (自動同步中)';
-          badge.style.color = 'var(--accent)';
-        } else {
-          badge.innerText = `補登/檢視 (${this.currentDate})`;
-          badge.style.color = 'var(--warning)';
+      // 產生當週 7 天 (週一～週日)
+      getWeekDaysArray() {
+        const days = [];
+        const dayNames = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(this.currentMonday);
+          d.setDate(d.getDate() + i);
+          const dateStr = this.formatDate(d);
+          days.push({
+            date: d,
+            dateStr: dateStr,
+            name: dayNames[i],
+            shortDate: `${d.getMonth() + 1}/${d.getDate()}`,
+            isToday: dateStr === this.todayStr
+          });
         }
+        return days;
       }
 
-      shiftDay(delta) {
-        const parts = this.currentDate.split('-');
-        const d = new Date(parts[0], parts[1] - 1, parts[2]);
-        d.setDate(d.getDate() + delta);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        this.currentDate = `${y}-${m}-${day}`;
-        document.getElementById('selected-date').value = this.currentDate;
-        this.onDateChange();
+      // 週導航
+      shiftWeek(delta) {
+        this.currentMonday.setDate(this.currentMonday.getDate() + (delta * 7));
+        this.renderWeekHeader();
+        this.renderWeeklyBoard();
       }
 
       setTodayDate() {
-        this.currentDate = this.getTodayStr();
-        document.getElementById('selected-date').value = this.currentDate;
-        this.onDateChange();
+        this.currentMonday = this.getMonday(new Date());
+        this.selectedDate = this.todayStr;
+        this.renderWeekHeader();
+        this.renderWeeklyBoard();
+        this.loadFocusDayData();
       }
 
-      onDateChange() {
-        const val = document.getElementById('selected-date').value;
-        if (val) {
-          this.currentDate = val;
-          this.updateDateBadge();
-          this.renderDailyGoals();
-          this.loadDailyData();
-        }
+      selectFocusDate(dateStr) {
+        this.selectedDate = dateStr;
+        this.renderWeekHeader();
+        this.loadFocusDayData();
       }
 
-      loadDailyData() {
-        const rec = this.records[this.currentDate] || {};
-        document.getElementById('daily-weight').value = rec.weight || '';
-        document.getElementById('daily-energy').value = rec.energy || '4';
-        document.getElementById('cbt-fact').value = rec.cbtFact || '';
-        document.getElementById('cbt-action').value = rec.cbtAction || '';
-        document.getElementById('cbt-clear').value = rec.cbtClear || '';
+      renderWeekHeader() {
+        const weekDays = this.getWeekDaysArray();
+        const mon = weekDays[0].date;
+        const sun = weekDays[6].date;
+
+        // 計算月份與第幾週 (以週一月份為準)
+        const year = mon.getFullYear();
+        const month = mon.getMonth() + 1;
+        const weekNum = this.getWeekOfMonth(mon);
+
+        document.getElementById('week-badge-text').innerText = `${year}年 ${month}月 第 ${weekNum > 0 ? weekNum : 1} 週`;
+        
+        const monStr = `${mon.getMonth() + 1}/${mon.getDate()} (週一)`;
+        const sunStr = `${sun.getMonth() + 1}/${sun.getDate()} (週日)`;
+        document.getElementById('week-range-text').innerText = `${monStr} ～ ${sunStr}`;
+
+        // 渲染 7 天選擇藥丸標籤
+        const pillContainer = document.getElementById('week-day-pills');
+        let pillsHtml = '';
+        weekDays.forEach(d => {
+          const isActive = d.dateStr === this.selectedDate;
+          pillsHtml += `
+            <div class="day-pill ${isActive ? 'active' : ''} ${d.isToday ? 'is-today' : ''}" onclick="app.selectFocusDate('${d.dateStr}')">
+              <span class="day-pill-name">${d.name}</span>
+              <span class="day-pill-date">${d.shortDate}</span>
+            </div>
+          `;
+        });
+        pillContainer.innerHTML = pillsHtml;
+
+        // 更新下方卡片標題
+        const focusDayObj = weekDays.find(d => d.dateStr === this.selectedDate) || { name: '', shortDate: this.selectedDate };
+        document.getElementById('focus-day-card-title').innerText = `⚖️ ${focusDayObj.shortDate} (${focusDayObj.name}) 身體數據`;
+        document.getElementById('focus-cbt-card-title').innerText = `🧠 ${focusDayObj.shortDate} 睡前心智清零 ‧ CBT思維解毒`;
       }
 
-      saveDailyField(field, val) {
-        if (!this.records[this.currentDate]) {
-          this.records[this.currentDate] = { checks: {} };
-        }
-        this.records[this.currentDate][field] = val;
-        this.saveRecords(true);
-      }
-
-      toggleGoalCheck(goalId) {
-        if (!this.records[this.currentDate]) {
-          this.records[this.currentDate] = { checks: {} };
-        }
-        if (!this.records[this.currentDate].checks) {
-          this.records[this.currentDate].checks = {};
-        }
-        const cur = !!this.records[this.currentDate].checks[goalId];
-        this.records[this.currentDate].checks[goalId] = !cur;
-        this.saveRecords(true);
-        this.renderDailyGoals();
-        this.showToast(!cur ? '目標達成 ✓' : '已取消');
-      }
-
-      renderDailyGoals() {
-        const container = document.getElementById('dynamic-goals-container');
+      // 渲染週執行核心檢核板（七天網格）
+      renderWeeklyBoard() {
+        const container = document.getElementById('dynamic-weekly-goals-container');
         if (!container) return;
 
-        const rec = this.records[this.currentDate] || { checks: {} };
-        const checks = rec.checks || {};
-
-        let totalGoals = 0;
-        let checkedCount = 0;
+        const weekDays = this.getWeekDaysArray();
+        let totalWeekChecks = 0;
         let html = '';
 
         this.values.forEach(val => {
@@ -700,19 +787,34 @@
               <div class="val-header">
                 <span class="val-tag">${val.title}</span>
               </div>
+              <p class="val-desc">${val.definition}</p>
           `;
 
           val.goals.forEach(g => {
-            totalGoals++;
-            const isChecked = !!checks[g.id];
-            if (isChecked) checkedCount++;
+            html += `
+              <div class="goal-week-row">
+                <div class="goal-info">
+                  <div class="goal-title">${g.title}</div>
+                  <div class="goal-desc">${g.desc}</div>
+                </div>
+                <div class="week-checkbox-grid">
+            `;
+
+            weekDays.forEach(d => {
+              const rec = this.records[d.dateStr] || {};
+              const isChecked = !!(rec.checks && rec.checks[g.id]);
+              if (isChecked) totalWeekChecks++;
+
+              html += `
+                <div class="day-check-btn ${isChecked ? 'checked' : ''} ${d.isToday ? 'is-today-col' : ''}" 
+                     onclick="app.toggleDayGoal('${d.dateStr}', '${g.id}')">
+                  <span class="d-label">${d.name.replace('週','')}</span>
+                  <span class="d-box">${isChecked ? '✓' : '·'}</span>
+                </div>
+              `;
+            });
 
             html += `
-              <div class="checklist-item ${isChecked ? 'checked' : ''}" onclick="app.toggleGoalCheck('${g.id}')">
-                <div class="custom-check"></div>
-                <div class="check-content">
-                  <div class="check-title">${g.title}</div>
-                  <div class="check-desc">${g.desc}</div>
                 </div>
               </div>
             `;
@@ -722,10 +824,44 @@
         });
 
         container.innerHTML = html;
-        document.getElementById('checked-progress').innerText = `${checkedCount} / ${totalGoals} 已完成`;
+        document.getElementById('week-checked-summary').innerText = `本週累積達成: ${totalWeekChecks} 次`;
       }
 
-      // =================== 核心：一鍵雲端雙向同步 ===================
+      // 切換任意一天的某目標達成狀態
+      toggleDayGoal(dateStr, goalId) {
+        if (!this.records[dateStr]) {
+          this.records[dateStr] = { checks: {} };
+        }
+        if (!this.records[dateStr].checks) {
+          this.records[dateStr].checks = {};
+        }
+
+        const cur = !!this.records[dateStr].checks[goalId];
+        this.records[dateStr].checks[goalId] = !cur;
+        this.saveRecords(true);
+        this.renderWeeklyBoard();
+        this.showToast(`${dateStr} ${!cur ? '達成 ✓' : '取消'}`);
+      }
+
+      // 載入焦點日期的數據 (體重與 CBT)
+      loadFocusDayData() {
+        const rec = this.records[this.selectedDate] || {};
+        document.getElementById('daily-weight').value = rec.weight || '';
+        document.getElementById('daily-energy').value = rec.energy || '4';
+        document.getElementById('cbt-fact').value = rec.cbtFact || '';
+        document.getElementById('cbt-action').value = rec.cbtAction || '';
+        document.getElementById('cbt-clear').value = rec.cbtClear || '';
+      }
+
+      saveDailyField(field, val) {
+        if (!this.records[this.selectedDate]) {
+          this.records[this.selectedDate] = { checks: {} };
+        }
+        this.records[this.selectedDate][field] = val;
+        this.saveRecords(true);
+      }
+
+      // =================== 雲端雙向同步 ===================
       saveSyncConfig() {
         this.syncBinId = document.getElementById('sync-room-key').value.trim();
         this.syncApiKey = document.getElementById('sync-api-key').value.trim();
@@ -743,15 +879,14 @@
           badge.style.color = 'var(--accent)';
           badge.style.borderColor = 'var(--accent)';
         } else {
-          badge.innerText = '未綁定金鑰';
+          badge.innerText = '未設定金鑰';
           badge.style.color = 'var(--warning)';
           badge.style.borderColor = 'var(--warning)';
         }
       }
 
-      // 建立專屬免費雲端庫（若尚未在 JSONBin 取得 Bin ID）
       async initCloudBin() {
-        const key = prompt('請輸入您的 JSONBin Master-Key（若無請至 jsonbin.io 免費註冊複製 Master Key，或使用共用金鑰）：', this.syncApiKey);
+        const key = prompt('請輸入您的 JSONBin Master-Key（若無請至 jsonbin.io 免費複製 Master Key）：', this.syncApiKey);
         if (!key) return;
 
         this.syncApiKey = key.trim();
@@ -771,7 +906,7 @@
             headers: {
               'Content-Type': 'application/json',
               'X-Master-Key': this.syncApiKey,
-              'X-Bin-Name': 'RetirementLab_Data'
+              'X-Bin-Name': 'RetirementLab_Weekly'
             },
             body: JSON.stringify(payload)
           });
@@ -782,7 +917,7 @@
             localStorage.setItem('rl_bin_id', this.syncBinId);
             document.getElementById('sync-room-key').value = this.syncBinId;
             this.updateSyncBadge();
-            alert('🎉 雲端空間建立成功！\n\n您的專屬 Bin ID 為：\n' + this.syncBinId + '\n\n請將這串 ID 與 Key 填到手機上的對應欄位，即可在手機與電腦間一鍵互通！');
+            alert('🎉 雲端空間建立成功！\n\n您的專屬 Bin ID 為：\n' + this.syncBinId + '\n\n請將這串 ID 填到手機上的對應欄位即可無縫同步！');
           } else {
             alert('建立失敗：' + JSON.stringify(data));
           }
@@ -793,11 +928,10 @@
         }
       }
 
-      // 手動點擊一鍵同步
       async syncCloudManual() {
         if (!this.syncBinId) {
           this.switchTab('sync', document.querySelectorAll('.nav-btn')[3]);
-          alert('請先在「同步與提醒」分頁填寫您的雲端 Bin ID 或點擊「建立新雲端存儲庫」！');
+          alert('請先在「同步與提醒」分頁填寫您的雲端 Bin ID 或建立新存儲庫！');
           return;
         }
         await this.syncCloud(true);
@@ -820,7 +954,6 @@
           const headers = {};
           if (this.syncApiKey) headers['X-Master-Key'] = this.syncApiKey;
 
-          // 1. 先讀取雲端最新資料
           const getRes = await fetch(`https://api.jsonbin.io/v3/b/${this.syncBinId}/latest`, { headers });
           if (!getRes.ok) throw new Error('讀取失敗，請確認 Bin ID 與 Key 正確');
 
@@ -830,20 +963,18 @@
           const localTime = parseInt(localStorage.getItem('rl_cloud_updated') || '0', 10);
 
           if (remoteTime > localTime) {
-            // 雲端資料更新（例如剛剛在手機上有填寫新紀錄）-> 覆蓋至本機
             if (remoteRecord.values) this.values = remoteRecord.values;
             if (remoteRecord.records) this.records = remoteRecord.records;
             localStorage.setItem('rl_values', JSON.stringify(this.values));
             localStorage.setItem('rl_daily_records', JSON.stringify(this.records));
             localStorage.setItem('rl_cloud_updated', remoteTime);
 
-            this.renderDailyGoals();
-            this.loadDailyData();
+            this.renderWeeklyBoard();
+            this.loadFocusDayData();
             this.renderConfigValues();
             this.renderHistoryList();
-            if (isManual) this.showToast('已自雲端拉取最新資料！');
+            if (isManual) this.showToast('已自雲端更新！');
           } else {
-            // 本地較新，或是手動強制更新 -> 將本地內容推送到雲端
             const newTimestamp = Date.now();
             const pushPayload = {
               values: this.values,
@@ -862,7 +993,7 @@
 
             if (putRes.ok) {
               localStorage.setItem('rl_cloud_updated', newTimestamp);
-              if (isManual) this.showToast('已成功上傳同步至雲端！');
+              if (isManual) this.showToast('已成功上傳雲端！');
             }
           }
         } catch (e) {
@@ -886,7 +1017,7 @@
         }
       }
 
-      // =================== 管理設定介面 ===================
+      // =================== 管理與設定 ===================
       renderConfigValues() {
         const container = document.getElementById('config-values-list');
         if (!container) return;
@@ -984,7 +1115,7 @@
         }
       }
 
-      // =================== 歷史與分析 ===================
+      // =================== 歷史檢視 ===================
       renderHistoryList() {
         const container = document.getElementById('history-records-list');
         if (!container) return;
@@ -996,10 +1127,7 @@
         for (let i = 0; i < 7; i++) {
           const d = new Date();
           d.setDate(d.getDate() - i);
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          last7Days.push(`${y}-${m}-${day}`);
+          last7Days.push(this.formatDate(d));
         }
 
         let drinkHits = 0, snackHits = 0, weightSum = 0, weightCount = 0;
@@ -1052,7 +1180,7 @@
         const icsContent = 
 `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Retirement Lab//Daily Habit//TW
+PRODID:-//Retirement Lab//Weekly Habit//TW
 CALSCALE:GREGORIAN
 BEGIN:VEVENT
 SUMMARY:☕ 退休實驗室：下午健康點心防線
@@ -1099,7 +1227,7 @@ END:VCALENDAR`;
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
-        link.setAttribute('download', `退休實驗室備份_${this.getTodayStr()}.json`);
+        link.setAttribute('download', `退休實驗室週備份_${this.todayStr}.json`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
