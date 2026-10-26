@@ -435,29 +435,29 @@
       </div>
     </div>
 
-    <!-- TAB 5: 雲端同步與 iPhone 提醒 (SETTINGS) -->
+    <!-- TAB 5: GitHub Gist 雲端同步與 iPhone 提醒 (SETTINGS) -->
     <div id="view-sync" class="tab-view">
       <div class="card" style="border: 1px solid var(--primary);">
         <div class="card-header">
-          <span class="card-title">☁️ 跨裝置一鍵雙向雲端同步</span>
+          <span class="card-title">🐙 GitHub Gist 雲端同步 (終身免費無上限)</span>
           <span class="status-badge" id="cloud-status-badge">未設定金鑰</span>
         </div>
-        <p class="val-desc">電腦與手機輸入同一組鑰匙，點擊頂部按鈕即可雙向即時更新：</p>
+        <p class="val-desc">資料永久存在您自己的 GitHub 私人 Gist，每小時享 5000 次配額，完全無扣點與收費風險：</p>
         
         <div class="input-group" style="margin-bottom:10px;">
-          <label>專屬同步房間金鑰 (Sync Room Key)：</label>
-          <input type="text" id="sync-room-key" class="text-input" placeholder="例: yongcheng_retirement_2026" onchange="app.saveSyncConfig()">
+          <label>GitHub Personal Access Token (需勾選 gist 權限，格式如 ghp_...):</label>
+          <input type="password" id="sync-gh-token" class="text-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" onchange="app.saveSyncConfig()">
         </div>
         <div class="input-group" style="margin-bottom:12px;">
-          <label>JSONBin Master Key (免費 API Key)：</label>
-          <input type="password" id="sync-api-key" class="text-input" placeholder="填入您的免費 JSONBin API Key" onchange="app.saveSyncConfig()">
+          <label>專屬 Gist ID (雲端資料庫代碼):</label>
+          <input type="text" id="sync-gist-id" class="text-input" placeholder="填入現有 Gist ID 或點擊下方按鈕自動建立" onchange="app.saveSyncConfig()">
         </div>
 
         <div style="display:flex; gap:8px;">
           <button class="btn" onclick="app.syncCloudManual()">🚀 立即執行雙向同步</button>
-          <button class="btn btn-outline" onclick="app.initCloudBin()">🔑 建立新雲端存儲庫</button>
+          <button class="btn btn-outline" onclick="app.initGistStorage()">🔑 自動建立新 Gist 雲端庫</button>
         </div>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:8px;">提示：系統每隔 25 秒會在背景自動比對最新版本，無縫同步。</p>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:8px;">提示：在電腦建立好 Gist 後，將 Token 與 Gist ID 填入手機端，點擊「立即執行雙向同步」即可一鍵對齊。</p>
       </div>
 
       <div class="card">
@@ -503,7 +503,6 @@
   </nav>
 
   <script>
-    // 預設六大核心價值觀，各內建 3 道心理檢查提問量表
     const DEFAULT_VALUES = [
       {
         id: 'val_1',
@@ -651,8 +650,8 @@
         this.values = this.loadValues();
         this.records = this.loadRecords();
         this.weeklyReviews = this.loadWeeklyReviews();
-        this.syncBinId = localStorage.getItem('rl_bin_id') || '';
-        this.syncApiKey = localStorage.getItem('rl_bin_key') || '';
+        this.ghToken = localStorage.getItem('rl_gh_token') || '';
+        this.gistId = localStorage.getItem('rl_gh_gist_id') || '';
         this.isSyncing = false;
         this.init();
       }
@@ -682,7 +681,6 @@
         if (local) {
           try {
             const parsed = JSON.parse(local);
-            // 若為舊格式且各項目標少於3個，優先使用新版架構
             if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].goals && parsed[0].goals.length >= 3) {
               return parsed;
             }
@@ -696,7 +694,6 @@
         this.renderDailyCompass();
         this.renderWeeklyQuestions();
         this.renderConfigValues();
-        if (triggerCloud) this.debounceAutoCloudSync();
       }
 
       loadRecords() {
@@ -709,7 +706,6 @@
 
       saveRecords(triggerCloud = true) {
         localStorage.setItem('rl_daily_records', JSON.stringify(this.records));
-        if (triggerCloud) this.debounceAutoCloudSync();
       }
 
       loadWeeklyReviews() {
@@ -722,7 +718,6 @@
 
       saveWeeklyReviews(triggerCloud = true) {
         localStorage.setItem('rl_weekly_reviews', JSON.stringify(this.weeklyReviews));
-        if (triggerCloud) this.debounceAutoCloudSync();
       }
 
       init() {
@@ -738,17 +733,15 @@
         this.renderConfigValues();
         this.renderHistoryList();
 
-        const binInput = document.getElementById('sync-room-key');
-        const keyInput = document.getElementById('sync-api-key');
-        if (binInput) binInput.value = this.syncBinId;
-        if (keyInput) keyInput.value = this.syncApiKey;
+        const tokenInput = document.getElementById('sync-gh-token');
+        const gistInput = document.getElementById('sync-gist-id');
+        if (tokenInput) tokenInput.value = this.ghToken;
+        if (gistInput) gistInput.value = this.gistId;
         this.updateSyncBadge();
 
-       // 修改後：移除定時輪詢，改為只在開網頁時對齊一次
-if (this.syncBinId) {
-  setTimeout(() => this.syncCloud(false), 800);
-  // 已關閉每 25 秒自動扣次數的背景輪詢，節省配額
-}
+        // 僅在開網頁時輕量對齊一次
+        if (this.ghToken && this.gistId) {
+          setTimeout(() => this.syncCloud(false), 800);
         }
       }
 
@@ -800,7 +793,6 @@ if (this.syncBinId) {
         }
       }
 
-      // =================== 每日心智羅盤渲染 (1-5分評分系統) ===================
       renderDailyCompass() {
         const container = document.getElementById('dynamic-compass-container');
         if (!container) return;
@@ -926,7 +918,6 @@ if (this.syncBinId) {
         this.saveRecords(true);
       }
 
-      // =================== 週末總檢閱專區 ===================
       renderWeeklyQuestions() {
         const container = document.getElementById('weekly-questions-container');
         if (!container) return;
@@ -967,7 +958,6 @@ if (this.syncBinId) {
         this.showToast('🎉 週末總檢閱報告已存檔！');
       }
 
-      // =================== 管理與設定 ===================
       renderConfigValues() {
         const container = document.getElementById('config-values-list');
         if (!container) return;
@@ -985,7 +975,7 @@ if (this.syncBinId) {
               
               <div>
                 <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; display:flex; justify-content:space-between;">
-                  <span>心理檢查提問量表（目前共 ${(v.goals||[]).length} 題）：</span>
+                  <span>心理檢查提問量表（共 ${(v.goals||[]).length} 題）：</span>
                   <a href="javascript:void(0)" style="color:var(--primary); text-decoration:none;" onclick="app.addGoalToValue(${vIndex})">+ 新增提問</a>
                 </div>
           `;
@@ -1070,7 +1060,6 @@ if (this.syncBinId) {
         }
       }
 
-      // =================== 歷史檢視 ===================
       renderHistoryList() {
         const container = document.getElementById('history-records-list');
         if (!container) return;
@@ -1109,40 +1098,40 @@ if (this.syncBinId) {
         container.innerHTML = html;
       }
 
-      // =================== 雲端同步與備份 ===================
+      // =================== GitHub Gist 核心同步引擎 ===================
       saveSyncConfig() {
-        this.syncBinId = document.getElementById('sync-room-key').value.trim();
-        this.syncApiKey = document.getElementById('sync-api-key').value.trim();
-        localStorage.setItem('rl_bin_id', this.syncBinId);
-        localStorage.setItem('rl_bin_key', this.syncApiKey);
+        this.ghToken = document.getElementById('sync-gh-token').value.trim();
+        this.gistId = document.getElementById('sync-gist-id').value.trim();
+        localStorage.setItem('rl_gh_token', this.ghToken);
+        localStorage.setItem('rl_gh_gist_id', this.gistId);
         this.updateSyncBadge();
-        if (this.syncBinId) this.syncCloudManual();
+        if (this.ghToken && this.gistId) this.syncCloudManual();
       }
 
       updateSyncBadge() {
         const badge = document.getElementById('cloud-status-badge');
         if (!badge) return;
-        if (this.syncBinId) {
-          badge.innerText = '已綁定雲端庫';
+        if (this.ghToken && this.gistId) {
+          badge.innerText = 'GitHub Gist 已綁定';
           badge.style.color = 'var(--accent)';
           badge.style.borderColor = 'var(--accent)';
         } else {
-          badge.innerText = '未設定金鑰';
+          badge.innerText = '未綁定金鑰';
           badge.style.color = 'var(--warning)';
           badge.style.borderColor = 'var(--warning)';
         }
       }
 
-      async initCloudBin() {
-        const key = prompt('請輸入您的 JSONBin Master-Key：', this.syncApiKey);
-        if (!key) return;
+      async initGistStorage() {
+        const token = prompt('請輸入您的 GitHub Personal Access Token (需有 gist 權限)：', this.ghToken);
+        if (!token) return;
 
-        this.syncApiKey = key.trim();
-        localStorage.setItem('rl_bin_key', this.syncApiKey);
-        document.getElementById('sync-api-key').value = this.syncApiKey;
+        this.ghToken = token.trim();
+        localStorage.setItem('rl_gh_token', this.ghToken);
+        document.getElementById('sync-gh-token').value = this.ghToken;
 
         try {
-          this.setSyncBtnState(true, '建立中...');
+          this.setSyncBtnState(true, '建立 Gist 中...');
           const payload = {
             values: this.values,
             records: this.records,
@@ -1150,25 +1139,35 @@ if (this.syncBinId) {
             updatedAt: Date.now()
           };
 
-          const res = await fetch('https://api.jsonbin.io/v3/b', {
+          const body = {
+            description: "RetirementLab Compass Database (Private)",
+            public: false,
+            files: {
+              "retirement_data.json": {
+                content: JSON.stringify(payload, null, 2)
+              }
+            }
+          };
+
+          const res = await fetch('https://api.github.com/gists', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'X-Master-Key': this.syncApiKey,
-              'X-Bin-Name': 'RetirementLab_Compass'
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${this.ghToken}`,
+              'X-GitHub-Api-Version': '2022-11-28'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(body)
           });
 
           const data = await res.json();
-          if (data.metadata && data.metadata.id) {
-            this.syncBinId = data.metadata.id;
-            localStorage.setItem('rl_bin_id', this.syncBinId);
-            document.getElementById('sync-room-key').value = this.syncBinId;
+          if (data && data.id) {
+            this.gistId = data.id;
+            localStorage.setItem('rl_gh_gist_id', this.gistId);
+            document.getElementById('sync-gist-id').value = this.gistId;
             this.updateSyncBadge();
-            alert('🎉 雲端空間建立成功！\n\n專屬 Bin ID 為：\n' + this.syncBinId + '\n\n請將這串 ID 填到手機端即可一鍵同步！');
+            alert('🎉 GitHub Gist 私人資料庫建立成功！\n\n您的專屬 Gist ID 為：\n' + this.gistId + '\n\n請將 Token 與這串 Gist ID 填入手機端，即可終身免費、無上限雙向同步！');
           } else {
-            alert('建立失敗：' + JSON.stringify(data));
+            alert('建立失敗：' + (data.message || JSON.stringify(data)));
           }
         } catch (e) {
           alert('連線失敗：' + e.message);
@@ -1178,55 +1177,59 @@ if (this.syncBinId) {
       }
 
       async syncCloudManual() {
-        if (!this.syncBinId) {
+        if (!this.ghToken || !this.gistId) {
           this.switchTab('sync', document.querySelectorAll('.nav-btn')[4]);
-          alert('請先在「同步提醒」分頁填寫您的雲端 Bin ID 或點擊建立存儲庫！');
+          alert('請先在「同步提醒」分頁填入 GitHub Token 與 Gist ID，或點擊「自動建立新 Gist 雲端庫」！');
           return;
         }
         await this.syncCloud(true);
       }
 
-      debounceAutoCloudSync() {
-        if (!this.syncBinId || !this.syncApiKey) return;
-        clearTimeout(this._syncTimer);
-        this._syncTimer = setTimeout(() => {
-          this.syncCloud(false);
-        }, 3000);
-      }
-
       async syncCloud(isManual = false) {
-        if (!this.syncBinId || this.isSyncing) return;
+        if (!this.ghToken || !this.gistId || this.isSyncing) return;
         this.isSyncing = true;
         this.setSyncBtnState(true, '同步中...');
 
         try {
-          const headers = {};
-          if (this.syncApiKey) headers['X-Master-Key'] = this.syncApiKey;
+          // 1. 取得 Gist 最新內容
+          const getRes = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+            headers: {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${this.ghToken}`,
+              'X-GitHub-Api-Version': '2022-11-28'
+            }
+          });
 
-          const getRes = await fetch(`https://api.jsonbin.io/v3/b/${this.syncBinId}/latest`, { headers });
-          if (!getRes.ok) throw new Error('讀取失敗，請確認 Bin ID 與 Key 正確');
+          if (!getRes.ok) throw new Error('讀取失敗，請確認 Token 與 Gist ID 正確');
 
-          const remoteData = await getRes.json();
-          const remoteRecord = remoteData.record || {};
+          const gistData = await getRes.json();
+          const fileObj = gistData.files && gistData.files["retirement_data.json"];
+          let remoteRecord = {};
+          if (fileObj && fileObj.content) {
+            try { remoteRecord = JSON.parse(fileObj.content); } catch (e) {}
+          }
+
           const remoteTime = remoteRecord.updatedAt || 0;
-          const localTime = parseInt(localStorage.getItem('rl_cloud_updated') || '0', 10);
+          const localTime = parseInt(localStorage.getItem('rl_gh_updated') || '0', 10);
 
           if (remoteTime > localTime) {
+            // 雲端資料較新 -> 拉取至本機
             if (remoteRecord.values) this.values = remoteRecord.values;
             if (remoteRecord.records) this.records = remoteRecord.records;
             if (remoteRecord.weeklyReviews) this.weeklyReviews = remoteRecord.weeklyReviews;
             localStorage.setItem('rl_values', JSON.stringify(this.values));
             localStorage.setItem('rl_daily_records', JSON.stringify(this.records));
             localStorage.setItem('rl_weekly_reviews', JSON.stringify(this.weeklyReviews));
-            localStorage.setItem('rl_cloud_updated', remoteTime);
+            localStorage.setItem('rl_gh_updated', remoteTime);
 
             this.renderDailyCompass();
             this.loadDailyData();
             this.renderWeeklyQuestions();
             this.renderConfigValues();
             this.renderHistoryList();
-            if (isManual) this.showToast('已自雲端拉取最新進度！');
+            if (isManual) this.showToast('已自 GitHub 拉取最新進度！');
           } else {
+            // 本機較新或手動覆蓋 -> 上傳至 Gist
             const newTimestamp = Date.now();
             const pushPayload = {
               values: this.values,
@@ -1235,22 +1238,33 @@ if (this.syncBinId) {
               updatedAt: newTimestamp
             };
 
-            const putRes = await fetch(`https://api.jsonbin.io/v3/b/${this.syncBinId}`, {
-              method: 'PUT',
+            const patchBody = {
+              files: {
+                "retirement_data.json": {
+                  content: JSON.stringify(pushPayload, null, 2)
+                }
+              }
+            };
+
+            const patchRes = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+              method: 'PATCH',
               headers: {
-                'Content-Type': 'application/json',
-                ...headers
+                'Accept': 'application/vnd.github+json',
+                'Authorization': `Bearer ${this.ghToken}`,
+                'X-GitHub-Api-Version': '2022-11-28'
               },
-              body: JSON.stringify(pushPayload)
+              body: JSON.stringify(patchBody)
             });
 
-            if (putRes.ok) {
-              localStorage.setItem('rl_cloud_updated', newTimestamp);
-              if (isManual) this.showToast('已成功上傳同步至雲端！');
+            if (patchRes.ok) {
+              localStorage.setItem('rl_gh_updated', newTimestamp);
+              if (isManual) this.showToast('已成功上傳同步至 GitHub Gist！');
+            } else {
+              throw new Error('更新 Gist 失敗');
             }
           }
         } catch (e) {
-          if (isManual) alert('雲端同步失敗：' + e.message);
+          if (isManual) alert('GitHub 同步失敗：' + e.message);
         } finally {
           this.isSyncing = false;
           this.setSyncBtnState(false);
