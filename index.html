@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>退休實驗室 ‧ 生活秩序系統</title>
+  <title>退休實驗室 ‧ 個人秩序系統</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="退休實驗室">
@@ -38,24 +38,30 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 16px;
+      padding-bottom: 14px;
       border-bottom: 1px solid var(--card-border);
       margin-bottom: 16px;
     }
-    .header-title h1 { font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-    .header-title p { font-size: 0.8rem; color: var(--text-muted); }
-    .status-badge {
+    .header-title h1 { font-size: 1.2rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .header-title p { font-size: 0.78rem; color: var(--text-muted); }
+    
+    .sync-btn-header {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.75rem;
-      padding: 4px 10px;
+      font-size: 0.78rem;
+      padding: 6px 12px;
       border-radius: 9999px;
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      cursor: pointer;
+      font-weight: 600;
     }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .sync-btn-header:hover { background: rgba(56, 189, 248, 0.25); }
+    .sync-btn-header.syncing { animation: pulse 1s infinite alternate; }
+
+    @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 
     /* Date Controller */
     .date-bar {
@@ -89,7 +95,7 @@
       text-align: center;
       color-scheme: dark;
     }
-    .current-time-badge { font-size: 0.75rem; color: var(--primary); display: block; }
+    .current-time-badge { font-size: 0.72rem; color: var(--accent); display: block; font-weight: 600; }
 
     /* Cards */
     .card {
@@ -112,11 +118,7 @@
     .card-subtitle { font-size: 0.75rem; color: var(--text-muted); }
 
     /* Inputs */
-    .weight-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
+    .weight-row { display: flex; gap: 12px; align-items: center; }
     .input-group { flex: 1; }
     .input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
     .text-input {
@@ -183,7 +185,7 @@
       align-items: center;
       margin-bottom: 8px;
     }
-    .val-tag { font-size: 0.8rem; font-weight: 700; color: var(--primary); }
+    .val-tag { font-size: 0.82rem; font-weight: 700; color: var(--primary); }
     .val-desc { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px; }
 
     /* CBT inputs */
@@ -285,24 +287,22 @@
 </head>
 <body>
 
-  <div id="toast" class="toast">已儲存</div>
+  <div id="toast" class="toast">已同步完成</div>
 
   <div class="container">
     <!-- Header -->
     <header>
       <div class="header-title">
         <h1><span>🧭</span> 退休實驗室 ‧ 個人秩序</h1>
-        <p id="live-clock">2026/10/26 載入中...</p>
+        <p id="live-clock">載入中...</p>
       </div>
-      <div class="status-badge">
-        <span class="status-dot"></span>
-        <span id="storage-status">極速本機已就緒</span>
-      </div>
+      <button class="sync-btn-header" id="cloud-sync-btn" onclick="app.syncCloudManual()">
+        <span>☁️</span> <span id="sync-btn-text">一鍵同步</span>
+      </button>
     </header>
 
     <!-- TAB 1: 每日執行 (TODAY) -->
     <div id="view-today" class="tab-view active">
-      <!-- Date switcher -->
       <div class="date-bar">
         <button class="date-nav-btn" onclick="app.shiftDay(-1)">◀ 前一天</button>
         <div class="current-date-info">
@@ -342,9 +342,7 @@
           <span class="card-title">🎯 價值觀對齊 ‧ 90天行動檢核</span>
           <span class="card-subtitle" id="checked-progress">0 / 0 已完成</span>
         </div>
-        <div id="dynamic-goals-container">
-          <!-- Rendered via JS -->
-        </div>
+        <div id="dynamic-goals-container"></div>
       </div>
 
       <!-- CBT Mind clearing -->
@@ -376,9 +374,7 @@
           <button class="btn" style="width:auto; padding:4px 10px; font-size:0.75rem;" onclick="app.showAddValueModal()">+ 新增價值觀</button>
         </div>
         <p class="val-desc">隨時點擊即可編輯價值觀定義，或為其增減 90 天行動目標。變更將即刻聯動至每日清單。</p>
-        <div id="config-values-list">
-          <!-- Rendered via JS -->
-        </div>
+        <div id="config-values-list"></div>
       </div>
     </div>
 
@@ -409,35 +405,50 @@
           <span class="card-title">📜 全歷史時空膠囊</span>
           <input type="text" id="history-search" class="text-input" style="width:140px; padding:4px 8px; font-size:0.75rem;" placeholder="搜尋筆記關鍵字" oninput="app.renderHistoryList()">
         </div>
-        <div id="history-records-list">
-          <!-- Rendered via JS -->
-        </div>
+        <div id="history-records-list"></div>
       </div>
     </div>
 
-    <!-- TAB 4: iPhone 提醒與同步 (SETTINGS) -->
+    <!-- TAB 4: 雲端同步與 iPhone 提醒 (SETTINGS) -->
     <div id="view-sync" class="tab-view">
+      <!-- Cloud Direct Sync Card -->
+      <div class="card" style="border: 1px solid var(--primary);">
+        <div class="card-header">
+          <span class="card-title">☁️ 跨裝置一鍵雙向雲端同步</span>
+          <span class="status-badge" id="cloud-status-badge">未設定金鑰</span>
+        </div>
+        <p class="val-desc">告別複製貼上代碼！只需在此輸入自訂的「雲端房間鑰匙」，電腦與手機設同一組，點一下頂部按鈕即刻雙向更新：</p>
+        
+        <div class="input-group" style="margin-bottom:10px;">
+          <label>專屬同步房間金鑰 (Sync Room Key)：</label>
+          <input type="text" id="sync-room-key" class="text-input" placeholder="例: yongcheng_retirement_2026" onchange="app.saveSyncConfig()">
+        </div>
+        <div class="input-group" style="margin-bottom:12px;">
+          <label>JSONBin Master Key (免費 API Key，填入後可享私人雲端存取)：</label>
+          <input type="password" id="sync-api-key" class="text-input" placeholder="可填入您的免費 JSONBin API Key" onchange="app.saveSyncConfig()">
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn" onclick="app.syncCloudManual()">🚀 立即執行雙向同步</button>
+          <button class="btn btn-outline" onclick="app.initCloudBin()">🔑 建立新雲端存儲庫</button>
+        </div>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-top:8px;">提示：系統會每隔 20 秒在背景自動比對最新版本，無縫同步。</p>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <span class="card-title">📱 iPhone 自動提醒事項設定</span>
         </div>
-        <p class="val-desc">點擊以下按鈕，可直接下載標準 Apple 行事曆/提醒設定檔（.ics），點開即可將「15:00 下午預置食物」與「21:30 睡前心智清空」加入 iPhone 循環提醒：</p>
-        <button class="btn btn-outline" onclick="app.downloadIcsReminder()" style="margin-bottom: 10px;">📅 下載 iPhone 每日提醒設定檔 (.ics)</button>
-        <p style="font-size:0.72rem; color:var(--text-muted);">提示：在 iPhone Safari 下載後點擊「加入行事曆」即可每日收到提醒。</p>
+        <p class="val-desc">下載 Apple 行事曆/提醒設定檔（.ics），點開即可將「15:00 下午預置食物」與「21:30 睡前心智清空」加入 iPhone 循環提醒：</p>
+        <button class="btn btn-outline" onclick="app.downloadIcsReminder()">📅 下載 iPhone 每日提醒設定檔 (.ics)</button>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title">🔄 跨裝置防丟失備份 (電腦 ⇄ iPhone)</span>
+          <span class="card-title">💾 備用本地備份 (JSON)</span>
         </div>
-        <p class="val-desc">為杜絕 iOS 清理快取造成資料遺失，提供雙重保險：</p>
-        <button class="btn" onclick="app.exportJsonBackup()" style="margin-bottom:8px;">💾 匯出完整備份檔案 (JSON)</button>
-        <button class="btn btn-outline" onclick="app.copySyncCode()" style="margin-bottom:8px;">📋 複製跨裝置轉移字串</button>
-        <div class="input-group" style="margin-top:12px;">
-          <label>從另一台裝置貼上轉移字串還原：</label>
-          <textarea id="import-code-area" class="text-input" placeholder="在此貼上複製的字串..." style="min-height:50px;"></textarea>
-          <button class="btn btn-outline" style="margin-top:6px;" onclick="app.importSyncCode()">📥 執行還原並覆蓋</button>
-        </div>
+        <p class="val-desc">若想將完整歷史留存為實體檔案存放在電腦硬碟：</p>
+        <button class="btn btn-outline" onclick="app.exportJsonBackup()">下載本地備份檔案 (JSON)</button>
       </div>
     </div>
   </div>
@@ -458,12 +469,12 @@
     </button>
     <button class="nav-btn" onclick="app.switchTab('sync', this)">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-      提醒與備份
+      同步與提醒
     </button>
   </nav>
 
   <script>
-    // 預設六大核心價值觀與衍生目標
+    // 預設核心架構
     const DEFAULT_VALUES = [
       {
         id: 'val_1',
@@ -521,6 +532,10 @@
         this.currentDate = this.getTodayStr();
         this.values = this.loadValues();
         this.records = this.loadRecords();
+        this.syncBinId = localStorage.getItem('rl_bin_id') || '';
+        this.syncApiKey = localStorage.getItem('rl_bin_key') || '';
+        this.lastCloudUpdated = localStorage.getItem('rl_cloud_updated') || 0;
+        this.isSyncing = false;
         this.init();
       }
 
@@ -540,11 +555,11 @@
         return DEFAULT_VALUES;
       }
 
-      saveValues() {
+      saveValues(triggerCloud = true) {
         localStorage.setItem('rl_values', JSON.stringify(this.values));
         this.renderDailyGoals();
         this.renderConfigValues();
-        this.showToast('價值觀與目標已更新');
+        if (triggerCloud) this.debounceAutoCloudSync();
       }
 
       loadRecords() {
@@ -555,24 +570,36 @@
         return {};
       }
 
-      saveRecords() {
+      saveRecords(triggerCloud = true) {
         localStorage.setItem('rl_daily_records', JSON.stringify(this.records));
+        if (triggerCloud) this.debounceAutoCloudSync();
       }
 
       init() {
-        // 更新時間
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
 
-        // 綁定當日日期選取器
         document.getElementById('selected-date').value = this.currentDate;
         this.updateDateBadge();
 
-        // 渲染主畫面
         this.renderDailyGoals();
         this.loadDailyData();
         this.renderConfigValues();
         this.renderHistoryList();
+
+        // 載入同步金鑰設定
+        const binInput = document.getElementById('sync-room-key');
+        const keyInput = document.getElementById('sync-api-key');
+        if (binInput) binInput.value = this.syncBinId;
+        if (keyInput) keyInput.value = this.syncApiKey;
+        this.updateSyncBadge();
+
+        // 開啟時立即嘗試自動靜默對齊一次
+        if (this.syncBinId) {
+          setTimeout(() => this.syncCloud(false), 800);
+          // 背景每隔 25 秒自動同步
+          setInterval(() => this.syncCloud(false), 25000);
+        }
       }
 
       updateClock() {
@@ -587,8 +614,8 @@
       updateDateBadge() {
         const badge = document.getElementById('is-today-badge');
         if (this.currentDate === this.getTodayStr()) {
-          badge.innerText = '今日紀錄 (自動同步)';
-          badge.style.color = 'var(--primary)';
+          badge.innerText = '今日紀錄 (自動同步中)';
+          badge.style.color = 'var(--accent)';
         } else {
           badge.innerText = `補登/檢視 (${this.currentDate})`;
           badge.style.color = 'var(--warning)';
@@ -623,7 +650,6 @@
         }
       }
 
-      // 載入指定日期的資料到表單
       loadDailyData() {
         const rec = this.records[this.currentDate] || {};
         document.getElementById('daily-weight').value = rec.weight || '';
@@ -638,8 +664,7 @@
           this.records[this.currentDate] = { checks: {} };
         }
         this.records[this.currentDate][field] = val;
-        this.saveRecords();
-        this.showToast('已即時儲存');
+        this.saveRecords(true);
       }
 
       toggleGoalCheck(goalId) {
@@ -651,7 +676,7 @@
         }
         const cur = !!this.records[this.currentDate].checks[goalId];
         this.records[this.currentDate].checks[goalId] = !cur;
-        this.saveRecords();
+        this.saveRecords(true);
         this.renderDailyGoals();
         this.showToast(!cur ? '目標達成 ✓' : '已取消');
       }
@@ -700,7 +725,168 @@
         document.getElementById('checked-progress').innerText = `${checkedCount} / ${totalGoals} 已完成`;
       }
 
-      // 管理介面：編輯價值觀與目標
+      // =================== 核心：一鍵雲端雙向同步 ===================
+      saveSyncConfig() {
+        this.syncBinId = document.getElementById('sync-room-key').value.trim();
+        this.syncApiKey = document.getElementById('sync-api-key').value.trim();
+        localStorage.setItem('rl_bin_id', this.syncBinId);
+        localStorage.setItem('rl_bin_key', this.syncApiKey);
+        this.updateSyncBadge();
+        if (this.syncBinId) this.syncCloudManual();
+      }
+
+      updateSyncBadge() {
+        const badge = document.getElementById('cloud-status-badge');
+        if (!badge) return;
+        if (this.syncBinId) {
+          badge.innerText = '已綁定雲端庫';
+          badge.style.color = 'var(--accent)';
+          badge.style.borderColor = 'var(--accent)';
+        } else {
+          badge.innerText = '未綁定金鑰';
+          badge.style.color = 'var(--warning)';
+          badge.style.borderColor = 'var(--warning)';
+        }
+      }
+
+      // 建立專屬免費雲端庫（若尚未在 JSONBin 取得 Bin ID）
+      async initCloudBin() {
+        const key = prompt('請輸入您的 JSONBin Master-Key（若無請至 jsonbin.io 免費註冊複製 Master Key，或使用共用金鑰）：', this.syncApiKey);
+        if (!key) return;
+
+        this.syncApiKey = key.trim();
+        localStorage.setItem('rl_bin_key', this.syncApiKey);
+        document.getElementById('sync-api-key').value = this.syncApiKey;
+
+        try {
+          this.setSyncBtnState(true, '建立中...');
+          const payload = {
+            values: this.values,
+            records: this.records,
+            updatedAt: Date.now()
+          };
+
+          const res = await fetch('https://api.jsonbin.io/v3/b', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Master-Key': this.syncApiKey,
+              'X-Bin-Name': 'RetirementLab_Data'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (data.metadata && data.metadata.id) {
+            this.syncBinId = data.metadata.id;
+            localStorage.setItem('rl_bin_id', this.syncBinId);
+            document.getElementById('sync-room-key').value = this.syncBinId;
+            this.updateSyncBadge();
+            alert('🎉 雲端空間建立成功！\n\n您的專屬 Bin ID 為：\n' + this.syncBinId + '\n\n請將這串 ID 與 Key 填到手機上的對應欄位，即可在手機與電腦間一鍵互通！');
+          } else {
+            alert('建立失敗：' + JSON.stringify(data));
+          }
+        } catch (e) {
+          alert('連線失敗：' + e.message);
+        } finally {
+          this.setSyncBtnState(false);
+        }
+      }
+
+      // 手動點擊一鍵同步
+      async syncCloudManual() {
+        if (!this.syncBinId) {
+          this.switchTab('sync', document.querySelectorAll('.nav-btn')[3]);
+          alert('請先在「同步與提醒」分頁填寫您的雲端 Bin ID 或點擊「建立新雲端存儲庫」！');
+          return;
+        }
+        await this.syncCloud(true);
+      }
+
+      debounceAutoCloudSync() {
+        if (!this.syncBinId || !this.syncApiKey) return;
+        clearTimeout(this._syncTimer);
+        this._syncTimer = setTimeout(() => {
+          this.syncCloud(false);
+        }, 3000);
+      }
+
+      async syncCloud(isManual = false) {
+        if (!this.syncBinId || this.isSyncing) return;
+        this.isSyncing = true;
+        this.setSyncBtnState(true, '同步中...');
+
+        try {
+          const headers = {};
+          if (this.syncApiKey) headers['X-Master-Key'] = this.syncApiKey;
+
+          // 1. 先讀取雲端最新資料
+          const getRes = await fetch(`https://api.jsonbin.io/v3/b/${this.syncBinId}/latest`, { headers });
+          if (!getRes.ok) throw new Error('讀取失敗，請確認 Bin ID 與 Key 正確');
+
+          const remoteData = await getRes.json();
+          const remoteRecord = remoteData.record || {};
+          const remoteTime = remoteRecord.updatedAt || 0;
+          const localTime = parseInt(localStorage.getItem('rl_cloud_updated') || '0', 10);
+
+          if (remoteTime > localTime) {
+            // 雲端資料更新（例如剛剛在手機上有填寫新紀錄）-> 覆蓋至本機
+            if (remoteRecord.values) this.values = remoteRecord.values;
+            if (remoteRecord.records) this.records = remoteRecord.records;
+            localStorage.setItem('rl_values', JSON.stringify(this.values));
+            localStorage.setItem('rl_daily_records', JSON.stringify(this.records));
+            localStorage.setItem('rl_cloud_updated', remoteTime);
+
+            this.renderDailyGoals();
+            this.loadDailyData();
+            this.renderConfigValues();
+            this.renderHistoryList();
+            if (isManual) this.showToast('已自雲端拉取最新資料！');
+          } else {
+            // 本地較新，或是手動強制更新 -> 將本地內容推送到雲端
+            const newTimestamp = Date.now();
+            const pushPayload = {
+              values: this.values,
+              records: this.records,
+              updatedAt: newTimestamp
+            };
+
+            const putRes = await fetch(`https://api.jsonbin.io/v3/b/${this.syncBinId}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                ...headers
+              },
+              body: JSON.stringify(pushPayload)
+            });
+
+            if (putRes.ok) {
+              localStorage.setItem('rl_cloud_updated', newTimestamp);
+              if (isManual) this.showToast('已成功上傳同步至雲端！');
+            }
+          }
+        } catch (e) {
+          if (isManual) alert('雲端同步失敗：' + e.message);
+        } finally {
+          this.isSyncing = false;
+          this.setSyncBtnState(false);
+        }
+      }
+
+      setSyncBtnState(syncing, text = '一鍵同步') {
+        const btn = document.getElementById('cloud-sync-btn');
+        const txt = document.getElementById('sync-btn-text');
+        if (!btn || !txt) return;
+        if (syncing) {
+          btn.classList.add('syncing');
+          txt.innerText = text;
+        } else {
+          btn.classList.remove('syncing');
+          txt.innerText = '一鍵同步';
+        }
+      }
+
+      // =================== 管理設定介面 ===================
       renderConfigValues() {
         const container = document.getElementById('config-values-list');
         if (!container) return;
@@ -798,7 +984,7 @@
         }
       }
 
-      // 歷史與回顧計算
+      // =================== 歷史與分析 ===================
       renderHistoryList() {
         const container = document.getElementById('history-records-list');
         if (!container) return;
@@ -806,7 +992,6 @@
         const keyword = (document.getElementById('history-search')?.value || '').trim();
         const dates = Object.keys(this.records).sort().reverse();
 
-        // 計算過去 7 天統計
         let last7Days = [];
         for (let i = 0; i < 7; i++) {
           const d = new Date();
@@ -834,7 +1019,6 @@
         document.getElementById('stat-snack-rate').innerText = Math.round((snackHits / 7) * 100) + '%';
         document.getElementById('stat-avg-weight').innerText = weightCount > 0 ? (weightSum / weightCount).toFixed(1) + ' kg' : '--';
 
-        // 渲染列表
         let html = '';
         dates.forEach(dStr => {
           const r = this.records[dStr];
@@ -864,7 +1048,6 @@
         container.innerHTML = html;
       }
 
-      // 產生標準 iPhone 提醒 / 行事曆檔案 (.ics)
       downloadIcsReminder() {
         const icsContent = 
 `BEGIN:VCALENDAR
@@ -907,7 +1090,6 @@ END:VCALENDAR`;
         this.showToast('已產生 iPhone 提醒設定檔');
       }
 
-      // 備份與轉移
       exportJsonBackup() {
         const data = {
           values: this.values,
@@ -921,39 +1103,6 @@ END:VCALENDAR`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        this.showToast('備份檔案已下載');
-      }
-
-      copySyncCode() {
-        const payload = btoa(encodeURIComponent(JSON.stringify({ values: this.values, records: this.records })));
-        navigator.clipboard.writeText(payload).then(() => {
-          this.showToast('同步代碼已複製到剪貼簿！');
-        }).catch(() => {
-          alert('請手動選取代碼：\n' + payload);
-        });
-      }
-
-      importSyncCode() {
-        const code = document.getElementById('import-code-area').value.trim();
-        if (!code) return alert('請先貼上代碼');
-        try {
-          const parsed = JSON.parse(decodeURIComponent(atob(code)));
-          if (parsed.values && parsed.records) {
-            this.values = parsed.values;
-            this.records = parsed.records;
-            this.saveValues();
-            this.saveRecords();
-            this.renderDailyGoals();
-            this.loadDailyData();
-            this.renderConfigValues();
-            this.renderHistoryList();
-            alert('還原成功！所有價值觀與歷史紀錄已更新。');
-          } else {
-            alert('格式不符');
-          }
-        } catch (e) {
-          alert('代碼無效或損毀：' + e.message);
-        }
       }
 
       switchTab(tabKey, btn) {
@@ -978,7 +1127,6 @@ END:VCALENDAR`;
       }
     }
 
-    // 啟動 App
     window.app = new RetirementLabApp();
   </script>
 </body>
