@@ -9,8 +9,11 @@
 ## 一、事前準備（只要做一次）
 
 ### 1. 安裝 Python
-到 <https://www.python.org/downloads/> 下載並安裝 Python 3.10 以上的版本。
-**安裝第一個畫面要勾選「Add python.exe to PATH」。**
+1. 到 <https://www.python.org/downloads/windows/>，按黃色的「Download Installer (MSIX)」按鈕。
+2. 雙擊下載好的檔案，按「安裝」。
+3. 按 Win 鍵輸入 `cmd`，打開「命令提示字元」，輸入 `py --version` 後按 Enter。
+   - 畫面出現 `Python 3.x.x` 就代表安裝成功。
+   - 如果畫面問你問題（Y/N），一律輸入 `y` 後按 Enter。
 
 ### 2. 申請 Telegram API 金鑰
 1. 用瀏覽器打開 <https://my.telegram.org>，輸入手機號碼（例如 `+886912345678`）。驗證碼會傳到你的 **Telegram App** 裡，不是簡訊。
