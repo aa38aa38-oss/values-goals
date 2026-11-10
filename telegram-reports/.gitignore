@@ -1,0 +1,8 @@
+# 私人資料，不要上傳
+config.ini
+*.session
+*.session-journal
+downloaded.json
+reports/
+.venv/
+__pycache__/
