@@ -18,7 +18,7 @@ import json
 import os
 import re
 import sys
-from datetime import timezone, timedelta
+from datetime import datetime, timezone, timedelta
 
 from telethon import TelegramClient, events, utils
 from telethon.tl import functions, types
@@ -60,6 +60,7 @@ def load_config():
         "history_limit": int(d.get("history_limit", "2000") or 0),
         "skip_own": str(d.get("skip_own", "true")).strip().lower() in ("1", "true", "yes", "y"),
         "max_size": int(float(d.get("max_size_mb", "100") or 0) * 1024 * 1024),
+        "since": parse_date(d.get("since_date", "")),
         "groups": [],
     }
     for sec in cp.sections():
@@ -71,6 +72,19 @@ def load_config():
         topics = [t.strip() for t in cp.get(sec, "topic", fallback="").split(",") if t.strip()]
         cfg["groups"].append({"label": sec[6:], "chat": chat, "topics": topics})
     return cfg
+
+
+def parse_date(text):
+    """'2026-10-01' / '2026/10/01' / '20261001' → 台灣時間當天 00:00；空白 → None"""
+    text = (text or "").strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y%m%d"):
+        try:
+            return datetime.strptime(text, fmt).replace(tzinfo=TW)
+        except ValueError:
+            pass
+    sys.exit(f"config.ini 的 since_date 格式不對：「{text}」，請寫成 2026-10-01")
 
 
 # ---------------------------------------------------------------- 小工具
@@ -275,8 +289,10 @@ class Downloader:
 
     async def fetch_history(self):
         limit = self.cfg["history_limit"] or None
+        since = self.cfg["since"]
         for chat_id, t in self.targets.items():
-            print(f"\n== 補抓歷史：{t['label']}（最多 {limit or '全部'} 則）==")
+            rng = f"{since:%Y-%m-%d} 之後" if since else f"最近 {limit or '全部'} 則"
+            print(f"\n== 補抓歷史：{t['label']}（{rng}）==")
             ids = sorted(t["topic_ids"]) if t["topic_ids"] else [None]
             for tid in ids:
                 kw = {}
@@ -284,6 +300,8 @@ class Downloader:
                     kw["reply_to"] = tid  # 只讀這個主題裡的訊息
                 async for msg in self.client.iter_messages(
                         t["entity"], limit=limit, filter=types.InputMessagesFilterDocument, **kw):
+                    if since and msg.date < since:
+                        break  # 訊息由新到舊排列，早於起始日期就停止
                     await self.handle(msg, chat_id)
         print("\n歷史補抓完成。")
 
