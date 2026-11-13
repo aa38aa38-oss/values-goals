@@ -56,8 +56,13 @@
   .actor .flip.left { transform: scaleX(-1); }
   #coach { width: 30%; aspect-ratio: 1 / 1.05; cursor: pointer; }
   #coach img, #coach svg { max-width: 100%; max-height: 100%; }
-  #player { width: 23%; aspect-ratio: 2 / 3; }
-  #player svg { width: 100%; height: 100%; overflow: visible; }
+  #player { width: 38%; aspect-ratio: 1 / 1; }
+  #player .inner { position: relative; }
+  canvas.px, .cc-stage canvas, .cc-opt canvas, .preset canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  #player canvas { width: 100%; height: 100%; display: block; }
+  #player .bump { position: absolute; left: 50%; top: 2%; transform: translateX(-10%); font-size: 1.1rem; display: none; animation: mark 1.2s ease-in-out infinite; }
+  #player .shadow { left: 34%; right: 34%; bottom: 1%; }
+  #player .name-tag { bottom: -10%; }
   .shadow { position: absolute; left: 18%; right: 18%; bottom: -3%; height: 8%; background: rgba(60, 30, 10, .22); border-radius: 50%; z-index: -1; }
   .marker { position: absolute; left: 50%; top: -8%; transform: translateX(-50%); font-size: 1.3rem; animation: mark 1s ease-in-out infinite; display: none; }
   .marker.on { display: block; }
@@ -177,7 +182,11 @@
   .cc-stage { position: relative; height: 270px; display: flex; align-items: flex-end; justify-content: center; }
   .cc-stage::before { content: ""; position: absolute; left: 50%; top: -12px; width: 70%; height: 100%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(160, 230, 255, .35), rgba(160, 230, 255, 0)); clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%); }
   .cc-stage .pedestal { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 62%; height: 34px; border-radius: 50%; background: radial-gradient(ellipse, #8fe9ff 0%, #3a7bd5 45%, #2a3560 75%); box-shadow: 0 0 24px rgba(120, 220, 255, .6); }
-  .cc-stage svg { position: relative; height: 250px; z-index: 1; }
+  .cc-stage canvas { position: relative; width: 256px; height: 256px; z-index: 1; margin-bottom: -14px; }
+  .cc-turn { display: flex; justify-content: center; gap: 8px; margin: 4px 0 2px; }
+  .cc-turn button { border: 2px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1); color: #fff; border-radius: 10px; padding: 6px 12px; font: inherit; font-size: .85rem; }
+  .cc-credit { font-size: .7rem; color: #aab2e0; margin: 10px 0 0; text-align: center; }
+  .cc-credit a { color: var(--gold); }
   .cc-height { display: flex; align-items: center; gap: 8px; font-size: .82rem; margin: 6px 4px 8px; }
   .cc-height input { flex: 1; accent-color: var(--gold); }
   .gender { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
@@ -192,7 +201,7 @@
   .cc-tabs button.sel { background: var(--gold); color: #3b2f2a; font-weight: 700; }
   .cc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .cc-opt { background: #3a4268; border: 2px solid #56609a; border-radius: 12px; padding: 3px 2px 4px; font: inherit; font-size: .7rem; color: #fff; text-align: center; }
-  .cc-opt svg { width: 100%; height: 62px; display: block; }
+  .cc-opt canvas { width: 100%; height: 62px; display: block; object-fit: contain; }
   .cc-opt.sel { border-color: var(--gold); background: #57507a; box-shadow: 0 0 10px rgba(242,177,52,.5); }
   .cc-sub { font-size: .75rem; color: #c5cbef; margin: 10px 0 5px; }
   .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -241,7 +250,7 @@
   .ob-inner p.sub { text-align: center; color: var(--muted); margin: 0 0 12px; font-size: .86rem; }
   .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .preset { background: #3a4268; border: 2px solid #56609a; border-radius: 14px; padding: 4px 2px 6px; text-align: center; font: inherit; font-size: .72rem; color: #fff; }
-  .preset svg { width: 100%; height: 96px; display: block; }
+  .preset canvas { width: 100%; height: 96px; display: block; object-fit: contain; }
   .preset.sel { border-color: var(--gold); box-shadow: 0 0 10px rgba(242,177,52,.6); background: #57507a; font-weight: 700; }
   .ob-coach { background: var(--stage); border: 2px solid var(--line); border-radius: 18px; height: 190px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
   .ob-coach img, .ob-coach svg { max-height: 170px; max-width: 70%; }
@@ -366,6 +375,11 @@
     </div>
 
     <div class="card">
+      <h2>🎨 素材授權</h2>
+      <p class="muted">角色紙娃娃零件來自開源的 <a href="https://github.com/liberatedpixelcup/Universal-LPC-Spritesheet-Character-Generator" target="_blank" rel="noopener">Liberated Pixel Cup (LPC) 角色產生器</a>（CC-BY-SA 3.0 / OGA-BY 3.0 / GPL 3.0），作者：<span id="lpc-authors"></span>。完整清單：<a href="lpc/CREDITS.md" target="_blank" rel="noopener">CREDITS.md</a>。健身房背景與預設教練為本遊戲原創。</p>
+    </div>
+
+    <div class="card">
       <h2>💾 資料備份</h2>
       <p class="muted">資料存在這支手機的瀏覽器裡。建議每週匯出一次備份。</p>
       <button class="btn secondary" onclick="App.exportData()">⬇️ 匯出備份檔</button>
@@ -463,7 +477,7 @@
 
     <div class="ob-step" data-step="1">
       <h2>創造你的角色</h2>
-      <p class="sub">先選一個喜歡的造型，再往下細捏髮型、臉、衣服</p>
+      <p class="sub">先選一個造型，再往下用紙娃娃零件細捏體型、臉、表情、髮型、衣服</p>
       <div class="creator" style="padding:10px">
         <div class="preset-grid" id="preset-grid"></div>
       </div>
@@ -573,7 +587,7 @@
         S = Object.assign(S, d);
         S.settings = Object.assign(defaultState().settings, d.settings || {});
         S.settings.goals = Object.assign(defaultState().settings.goals, (d.settings || {}).goals || {});
-        if (d.avatar && d.avatar.v === 2) S.avatar = Object.assign(DEFAULT_AVATAR(), d.avatar);
+        if (d.avatar && d.avatar.v === 3) S.avatar = Object.assign(DEFAULT_AVATAR(), d.avatar);
         else { S.avatar = Object.assign(DEFAULT_AVATAR(), { name: (d.avatar && d.avatar.name) || '我' }); S.onboarded = false; }
         S.records = d.records || {};
       } catch (e) {}
@@ -730,261 +744,212 @@
   }
 
 
-  // ---------- chibi player avatar ----------
-  const SKINS = ['#ffe8d8', '#fcd9bd', '#f2c29b', '#dca679', '#b97a50', '#7d4f33'];
-  const HAIRC = ['#2b211d', '#6b4226', '#a8662e', '#e3b35b', '#ece6da', '#e06b8f', '#4a6fd6', '#c43d3d'];
-  const EYEC = ['#4a3324', '#3f7fd6', '#3fa86b', '#8b5bd6', '#d0882a', '#c03a4a'];
-  const PAL = ['#e8505b', '#f0a32b', '#3fa86b', '#4a8fd6', '#8b5bd6', '#3b3f4a', '#f5f1ea', '#8b5a2b', '#f08fb0', '#2f6e8f'];
+  const LPC_CATALOG = {"body":[{"id":"male","label":"標準男","mats":["body"],"layers":[[10,{"male":"body/bodies/male/","female":"body/bodies/female/","muscular":"body/bodies/muscular/","teen":"body/bodies/teen/"}]]},{"id":"female","label":"標準女","mats":["body"],"layers":[[10,{"male":"body/bodies/male/","female":"body/bodies/female/","muscular":"body/bodies/muscular/","teen":"body/bodies/teen/"}]]},{"id":"muscular","label":"肌肉身","mats":["body"],"layers":[[10,{"male":"body/bodies/male/","female":"body/bodies/female/","muscular":"body/bodies/muscular/","teen":"body/bodies/teen/"}]]},{"id":"teen","label":"嬌小（矮）","mats":["body"],"layers":[[10,{"male":"body/bodies/male/","female":"body/bodies/female/","muscular":"body/bodies/muscular/","teen":"body/bodies/teen/"}]]}],"head":[{"id":"male","label":"男生臉","mats":["body","eye"],"layers":[[100,{"male":"head/heads/human/male/","female":"head/heads/human/male/","muscular":"head/heads/human/male/","teen":"head/heads/human/male/"}]]},{"id":"female","label":"女生臉","mats":["body","eye"],"layers":[[100,{"male":"head/heads/human/female/","female":"head/heads/human/female/","muscular":"head/heads/human/female/","teen":"head/heads/human/female/"}]]},{"id":"plump","label":"圓圓臉","mats":["body","eye"],"layers":[[100,{"male":"head/heads/human/male_plump/","female":"head/heads/human/male_plump/","muscular":"head/heads/human/male_plump/","teen":"head/heads/human/male_plump/"}]]},{"id":"gaunt","label":"瘦長臉","mats":["body","eye"],"layers":[[100,{"male":"head/heads/human/male_gaunt/","female":"head/heads/human/male_gaunt/","muscular":"head/heads/human/male_gaunt/","teen":"head/heads/human/male_gaunt/"}]]},{"id":"small","label":"小臉","mats":["body","eye"],"layers":[[100,{"male":"head/heads/human/male_small/","female":"head/heads/human/male_small/","muscular":"head/heads/human/male_small/","teen":"head/heads/human/male_small/"}]]}],"face":[{"id":"none","label":"預設"},{"id":"happy","label":"開心","mats":["body"],"layers":[[101,{"male:male":"head/faces/male/happy/","male:female":"head/faces/female/happy/","female:male":"head/faces/male/happy/","female:female":"head/faces/female/happy/","muscular:male":"head/faces/male/happy/","muscular:female":"head/faces/female/happy/","teen:male":"head/faces/male/happy/","teen:female":"head/faces/female/happy/"}]]},{"id":"anger","label":"生氣","mats":["body","eye"],"layers":[[101,{"male:male":"head/faces/male/anger/","male:female":"head/faces/female/anger/","female:male":"head/faces/male/anger/","female:female":"head/faces/female/anger/","muscular:male":"head/faces/male/anger/","muscular:female":"head/faces/female/anger/","teen:male":"head/faces/male/anger/","teen:female":"head/faces/female/anger/"}]]},{"id":"sad","label":"難過","mats":["body","eye"],"layers":[[101,{"male:male":"head/faces/male/sad/","male:female":"head/faces/female/sad/","female:male":"head/faces/male/sad/","female:female":"head/faces/female/sad/","muscular:male":"head/faces/male/sad/","muscular:female":"head/faces/female/sad/","teen:male":"head/faces/male/sad/","teen:female":"head/faces/female/sad/"}]]},{"id":"shock","label":"驚訝","mats":["body","eye"],"layers":[[101,{"male:male":"head/faces/male/shock/","male:female":"head/faces/female/shock/","female:male":"head/faces/male/shock/","female:female":"head/faces/female/shock/","muscular:male":"head/faces/male/shock/","muscular:female":"head/faces/female/shock/","teen:male":"head/faces/male/shock/","teen:female":"head/faces/female/shock/"}]]},{"id":"blush","label":"害羞","mats":["body"],"layers":[[101,{"male:male":"head/faces/male/blush/","male:female":"head/faces/female/blush/","female:male":"head/faces/male/blush/","female:female":"head/faces/female/blush/","muscular:male":"head/faces/male/blush/","muscular:female":"head/faces/female/blush/","teen:male":"head/faces/male/blush/","teen:female":"head/faces/female/blush/"}]]},{"id":"closed","label":"瞇眼","mats":["body"],"layers":[[101,{"male:male":"head/faces/male/closed/","male:female":"head/faces/female/closed/","female:male":"head/faces/male/closed/","female:female":"head/faces/female/closed/","muscular:male":"head/faces/male/closed/","muscular:female":"head/faces/female/closed/","teen:male":"head/faces/male/closed/","teen:female":"head/faces/female/closed/"}]]},{"id":"eyeroll","label":"白眼","mats":["body","eye"],"layers":[[101,{"male:male":"head/faces/male/eyeroll/","male:female":"head/faces/female/eyeroll/","female:male":"head/faces/male/eyeroll/","female:female":"head/faces/female/eyeroll/","muscular:male":"head/faces/male/eyeroll/","muscular:female":"head/faces/female/eyeroll/","teen:male":"head/faces/male/eyeroll/","teen:female":"head/faces/female/eyeroll/"}]]}],"brows":[{"id":"none","label":"無"},{"id":"thick","label":"粗眉","mats":["hair"],"layers":[[106,{"male":"eyes/eyebrows/thick/adult/","female":"eyes/eyebrows/thick/adult/","muscular":"eyes/eyebrows/thick/adult/","teen":"eyes/eyebrows/thick/adult/"}]]},{"id":"thin","label":"細眉","mats":["hair"],"layers":[[106,{"male":"eyes/eyebrows/thin/adult/","female":"eyes/eyebrows/thin/adult/","muscular":"eyes/eyebrows/thin/adult/","teen":"eyes/eyebrows/thin/adult/"}]]}],"hair":[{"id":"none","label":"光頭"},{"id":"plain","label":"短短髮","mats":["hair"],"layers":[[120,{"male":"hair/plain/adult/","female":"hair/plain/adult/","muscular":"hair/plain/adult/","teen":"hair/plain/adult/"}]]},{"id":"parted","label":"旁分","mats":["hair"],"layers":[[120,{"male":"hair/parted/adult/","female":"hair/parted/adult/","muscular":"hair/parted/adult/","teen":"hair/parted/adult/"}]]},{"id":"bangs","label":"齊瀏海","mats":["hair"],"layers":[[120,{"male":"hair/bangs/adult/","female":"hair/bangs/adult/","muscular":"hair/bangs/adult/","teen":"hair/bangs/adult/"}]]},{"id":"spiked","label":"刺蝟頭","mats":["hair"],"layers":[[120,{"male":"hair/spiked/adult/","female":"hair/spiked/adult/","muscular":"hair/spiked/adult/","teen":"hair/spiked/adult/"}]]},{"id":"porcupine","label":"爆炸頭","mats":["hair"],"layers":[[120,{"male":"hair/spiked_porcupine/adult/","female":"hair/spiked_porcupine/adult/","muscular":"hair/spiked_porcupine/adult/","teen":"hair/spiked_porcupine/adult/"}]]},{"id":"messy1","label":"亂髮","mats":["hair"],"layers":[[120,{"male":"hair/messy1/adult/","female":"hair/messy1/adult/","muscular":"hair/messy1/adult/","teen":"hair/messy1/adult/"}]]},{"id":"pixie","label":"精靈短髮","mats":["hair"],"layers":[[120,{"male":"hair/pixie/adult/","female":"hair/pixie/adult/","muscular":"hair/pixie/adult/","teen":"hair/pixie/adult/"}]]},{"id":"buzzcut","label":"平頭","mats":["hair"],"layers":[[120,{"male":"hair/buzzcut/adult/","female":"hair/buzzcut/adult/","muscular":"hair/buzzcut/adult/","teen":"hair/buzzcut/adult/"}]]},{"id":"curly_short","label":"短捲髮","mats":["hair"],"layers":[[120,{"male":"hair/curly_short/adult/","female":"hair/curly_short/adult/","muscular":"hair/curly_short/adult/","teen":"hair/curly_short/adult/"}]]},{"id":"afro","label":"蓬蓬頭","mats":["hair"],"layers":[[120,{"male":"hair/afro/adult/","female":"hair/afro/adult/","muscular":"hair/afro/adult/","teen":"hair/afro/adult/"}]]},{"id":"bob","label":"妹妹頭","mats":["hair"],"layers":[[120,{"male":"hair/bob/adult/","female":"hair/bob/adult/","muscular":"hair/bob/adult/","teen":"hair/bob/adult/"}]]},{"id":"long","label":"長髮","mats":["hair"],"layers":[[120,{"male":"hair/long/adult/","female":"hair/long/adult/","muscular":"hair/long/adult/","teen":"hair/long/adult/"}]]},{"id":"long_straight","label":"長直髮","mats":["hair"],"layers":[[120,{"male":"hair/long_straight/adult/","female":"hair/long_straight/adult/","muscular":"hair/long_straight/adult/","teen":"hair/long_straight/adult/"}]]},{"id":"ponytail","label":"馬尾","mats":["hair"],"layers":[[120,{"male":"hair/ponytail/adult/fg/","female":"hair/ponytail/adult/fg/","muscular":"hair/ponytail/adult/fg/","teen":"hair/ponytail/adult/fg/"}],[9,{"male":"hair/ponytail/adult/bg/","female":"hair/ponytail/adult/bg/","muscular":"hair/ponytail/adult/bg/","teen":"hair/ponytail/adult/bg/"}]]},{"id":"high_ponytail","label":"高馬尾","mats":["hair"],"layers":[[120,{"male":"hair/high_ponytail/adult/fg/","female":"hair/high_ponytail/adult/fg/","muscular":"hair/high_ponytail/adult/fg/","teen":"hair/high_ponytail/adult/fg/"}],[9,{"male":"hair/high_ponytail/adult/bg/","female":"hair/high_ponytail/adult/bg/","muscular":"hair/high_ponytail/adult/bg/","teen":"hair/high_ponytail/adult/bg/"}]]},{"id":"bunches","label":"雙馬尾","mats":["hair"],"layers":[[120,{"male":"hair/bunches/adult/fg/","female":"hair/bunches/adult/fg/","muscular":"hair/bunches/adult/fg/","teen":"hair/bunches/adult/fg/"}],[9,{"male":"hair/bunches/adult/bg/","female":"hair/bunches/adult/bg/","muscular":"hair/bunches/adult/bg/","teen":"hair/bunches/adult/bg/"}]]},{"id":"bangs_bun","label":"包包頭","mats":["hair"],"layers":[[120,{"male":"hair/bangs_bun/adult/","female":"hair/bangs_bun/adult/","muscular":"hair/bangs_bun/adult/","teen":"hair/bangs_bun/adult/"}]]},{"id":"xlong","label":"超長髮","mats":["hair"],"layers":[[120,{"male":"hair/xlong/adult/fg/","female":"hair/xlong/adult/fg/","muscular":"hair/xlong/adult/fg/","teen":"hair/xlong/adult/fg/"}],[9,{"male":"hair/xlong/adult/bg/","female":"hair/xlong/adult/bg/","muscular":"hair/xlong/adult/bg/","teen":"hair/xlong/adult/bg/"}]]},{"id":"curly_long","label":"長捲髮","mats":["hair"],"layers":[[120,{"male":"hair/curly_long/adult/","female":"hair/curly_long/adult/","muscular":"hair/curly_long/adult/","teen":"hair/curly_long/adult/"}]]}],"top":[{"id":"none","label":"無"},{"id":"tshirt","label":"T恤","mats":["cloth"],"layers":[[35,{"male":"torso/clothes/shortsleeve/tshirt/male/","female":"torso/clothes/shortsleeve/tshirt/female/","muscular":"torso/clothes/shortsleeve/tshirt/male/","teen":"torso/clothes/shortsleeve/tshirt/teen/"}]]},{"id":"vneck","label":"V領T","mats":["cloth"],"layers":[[35,{"male":"torso/clothes/shortsleeve/tshirt_vneck/male/","female":"torso/clothes/shortsleeve/tshirt_vneck/female/","muscular":"torso/clothes/shortsleeve/tshirt_vneck/male/","teen":"torso/clothes/shortsleeve/tshirt_vneck/teen/"}]]},{"id":"polo","label":"Polo衫","mats":["cloth"],"layers":[[35,{"male":"torso/clothes/shortsleeve/shortsleeve_polo/male/","female":"torso/clothes/shortsleeve/shortsleeve_polo/female/","muscular":"torso/clothes/shortsleeve/shortsleeve_polo/male/","teen":"torso/clothes/shortsleeve/shortsleeve_polo/teen/"}]]},{"id":"longsleeve","label":"長袖","mats":["cloth"],"layers":[[35,{"male":"torso/clothes/longsleeve/longsleeve/male/","female":"torso/clothes/longsleeve/longsleeve/female/","muscular":"torso/clothes/longsleeve/longsleeve/male/","teen":"torso/clothes/longsleeve/longsleeve/teen/"}]]},{"id":"cardigan","label":"開襟外套","mats":["cloth"],"layers":[[35,{"male":"torso/clothes/longsleeve/longsleeve2_cardigan/male/","female":"torso/clothes/longsleeve/longsleeve2_cardigan/female/","muscular":"torso/clothes/longsleeve/longsleeve2_cardigan/male/","teen":"torso/clothes/longsleeve/longsleeve2_cardigan/teen/"}]]},{"id":"tank","label":"運動背心","mats":["cloth"],"layers":[[35,{"male":"torso/clothes/sleeveless/sleeveless2/male/","female":"torso/clothes/sleeveless/sleeveless2/female/","muscular":"torso/clothes/sleeveless/sleeveless2/male/","teen":"torso/clothes/sleeveless/sleeveless2/teen/"}]]},{"id":"leather","label":"皮甲","mats":["cloth","metal"],"layers":[[60,{"male":"torso/armour/leather/male/","female":"torso/armour/leather/female/","muscular":"torso/armour/leather/male/","teen":"torso/armour/leather/teen/"}]]},{"id":"plate","label":"重裝鎧甲","mats":["metal"],"layers":[[60,{"male":"torso/armour/plate/male/","female":"torso/armour/plate/female/","muscular":"torso/armour/plate/male/","teen":"torso/armour/plate/teen/"}]]}],"legs":[{"id":"pants","label":"長褲","mats":["cloth"],"layers":[[20,{"male":"legs/pants/male/","female":"legs/pants/thin/","muscular":"legs/pants/male/","teen":"legs/pants/thin/"}]]},{"id":"cuffed","label":"束口褲","mats":["cloth"],"layers":[[20,{"male":"legs/cuffed/male/","female":"legs/cuffed/thin/","muscular":"legs/cuffed/male/","teen":"legs/cuffed/thin/"}]]},{"id":"shorts","label":"短褲","mats":["cloth"],"layers":[[20,{"male":"legs/shorts/shorts/male/","female":"legs/shorts/shorts/thin/","muscular":"legs/shorts/shorts/male/","teen":"legs/shorts/shorts/thin/"}]]},{"id":"short_shorts","label":"熱褲","mats":["cloth"],"layers":[[20,{"male":"legs/shorts/short_shorts/male/","female":"legs/shorts/short_shorts/thin/","muscular":"legs/shorts/short_shorts/male/","teen":"legs/shorts/short_shorts/thin/"}]]},{"id":"leggings","label":"緊身褲","mats":["cloth"],"layers":[[20,{"male":"legs/leggings/male/","female":"legs/leggings/thin/","muscular":"legs/leggings/male/","teen":"legs/leggings/thin/"}]]},{"id":"skirt","label":"裙子","mats":["cloth"],"layers":[[20,{"male":"legs/skirts/plain/male/","female":"legs/skirts/plain/thin/","muscular":"legs/skirts/plain/male/","teen":"legs/skirts/plain/thin/"}]]},{"id":"armour","label":"護甲褲","mats":["metal"],"layers":[[20,{"male":"legs/armour/plate/male/","female":"legs/armour/plate/thin/","muscular":"legs/armour/plate/male/","teen":"legs/armour/plate/thin/"}]]}],"feet":[{"id":"none","label":"赤腳"},{"id":"shoes","label":"運動鞋","mats":["cloth"],"layers":[[15,{"male":"feet/shoes/basic/male/","female":"feet/shoes/basic/thin/","muscular":"feet/shoes/basic/male/","teen":"feet/shoes/basic/thin/"}]]},{"id":"revised","label":"休閒鞋","mats":["cloth"],"layers":[[15,{"male":"feet/shoes/revised/male/","female":"feet/shoes/revised/thin/","muscular":"feet/shoes/revised/male/","teen":"feet/shoes/revised/thin/"}]]},{"id":"boots","label":"靴子","mats":["cloth"],"layers":[[25,{"male":"feet/boots/basic/male/","female":"feet/boots/basic/thin/","muscular":"feet/boots/basic/male/","teen":"feet/boots/basic/thin/"}]]},{"id":"fold","label":"反摺靴","mats":["cloth"],"layers":[[25,{"male":"feet/boots/fold/male/","female":"feet/boots/fold/thin/","muscular":"feet/boots/fold/male/","teen":"feet/boots/fold/thin/"}]]},{"id":"sandals","label":"涼鞋","mats":["cloth"],"layers":[[15,{"male":"feet/sandals/male/","female":"feet/sandals/thin/","muscular":"feet/sandals/male/","teen":"feet/sandals/thin/"}]]},{"id":"slippers","label":"拖鞋","mats":["cloth"],"layers":[[15,{"male":"feet/slippers/male/","female":"feet/slippers/thin/","muscular":"feet/slippers/male/","teen":"feet/slippers/thin/"}]]}],"acc":[{"id":"none","label":"無"},{"id":"glasses","label":"眼鏡","layers":[[115,{"male":"facial/glasses/glasses/adult/","female":"facial/glasses/glasses/adult/","muscular":"facial/glasses/glasses/adult/","teen":"facial/glasses/glasses/adult/"}]]},{"id":"round","label":"圓框眼鏡","layers":[[115,{"male":"facial/glasses/round/adult/","female":"facial/glasses/round/adult/","muscular":"facial/glasses/round/adult/","teen":"facial/glasses/round/adult/"}]]},{"id":"nerd","label":"書呆眼鏡","layers":[[115,{"male":"facial/glasses/nerd/adult/","female":"facial/glasses/nerd/adult/","muscular":"facial/glasses/nerd/adult/","teen":"facial/glasses/nerd/adult/"}]]},{"id":"sunglasses","label":"墨鏡","layers":[[115,{"male":"facial/glasses/sunglasses/adult/","female":"facial/glasses/sunglasses/adult/","muscular":"facial/glasses/sunglasses/adult/","teen":"facial/glasses/sunglasses/adult/"}]]},{"id":"shades","label":"酷炫墨鏡","layers":[[115,{"male":"facial/glasses/shades/adult/","female":"facial/glasses/shades/adult/","muscular":"facial/glasses/shades/adult/","teen":"facial/glasses/shades/adult/"}]]}],"hat":[{"id":"none","label":"無"},{"id":"leather_cap","label":"皮帽","layers":[[130,{"male":"hat/cloth/leather_cap/adult/","female":"hat/cloth/leather_cap/adult/","muscular":"hat/cloth/leather_cap/adult/","teen":"hat/cloth/leather_cap/adult/"}]]},{"id":"bowler","label":"圓頂禮帽","layers":[[130,{"male":"hat/formal/bowler/adult/","female":"hat/formal/bowler/adult/","muscular":"hat/formal/bowler/adult/","teen":"hat/formal/bowler/adult/"}]]},{"id":"christmas","label":"聖誕帽","layers":[[130,{"male":"hat/holiday/christmas/adult/","female":"hat/holiday/christmas/adult/","muscular":"hat/holiday/christmas/adult/","teen":"hat/holiday/christmas/adult/"}]]},{"id":"wizard","label":"巫師帽","layers":[[130,{"male":"hat/magic/wizard/base/adult/","female":"hat/magic/wizard/base/adult/","muscular":"hat/magic/wizard/base/adult/","teen":"hat/magic/wizard/base/adult/"}]]},{"id":"crown","label":"皇冠","layers":[[130,{"male":"hat/formal/crown/adult/","female":"hat/formal/crown/adult/","muscular":"hat/formal/crown/adult/","teen":"hat/formal/crown/adult/"}]]}]};
+  const LPC_PAL = {"body":{"base":"light","label":{"light":"白皙","amber":"蜜糖","olive":"橄欖","taupe":"小麥","bronze":"古銅","brown":"深棕","black":"黝黑","lavender":"夢幻紫","blue":"冰藍","green":"綠巨人"},"pal":{"light":["#271920","#99423c","#cc8665","#E4A47C","#F9D5BA","#FAECE7"],"amber":["#281716","#9E3E37","#D28144","#EA9F54","#FDD082","#FBE7A4"],"olive":["#271920","#442725","#7F4C31","#AE6B3F","#D38B59","#E4A47C"],"taupe":["#271920","#503734","#785946","#936849","#BA8454","#C7935F"],"bronze":["#1A1213","#442725","#644133","#7F4C31","#AE6B3F","#D38B59"],"brown":["#120E10","#412B29","#5F4539","#76513A","#9C663E","#B8773F"],"black":["#000000","#1A1213","#2E1F1C","#442725","#603429","#7F4C31"],"lavender":["#16171B","#393B44","#787C8F","#A0A5BC","#C9D0EE","#FBECE6"],"blue":["#16171B","#46425D","#586B90","#748DA4","#A9C9CA","#C8E8E8"],"green":["#140C09","#09320B","#19541D","#228236","#39AA4E","#53BF71"]}},"eye":{"base":"blue","label":{"blue":"藍","green":"綠","brown":"棕","gray":"灰","purple":"紫","red":"紅","orange":"橘","yellow":"金"},"pal":{"blue":["#2a3c49","#5686ae","#57cee4"],"green":["#2b4b29","#53b351","#84ec50"],"brown":["#232017","#544c2e","#7e4e20"],"gray":["#3d3c37","#8b8979","#ada18f"],"purple":["#710862","#b90da0","#eba0e0"],"red":["#532421","#cb4a39","#ff3d62"],"orange":["#a45227","#be734b","#ea9b71"],"yellow":["#b69953","#d9bf46","#fedf47"]}},"hair":{"base":"orange","label":{},"pal":{"dark_brown":["#050100","#160701","#290E02","#421603","#5F1F04","#792806"],"black":["#000000","#080A0A","#101414","#1C2222","#31313E","#4A5057"],"chestnut":["#200C0D","#3A130E","#63200B","#81310A","#B6550E","#D28102"],"light_brown":["#1A0E04","#301B07","#60350F","#7D4513","#AE682A","#C88D58"],"blonde":["#331313","#552B15","#AC5D1F","#E09E2B","#FCCF56","#FFE67D"],"platinum":["#1C0E06","#7D5D5D","#A87D52","#C0AB81","#EDDF95","#F6F6F3"],"gray":["#0E0E0E","#292929","#4B4B4B","#777777","#AAAAAA","#D9D9D9"],"white":["#1D1D21","#484E57","#8B9498","#B8BBBC","#D8DCDC","#FFFFFF"],"orange":["#260D14","#6A1108","#A42600","#BF4000","#E55600","#FF8A00"],"redhead":["#260D14","#3E111A","#73171E","#9E1F1F","#C7341B","#E74716"],"red":["#300000","#870000","#A40712","#CB0000","#E21414","#F1583A"],"pink":["#330410","#71043A","#B60A68","#E941AA","#E976C4","#EA95D5"],"rose":["#30051F","#6A1E4B","#9C4373","#CC789D","#FABBC6","#FAE1E5"],"purple":["#13112D","#2B225A","#402E82","#7141B2","#A966DD","#D085ED"],"navy":["#180716","#20102B","#281E41","#322D6A","#3C49AD","#466AC9"],"blue":["#000027","#00005E","#000091","#0041B4","#0074CB","#1E85EF"],"green":["#000400","#001400","#002D00","#005000","#007C00","#00A700"]}},"cloth":{"base":"white","label":{},"pal":{"white":["#281820","#4D4A5D","#958080","#C4B59F","#E5E6C7","#FFFFFF"],"black":["#000000","#101414","#1C2222","#22282A","#2A3034","#4A5057"],"gray":["#0e0e18","#201E2B","#373340","#585561","#797580","#A2A0A4"],"slate":["#1d131e","#31313E","#4A5057","#818B8B","#B3AFA1","#E5E6C7"],"red":["#1d131e","#400B1F","#651117","#82171C","#AB1E1E","#CD2429"],"maroon":["#1d131e","#400B1F","#551C22","#682121","#832121","#AE424A"],"pink":["#1d131e","#54242E","#6C3536","#AE424A","#C36072","#E08080"],"orange":["#301723","#5F1D1B","#9C3F23","#D75B1A","#EF7E19","#FFA749"],"yellow":["#301723","#5F2F25","#BA5B23","#D99431","#F3C03F","#FFE360"],"tan":["#3e2613","#684415","#986A20","#B78C41","#B7996A","#CFC587"],"brown":["#1d131e","#411E05","#4B2B13","#62351C","#744B30","#996B4A"],"green":["#101820","#192832","#0B5C2F","#214437","#2F8136","#64A42C"],"forest":["#09131d","#07391D","#0B1F25","#0B2B28","#134507","#1B5502"],"teal":["#180716","#1B2B47","#0E4E72","#156C99","#0098B2","#00CFDF"],"sky":["#1a0d18","#313148","#586B90","#9FBBCB","#C6EEFD","#FFFFFF"],"blue":["#180716","#281E41","#322D6A","#3C49AD","#466AC9","#61A0EF"],"navy":["#180716","#20102B","#281E41","#322D6A","#3C49AD","#466AC9"],"lavender":["#13112d","#2B225A","#402E82","#7141B2","#A966DD","#D085ED"],"purple":["#180716","#13112D","#261044","#411357","#621E78","#813089"]}}};
+  const LPC_AUTHORS = ["??", "Ahmad3366", "Barbara Riviera", "Benjamin K. Smith (BenCreating)", "Bluecarrot16", "Charles Sanchez (CharlesGabriel)", "DarkwallLKE", "Durrani", "Eliza Wyatt (ElizaWy)", "ElizaWy", "Evert", "Fabzy", "JaidynReiman", "Joe White", "Johannes Sjölund (wulax)", "Luke Mehl", "Mandi Paugh", "Manuel Riecke (MrBeast)", "Matthew Krohn (Makrohn)", "Matthew Krohn (makrohn)", "Michael Whitlock (bigbeargames)", "MuffinElZangano", "Napsio (Vitruvian Studio)", "Nila122", "Pierre Vigier (pvigier)", "Sander Frenken (castelonia)", "Stephen Challener (Redshrike)", "Thane Brimhall (pennomi)", "TheraHedwig", "Tuomo Untinen (reemax)", "William.Thompsonj", "bluecarrot16", "dalonedrau", "kcilds/Rocetti/Eredah", "laetissima", "thecilekli"];
 
-  function shade(hex, amt) {
-    const n = parseInt(hex.slice(1), 16);
-    const c = v => Math.max(0, Math.min(255, v + amt));
-    return '#' + ((1 << 24) + (c(n >> 16) << 16) + (c((n >> 8) & 255) << 8) + c(n & 255)).toString(16).slice(1);
+  // ---------- paper-doll engine (LPC modular sprites) ----------
+  // Every part shares the same 64x64 frame grid and anchor; parts are stacked by zPos,
+  // recoloured at runtime by palette swap, and animated by picking frames from the sheet.
+  const LPC_BASE = 'lpc/';
+  const FRAME = 64;
+  const ANIM = {
+    walk: { w: 576, h: 256, frames: 9, rows: 4, fps: 12, loopFrom: 1 },
+    idle: { w: 128, h: 256, frames: 2, rows: 4, fps: 2, loopFrom: 0 },
+    hurt: { w: 384, h: 64, frames: 6, rows: 1, fps: 10, loopFrom: -1 },
+  };
+  const DIR = { up: 0, left: 1, down: 2, right: 3 };
+  const SLOT_ORDER = ['body', 'head', 'face', 'brows', 'hair', 'legs', 'feet', 'top', 'acc', 'hat'];
+  const SLOT_COLOR = { body: 'skin', head: 'skin', face: 'skin', brows: 'hairColor', hair: 'hairColor', top: 'topColor', legs: 'legsColor', feet: 'feetColor' };
+
+  const imgCache = new Map();
+  function loadImg(url) {
+    if (!imgCache.has(url)) imgCache.set(url, new Promise(res => {
+      const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = url;
+    }));
+    return imgCache.get(url);
+  }
+  const hex2rgb = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+  function buildMap(mats, a) {
+    // palette swap: base palette colour -> chosen palette colour (by index)
+    const map = new Map();
+    for (const m of mats || []) {
+      const P = LPC_PAL[m]; if (!P) continue;
+      let key;
+      if (m === 'body') key = a.skin; else if (m === 'eye') key = a.eyes; else if (m === 'hair') key = a.hairColor;
+      else key = a._clothKey;
+      const from = P.pal[P.base], to = P.pal[key];
+      if (!from || !to || key === P.base) continue;
+      from.forEach((c, i) => { const [r, g, b] = hex2rgb(c); map.set((r << 16) | (g << 8) | b, hex2rgb(to[i])); });
+    }
+    return map;
+  }
+  const tintCache = new Map();
+  async function tinted(url, mats, a) {
+    const map = buildMap(mats, a);
+    const key = url + '|' + [...map.keys()].join(',') + '|' + [...map.values()].map(v => v.join('.')).join(',');
+    if (tintCache.has(key)) return tintCache.get(key);
+    const p = (async () => {
+      const im = await loadImg(url); if (!im) return null;
+      if (!map.size) return im;
+      const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+      const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(im, 0, 0);
+      const id = ctx.getImageData(0, 0, c.width, c.height), d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (!d[i + 3]) continue;
+        const t = map.get((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]);
+        if (t) { d[i] = t[0]; d[i + 1] = t[1]; d[i + 2] = t[2]; }
+      }
+      ctx.putImageData(id, 0, 0);
+      return c;
+    })();
+    tintCache.set(key, p);
+    return p;
+  }
+  const findPart = (slot, id) => (LPC_CATALOG[slot] || []).find(p => p.id === id) || null;
+
+  function layersFor(a) {
+    const out = [];
+    const g = a.head === 'female' ? 'female' : 'male';
+    for (const slot of SLOT_ORDER) {
+      const part = findPart(slot, slot === 'body' ? a.body : a[slot]);
+      if (!part || !part.layers) continue;
+      const colorKey = SLOT_COLOR[slot];
+      const aa = Object.assign({}, a, { _clothKey: colorKey ? a[colorKey] : 'white' });
+      for (const [z, paths] of part.layers) {
+        const p = paths[a.body] || paths[a.body + ':' + g] || paths['male'] || paths['male:' + g];
+        if (p) out.push({ z, path: p, mats: part.mats, a: aa });
+      }
+    }
+    return out.sort((x, y) => x.z - y.z);
   }
 
+  const sheetCache = new Map();
+  function sheetKey(a, anim) {
+    return anim + '|' + ['body', 'head', 'face', 'brows', 'hair', 'top', 'legs', 'feet', 'acc', 'hat', 'skin', 'eyes', 'hairColor', 'topColor', 'legsColor', 'feetColor'].map(k => a[k]).join('|');
+  }
+  async function composeSheet(a, anim) {
+    const key = sheetKey(a, anim);
+    if (sheetCache.has(key)) return sheetCache.get(key);
+    const p = (async () => {
+      const A = ANIM[anim];
+      const c = document.createElement('canvas'); c.width = A.w; c.height = A.h;
+      const ctx = c.getContext('2d');
+      const imgs = await Promise.all(layersFor(a).map(L => tinted(LPC_BASE + L.path + anim + '.png', L.mats, L.a)));
+      imgs.forEach(im => { if (im) ctx.drawImage(im, 0, 0); });
+      return c;
+    })();
+    sheetCache.set(key, p);
+    if (sheetCache.size > 80) sheetCache.delete(sheetCache.keys().next().value);
+    return p;
+  }
+
+  // Height: never scale the head. Only the legs band (below the hip line) is stretched,
+  // and the upper body is shifted up/down to stay attached.
+  const HIP = 42;
+  function drawFrame(ctx, sheet, col, row, h, dx = 0, dy = 0, scale = 1) {
+    if (!sheet) return;
+    h = Math.max(.85, Math.min(1.15, h || 1));
+    const legH = FRAME - HIP, newLeg = Math.round(legH * h), top = FRAME - newLeg - HIP;
+    const sx = col * FRAME, sy = row * FRAME;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(sheet, sx, sy, FRAME, HIP, dx, dy + top * scale, FRAME * scale, HIP * scale);
+    ctx.drawImage(sheet, sx, sy + HIP, FRAME, legH, dx, dy + (top + HIP) * scale, FRAME * scale, newLeg * scale);
+  }
+
+  // A sprite actor = canvas + animation state
+  class Doll {
+    constructor(canvas) {
+      this.c = canvas; this.ctx = canvas.getContext('2d');
+      this.anim = 'idle'; this.dir = DIR.down; this.frame = 0; this.t = 0; this.sheets = {}; this.a = null; this.onDone = null; this.paused = false;
+    }
+    async setAvatar(a) {
+      const snap = JSON.parse(JSON.stringify(a)); this.a = snap;
+      const [walk, idle, hurt] = await Promise.all(['walk', 'idle', 'hurt'].map(n => composeSheet(snap, n)));
+      if (this.a !== snap) return;
+      this.sheets = { walk, idle, hurt }; this.draw();
+    }
+    play(anim, dir, onDone) {
+      if (dir !== undefined) this.dir = dir;
+      if (this.anim !== anim) { this.anim = anim; this.frame = ANIM[anim].loopFrom > 0 ? ANIM[anim].loopFrom : 0; this.t = 0; }
+      this.onDone = onDone || null;
+      this.draw();
+    }
+    tick(dt) {
+      if (this.paused) return;
+      const A = ANIM[this.anim]; this.t += dt;
+      const step = 1000 / A.fps;
+      let changed = false;
+      while (this.t >= step) {
+        this.t -= step; changed = true;
+        if (A.loopFrom < 0) {
+          if (this.frame < A.frames - 1) this.frame++;
+          else if (this.onDone) { const f = this.onDone; this.onDone = null; f(); }
+        } else {
+          this.frame++;
+          if (this.frame >= A.frames) this.frame = A.loopFrom;
+        }
+      }
+      if (changed) this.draw();
+    }
+    draw() {
+      const sheet = this.sheets[this.anim]; const A = ANIM[this.anim];
+      this.ctx.clearRect(0, 0, this.c.width, this.c.height);
+      if (!sheet || !this.a) return;
+      const row = A.rows === 1 ? 0 : this.dir;
+      drawFrame(this.ctx, sheet, Math.min(this.frame, A.frames - 1), row, this.a.height, 0, 0, this.c.width / FRAME);
+    }
+  }
+  const dolls = new Set();
+  let lastT = performance.now();
+  function loop(t) {
+    const dt = Math.min(100, t - lastT); lastT = t;
+    dolls.forEach(d => { if (d.c.isConnected) d.tick(dt); else dolls.delete(d); });
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  function makeDoll(canvas, a, anim = 'idle', dir = DIR.down) {
+    const d = new Doll(canvas); d.anim = anim; d.dir = dir; d.frame = ANIM[anim].loopFrom > 0 ? ANIM[anim].loopFrom : 0;
+    d.setAvatar(a); dolls.add(d); return d;
+  }
+
+  // static thumbnail of one frame, cropped to the region that matters for the slot
+  const CROP = { head: [16, 4, 32, 32], torso: [12, 18, 40, 30], legs: [12, 34, 40, 30], full: [8, 4, 48, 60] };
+  async function thumb(canvas, a, crop = 'full', anim = 'idle', dir = DIR.down) {
+    const sheet = await composeSheet(a, anim);
+    const [x, y, w, h] = CROP[crop] || CROP.full;
+    const tmp = document.createElement('canvas'); tmp.width = FRAME; tmp.height = FRAME;
+    drawFrame(tmp.getContext('2d'), sheet, 0, ANIM[anim].rows === 1 ? 0 : dir, a.height);
+    canvas.width = w * 3; canvas.height = h * 3;
+    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(tmp, x, y, w, h, 0, 0, w * 3, h * 3);
+  }
+
+  // ---------- creator data ----------
+  const SWATCH = (mat) => Object.keys(LPC_PAL[mat].pal).map(k => [k, LPC_PAL[mat].pal[k][3] || LPC_PAL[mat].pal[k][1], LPC_PAL[mat].label[k] || k]);
   const CC_CATS = [
-    { k: 'face', label: '臉部', crop: 'head', opts: [['eyes', [['big', '大眼'], ['proud', '傲嬌'], ['squint', '瞇瞇眼'], ['confident', '自信'], ['cool', '冷酷'], ['sleepy', '睏睏眼']]], ['mouth', [['smile', '微笑'], ['grin', '露齒笑'], ['open', '開心'], ['cat', '貓嘴'], ['flat', '一字嘴'], ['smirk', '壞笑']]]],
-      swatches: [['skin', '膚色', SKINS], ['eyeColor', '瞳色', EYEC]], toggle: ['blush', '腮紅'] },
-    { k: 'hair', label: '髮型', crop: 'head', opts: [['hair', [['spiky', '刺蝟頭'], ['short', '短短髮'], ['middle', '中分'], ['pony', '馬尾'], ['twin', '雙馬尾'], ['curly', '捲髮'], ['long', '長直髮'], ['bob', '妹妹頭'], ['bun', '包包頭'], ['bald', '光頭']]]],
-      swatches: [['hairColor', '髮色', HAIRC]] },
-    { k: 'body', label: '體型', crop: 'full', opts: [['body', [['normal', '標準'], ['slim', '纖細'], ['chubby', '胖胖身'], ['muscle', '肌肉身']]]] },
-    { k: 'top', label: '上衣', crop: 'torso', opts: [['top', [['tee', 'T恤'], ['hoodie', '休閒衛衣'], ['jacket', '冒險外套'], ['robe', '魔法長袍'], ['armor', '重裝鎧甲'], ['tank', '運動背心'], ['jersey', '球衣']]]],
-      swatches: [['topColor', '上衣顏色', PAL]] },
-    { k: 'bottom', label: '下身', crop: 'legs', opts: [['bottom', [['joggers', '束口長褲'], ['shorts', '運動短褲'], ['skirt', '百褶短裙'], ['leggings', '緊身褲'], ['armorleg', '防禦護甲']]]],
-      swatches: [['bottomColor', '下身顏色', PAL]] },
-    { k: 'shoes', label: '鞋子', crop: 'legs', opts: [['shoes', [['sneakers', '運動鞋'], ['boots', '戰鬥靴'], ['hightop', '高筒鞋'], ['sandals', '拖鞋']]]],
-      swatches: [['shoeColor', '鞋子顏色', PAL]] },
-    { k: 'acc', label: '配件', crop: 'head', opts: [['acc', [['none', '無'], ['sunglasses', '酷炫墨鏡'], ['glasses', '眼鏡'], ['mask', '神秘面罩'], ['cap', '棒球帽'], ['headband', '運動頭帶'], ['earphones', '耳機']]]] },
+    { k: 'body', label: '體型', slot: 'body', crop: 'full', swatches: [['skin', '膚色', 'body']], height: true },
+    { k: 'head', label: '臉型', slot: 'head', crop: 'head', swatches: [['eyes', '瞳色', 'eye']] },
+    { k: 'face', label: '表情', slot: 'face', crop: 'head' },
+    { k: 'hair', label: '髮型', slot: 'hair', crop: 'head', swatches: [['hairColor', '髮色', 'hair']] },
+    { k: 'brows', label: '眉毛', slot: 'brows', crop: 'head' },
+    { k: 'top', label: '上衣', slot: 'top', crop: 'torso', swatches: [['topColor', '上衣顏色', 'cloth']] },
+    { k: 'legs', label: '下身', slot: 'legs', crop: 'legs', swatches: [['legsColor', '下身顏色', 'cloth']] },
+    { k: 'feet', label: '鞋子', slot: 'feet', crop: 'legs', swatches: [['feetColor', '鞋子顏色', 'cloth']] },
+    { k: 'acc', label: '眼鏡', slot: 'acc', crop: 'head' },
+    { k: 'hat', label: '帽子', slot: 'hat', crop: 'head' },
   ];
-
   const PRESETS = [
-    ['刺蝟少年', { gender: 'm', height: .5, body: 'normal', skin: 1, eyes: 'big', eyeColor: 1, mouth: 'grin', blush: true, hair: 'spiky', hairColor: 1, top: 'jacket', topColor: 7, bottom: 'joggers', bottomColor: 5, shoes: 'boots', shoeColor: 7, acc: 'none' }],
-    ['酷炫哥', { gender: 'm', height: .7, body: 'normal', skin: 2, eyes: 'cool', eyeColor: 0, mouth: 'smirk', blush: false, hair: 'spiky', hairColor: 0, top: 'hoodie', topColor: 5, bottom: 'joggers', bottomColor: 5, shoes: 'sneakers', shoeColor: 0, acc: 'sunglasses' }],
-    ['上班族', { gender: 'm', height: .55, body: 'normal', skin: 1, eyes: 'confident', eyeColor: 0, mouth: 'smile', blush: false, hair: 'middle', hairColor: 0, top: 'tee', topColor: 9, bottom: 'joggers', bottomColor: 5, shoes: 'sneakers', shoeColor: 6, acc: 'glasses' }],
-    ['肌肉猛男', { gender: 'm', height: .8, body: 'muscle', skin: 3, eyes: 'confident', eyeColor: 0, mouth: 'grin', blush: false, hair: 'short', hairColor: 0, top: 'tank', topColor: 0, bottom: 'shorts', bottomColor: 5, shoes: 'sneakers', shoeColor: 6, acc: 'headband' }],
-    ['元氣少女', { gender: 'f', height: .35, body: 'normal', skin: 0, eyes: 'big', eyeColor: 1, mouth: 'smile', blush: true, hair: 'twin', hairColor: 1, top: 'tee', topColor: 6, bottom: 'skirt', bottomColor: 0, shoes: 'boots', shoeColor: 7, acc: 'none' }],
-    ['馬尾跑者', { gender: 'f', height: .5, body: 'slim', skin: 1, eyes: 'big', eyeColor: 2, mouth: 'open', blush: true, hair: 'pony', hairColor: 2, top: 'tank', topColor: 3, bottom: 'leggings', bottomColor: 5, shoes: 'sneakers', shoeColor: 8, acc: 'cap' }],
-    ['捲髮甜心', { gender: 'f', height: .4, body: 'normal', skin: 0, eyes: 'proud', eyeColor: 3, mouth: 'cat', blush: true, hair: 'curly', hairColor: 7, top: 'hoodie', topColor: 8, bottom: 'skirt', bottomColor: 4, shoes: 'hightop', shoeColor: 6, acc: 'earphones' }],
-    ['魔法師', { gender: 'f', height: .45, body: 'normal', skin: 1, eyes: 'squint', eyeColor: 3, mouth: 'smile', blush: true, hair: 'long', hairColor: 4, top: 'robe', topColor: 4, bottom: 'leggings', bottomColor: 5, shoes: 'boots', shoeColor: 7, acc: 'none' }],
+    ['熱血少年', { body: 'male', head: 'male', face: 'happy', brows: 'thick', hair: 'spiked', top: 'tshirt', legs: 'shorts', feet: 'shoes', acc: 'none', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'dark_brown', topColor: 'red', legsColor: 'navy', feetColor: 'white', height: 1 }],
+    ['酷炫哥', { body: 'male', head: 'gaunt', face: 'none', brows: 'thick', hair: 'messy1', top: 'longsleeve', legs: 'pants', feet: 'boots', acc: 'shades', hat: 'none', skin: 'taupe', eyes: 'gray', hairColor: 'black', topColor: 'black', legsColor: 'gray', feetColor: 'black', height: 1.1 }],
+    ['上班族', { body: 'male', head: 'male', face: 'none', brows: 'thin', hair: 'parted', top: 'polo', legs: 'pants', feet: 'revised', acc: 'glasses', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'black', topColor: 'sky', legsColor: 'navy', feetColor: 'brown', height: 1 }],
+    ['肌肉猛男', { body: 'muscular', head: 'plump', face: 'happy', brows: 'thick', hair: 'buzzcut', top: 'tank', legs: 'shorts', feet: 'shoes', acc: 'none', hat: 'none', skin: 'bronze', eyes: 'brown', hairColor: 'black', topColor: 'red', legsColor: 'black', feetColor: 'white', height: 1.1 }],
+    ['元氣少女', { body: 'female', head: 'female', face: 'happy', brows: 'thin', hair: 'bunches', top: 'tshirt', legs: 'skirt', feet: 'shoes', acc: 'none', hat: 'none', skin: 'light', eyes: 'blue', hairColor: 'chestnut', topColor: 'white', legsColor: 'red', feetColor: 'brown', height: .95 }],
+    ['馬尾跑者', { body: 'female', head: 'female', face: 'none', brows: 'thin', hair: 'high_ponytail', top: 'tank', legs: 'leggings', feet: 'shoes', acc: 'none', hat: 'none', skin: 'amber', eyes: 'green', hairColor: 'blonde', topColor: 'teal', legsColor: 'black', feetColor: 'pink', height: 1.05 }],
+    ['文青女孩', { body: 'female', head: 'female', face: 'blush', brows: 'thin', hair: 'bob', top: 'cardigan', legs: 'skirt', feet: 'slippers', acc: 'round', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'black', topColor: 'tan', legsColor: 'navy', feetColor: 'brown', height: .95 }],
+    ['小不點', { body: 'teen', head: 'small', face: 'happy', brows: 'none', hair: 'curly_short', top: 'vneck', legs: 'short_shorts', feet: 'sandals', acc: 'none', hat: 'leather_cap', skin: 'olive', eyes: 'orange', hairColor: 'redhead', topColor: 'yellow', legsColor: 'blue', feetColor: 'brown', height: .9 }],
   ];
-  const DEFAULT_AVATAR = () => Object.assign({ v: 2, name: '我' }, PRESETS[0][1]);
-
-  function avatarSVG(a, o = {}) {
-    const L = '#3a2a24';
-    const skin = SKINS[a.skin] || SKINS[1], skinD = shade(skin, -30);
-    const hc = HAIRC[a.hairColor] || HAIRC[0], hcD = shade(hc, -55), hcL = shade(hc, 55);
-    const ec = EYEC[a.eyeColor] || EYEC[0];
-    const tc = PAL[a.topColor] ?? PAL[0], tcD = shade(tc, -40);
-    const bc = PAL[a.bottomColor] ?? PAL[5], bcD = shade(bc, -40);
-    const sc = PAL[a.shoeColor] ?? PAL[6], scD = shade(sc, -45);
-    const fem = a.gender === 'f';
-    const h = Math.max(0, Math.min(1, isFinite(+a.height) ? +a.height : .5));
-    const legLen = Math.round(26 + h * 32);
-    const body = a.body || 'normal';
-    const bw = { normal: fem ? 54 : 58, chubby: 78, muscle: 72, slim: 46 }[body] || 58;
-    const x0 = 100 - bw / 2, x1 = 100 + bw / 2;
-    const top = 150, hip = 204, feet = hip + legLen;
-    const dy = 288 - (feet + 10);
-    const hurt = o.hurt;
-    const legOff = { chubby: 18, slim: 10, muscle: 16 }[body] || 13;
-    const legW = { chubby: 24, slim: 14, muscle: 21 }[body] || 18;
-    const aw = { chubby: 16, slim: 11, muscle: 17 }[body] || 13;
-
-    // --- hair back ---
-    let hairBack = '';
-    const hb = (d) => `<path d="${d}" fill="${hc}" stroke="${hcD}" stroke-width="3" stroke-linejoin="round"/>`;
-    switch (a.hair) {
-      case 'pony': hairBack = hb('M138 58 Q190 66 184 128 Q180 172 158 190 Q172 140 148 100Z') + `<circle cx="146" cy="62" r="7" fill="#e0424f" stroke="${L}" stroke-width="2.5"/>`; break;
-      case 'twin': hairBack = hb('M56 62 Q8 70 12 140 Q14 184 36 200 Q30 150 52 112Z') + hb('M144 62 Q192 70 188 140 Q186 184 164 200 Q170 150 148 112Z') + `<circle cx="54" cy="64" r="7" fill="#e0424f" stroke="${L}" stroke-width="2.5"/><circle cx="146" cy="64" r="7" fill="#e0424f" stroke="${L}" stroke-width="2.5"/>`; break;
-      case 'curly': {
-        let c = '';
-        [[44, 70], [36, 100], [40, 130], [52, 152], [156, 70], [164, 100], [160, 130], [148, 152], [64, 44], [100, 34], [136, 44]].forEach(([x, y]) => { c += `<circle cx="${x}" cy="${y}" r="22" fill="${hc}" stroke="${hcD}" stroke-width="3"/>`; });
-        hairBack = c; break;
-      }
-      case 'long': hairBack = hb('M38 100 Q30 28 100 28 Q170 28 162 100 Q172 180 158 214 L42 214 Q28 180 38 100Z'); break;
-      case 'bob': hairBack = hb('M34 100 Q28 28 100 28 Q172 28 166 100 L168 152 Q146 162 132 150 L68 150 Q54 162 32 152Z'); break;
-      case 'bun': hairBack = `<circle cx="100" cy="30" r="22" fill="${hc}" stroke="${hcD}" stroke-width="3"/>`; break;
-      case 'middle': hairBack = hb('M38 108 Q30 30 100 30 Q170 30 162 108 L164 138 Q152 146 146 132 L54 132 Q48 146 36 138Z'); break;
-    }
-
-    // --- legs ---
-    function leg(cx) {
-      let s = '';
-      const lx = cx - legW / 2;
-      if (a.bottom === 'shorts' || a.bottom === 'skirt') {
-        s += `<rect x="${lx}" y="${hip - 6}" width="${legW}" height="${feet - hip + 4}" rx="${legW / 2.4}" fill="${skin}" stroke="${L}" stroke-width="3"/>`;
-        if (a.bottom === 'shorts') s += `<rect x="${lx - 3}" y="${hip - 8}" width="${legW + 6}" height="24" rx="6" fill="${bc}" stroke="${L}" stroke-width="3"/><path d="M${lx + 2} ${hip + 10} h${legW - 4}" stroke="#fff" stroke-width="2" opacity=".6"/>`;
-      } else if (a.bottom === 'armorleg') {
-        s += `<rect x="${lx - 1}" y="${hip - 6}" width="${legW + 2}" height="${feet - hip + 4}" rx="6" fill="#a7b0ba" stroke="${L}" stroke-width="3"/>`
-          + `<ellipse cx="${cx}" cy="${hip + legLen * .45}" rx="${legW / 2 + 2}" ry="7" fill="#d5dbe2" stroke="${L}" stroke-width="2.5"/>`
-          + `<path d="M${lx + 1} ${hip + 6} h${legW} M${lx + 1} ${feet - 12} h${legW}" stroke="${L}" stroke-width="2"/>`;
-      } else {
-        const w = a.bottom === 'leggings' ? legW - 1 : legW + 3;
-        s += `<rect x="${cx - w / 2}" y="${hip - 6}" width="${w}" height="${feet - hip + 4}" rx="7" fill="${bc}" stroke="${L}" stroke-width="3"/>`;
-        if (a.bottom === 'joggers') s += `<rect x="${cx - w / 2}" y="${feet - 11}" width="${w}" height="9" rx="4" fill="${bcD}" stroke="${L}" stroke-width="2.5"/><path d="M${cx + (cx < 100 ? -w / 2 + 4 : w / 2 - 4)} ${hip} v${legLen - 14}" stroke="#fff" stroke-width="2.5" opacity=".55"/>`;
-      }
-      // shoes
-      switch (a.shoes) {
-        case 'boots':
-          s += `<path d="M${cx - 12} ${feet - 16} h24 v14 q6 2 6 10 h-36 q0 -8 6 -10 z" fill="${sc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M${cx - 12} ${feet - 9} h24" stroke="${scD}" stroke-width="3"/><rect x="${cx - 18}" y="${feet + 6}" width="36" height="5" rx="2" fill="${scD}" stroke="${L}" stroke-width="2"/>`; break;
-        case 'hightop':
-          s += `<path d="M${cx - 12} ${feet - 12} h24 v8 q8 2 8 12 h-40 q0 -10 8 -12 z" fill="${sc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M${cx - 6} ${feet - 8} l12 4 M${cx - 6} ${feet - 2} l12 -4" stroke="${L}" stroke-width="1.8"/><rect x="${cx - 20}" y="${feet + 6}" width="40" height="6" rx="3" fill="#fff" stroke="${L}" stroke-width="2.5"/>`; break;
-        case 'sandals':
-          s += `<ellipse cx="${cx}" cy="${feet + 4}" rx="15" ry="7" fill="${skin}" stroke="${L}" stroke-width="3"/><path d="M${cx - 12} ${feet + 2} q12 -8 24 0" stroke="${sc}" stroke-width="5" fill="none"/><rect x="${cx - 17}" y="${feet + 8}" width="34" height="4" rx="2" fill="${scD}"/>`; break;
-        default:
-          s += `<path d="M${cx - 15} ${feet + 8} q-1 -14 15 -15 q16 1 15 15 z" fill="${sc}" stroke="${L}" stroke-width="3"/><path d="M${cx - 6} ${feet - 3} h12" stroke="${scD}" stroke-width="2"/><rect x="${cx - 17}" y="${feet + 5}" width="34" height="6" rx="3" fill="#fff" stroke="${L}" stroke-width="2.5"/>`;
-      }
-      return s;
-    }
-    const legs = `<g class="leg-l">${leg(100 - legOff)}</g><g class="leg-r">${leg(100 + legOff)}</g>`;
-
-    // --- torso / top ---
-    let back = '', torso = '', over = '';
-    const T = (fill) => `<rect x="${x0}" y="${top}" width="${bw}" height="${hip - top + 6}" rx="16" fill="${fill}" stroke="${L}" stroke-width="3"/>`;
-    switch (a.top) {
-      case 'hoodie':
-        back = `<path d="M${x0 + 2} ${top + 12} Q100 ${top - 26} ${x1 - 2} ${top + 12}" fill="${tcD}" stroke="${L}" stroke-width="3"/>`;
-        torso = T(tc) + `<path d="M${x0 + 10} ${hip - 14} h${bw - 20} l-5 15 h-${bw - 30} z" fill="${tcD}" stroke="${L}" stroke-width="2.5"/><path d="M94 ${top + 6} v16 M106 ${top + 6} v16" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`;
-        break;
-      case 'jacket':
-        torso = T('#f7f2e8') + `<path d="M${x0} ${top + 12} Q${x0} ${top} ${x0 + 14} ${top} L96 ${top + 8} L91 ${hip + 6} L${x0 + 4} ${hip + 6} Q${x0} ${hip + 6} ${x0} ${hip}Z" fill="${tc}" stroke="${L}" stroke-width="3"/>`
-          + `<path d="M${x1} ${top + 12} Q${x1} ${top} ${x1 - 14} ${top} L104 ${top + 8} L109 ${hip + 6} L${x1 - 4} ${hip + 6} Q${x1} ${hip + 6} ${x1} ${hip}Z" fill="${tc}" stroke="${L}" stroke-width="3"/>`
-          + `<path d="M96 ${top + 8} l-8 12 l6 4 M104 ${top + 8} l8 12 l-6 4" fill="${tcD}" stroke="${L}" stroke-width="2"/>`
-          + `<path d="M${x0 + 8} ${top + 6} L${x1 - 8} ${hip - 6}" stroke="#7a4a26" stroke-width="7" stroke-linecap="round"/>`
-          + `<rect x="${x0}" y="${hip - 8}" width="${bw}" height="8" fill="#6b3f1f" stroke="${L}" stroke-width="2"/><rect x="95" y="${hip - 10}" width="10" height="12" rx="2" fill="#e8c35a" stroke="${L}" stroke-width="2"/>`;
-        break;
-      case 'robe':
-        torso = `<path d="M${x0} ${top + 6} Q100 ${top - 6} ${x1} ${top + 6} L${x1 + 16} ${feet - 10} Q100 ${feet - 2} ${x0 - 16} ${feet - 10} Z" fill="${tc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`
-          + `<path d="M100 ${top + 2} V${feet - 6}" stroke="#f2c14e" stroke-width="5"/><path d="M${x0 - 14} ${feet - 14} Q100 ${feet - 4} ${x1 + 14} ${feet - 14}" stroke="#f2c14e" stroke-width="4" fill="none"/>`
-          + `<rect x="${x0 - 2}" y="${hip - 6}" width="${bw + 4}" height="8" rx="3" fill="${tcD}" stroke="${L}" stroke-width="2"/><circle cx="100" cy="${top + 12}" r="5" fill="#7fd3ff" stroke="${L}" stroke-width="2"/>`;
-        break;
-      case 'armor':
-        torso = T('#a7b0ba') + `<path d="M${x0 + 8} ${top + 8} Q100 ${top + 2} ${x1 - 8} ${top + 8} L${x1 - 12} ${hip - 14} Q100 ${hip - 4} ${x0 + 12} ${hip - 14} Z" fill="#d5dbe2" stroke="${L}" stroke-width="2.5"/>`
-          + `<path d="M100 ${top + 8} V${hip - 8}" stroke="#8c96a1" stroke-width="2"/><rect x="${x0}" y="${hip - 8}" width="${bw}" height="9" fill="#6b3f1f" stroke="${L}" stroke-width="2"/>`;
-        over = `<ellipse cx="${x0 + 2}" cy="${top + 9}" rx="15" ry="11" fill="#d5dbe2" stroke="${L}" stroke-width="3"/><ellipse cx="${x1 - 2}" cy="${top + 9}" rx="15" ry="11" fill="#d5dbe2" stroke="${L}" stroke-width="3"/>`;
-        break;
-      case 'tank':
-        torso = T(skin) + `<path d="M${x0 + 4} ${hip + 6} L${x0 + 4} ${top + 18} Q${x0 + 6} ${top + 2} ${x0 + 16} ${top + 1} L91 ${top + 14} Q100 ${top + 22} 109 ${top + 14} L${x1 - 16} ${top + 1} Q${x1 - 6} ${top + 2} ${x1 - 4} ${top + 18} L${x1 - 4} ${hip + 6}Z" fill="${tc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`;
-        if (body === 'muscle') torso += `<path d="M88 ${top + 30} q12 6 24 0" stroke="${tcD}" stroke-width="2" fill="none"/>`;
-        break;
-      case 'jersey':
-        torso = T(tc) + `<path d="M88 ${top} L100 ${top + 16} L112 ${top}" fill="#fff" stroke="${L}" stroke-width="2.5"/><text x="100" y="${hip - 8}" text-anchor="middle" font-size="22" font-weight="900" fill="#fff" stroke="${L}" stroke-width="1.2" font-family="Arial, sans-serif">7</text>`;
-        break;
-      default:
-        torso = T(tc) + `<path d="M88 ${top + 1} q12 11 24 0" fill="${skin}" stroke="${L}" stroke-width="2.5"/>`;
-    }
-    const skirt = a.bottom === 'skirt' && a.top !== 'robe'
-      ? `<path d="M${x0 - 2} ${hip - 8} L${x1 + 2} ${hip - 8} L${x1 + 13} ${hip + 22} Q100 ${hip + 28} ${x0 - 13} ${hip + 22} Z" fill="${bc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M${x0 + 8} ${hip - 6} l-5 28 M${x0 + bw * .37} ${hip - 6} l-2 30 M${x1 - bw * .37} ${hip - 6} l2 30 M${x1 - 8} ${hip - 6} l5 28" stroke="${bcD}" stroke-width="2"/>`
-      : '';
-
-    // --- arms ---
-    const longSleeve = ['hoodie', 'jacket', 'robe', 'armor'].includes(a.top);
-    const shortSleeve = ['tee', 'jersey'].includes(a.top);
-    const sleeveC = a.top === 'armor' ? '#a7b0ba' : tc;
-    function arm(side) {
-      const sx = side < 0 ? x0 + 6 : x1 - 6, sy = top + 12;
-      const hx = side < 0 ? x0 - 9 : x1 + 9, hy = hip - 4;
-      const d = `M${sx} ${sy} L${hx} ${hy}`;
-      let s = '';
-      if (a.top === 'robe') {
-        s += `<path d="M${sx} ${sy - 4} L${hx - side * 2} ${hy - 6} L${hx + side * 12} ${hy + 2} L${sx + side * 6} ${sy + 6} Z" fill="${tc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`;
-        s += `<circle cx="${hx}" cy="${hy + 2}" r="7.5" fill="${skin}" stroke="${L}" stroke-width="3"/>`;
-        return s;
-      }
-      s += `<path d="${d}" stroke="${L}" stroke-width="${aw + 6}" stroke-linecap="round"/><path d="${d}" stroke="${skin}" stroke-width="${aw}" stroke-linecap="round"/>`;
-      if (longSleeve) s += `<path d="${d}" stroke="${sleeveC}" stroke-width="${aw}" stroke-linecap="round"/><path d="M${hx - 5} ${hy - 7} l10 3" stroke="${shade(sleeveC, -40)}" stroke-width="3" stroke-linecap="round"/>`;
-      else if (shortSleeve) { const mx = sx + (hx - sx) * .42, my = sy + (hy - sy) * .42; s += `<path d="M${sx} ${sy} L${mx} ${my}" stroke="${L}" stroke-width="${aw + 8}" stroke-linecap="round"/><path d="M${sx} ${sy} L${mx} ${my}" stroke="${tc}" stroke-width="${aw + 2}" stroke-linecap="round"/>`; }
-      if (body === 'muscle' && !longSleeve) s += `<circle cx="${sx + (hx - sx) * .35}" cy="${sy + (hy - sy) * .35}" r="${aw / 2 + 2}" fill="${skin}" stroke="${L}" stroke-width="2"/>`;
-      const handC = a.top === 'armor' ? '#8c96a1' : skin;
-      s += `<circle cx="${hx}" cy="${hy + 2}" r="${aw / 2 + 2}" fill="${handC}" stroke="${L}" stroke-width="3"/>`;
-      return s;
-    }
-    const arms = `<g class="arm-l">${arm(-1)}</g><g class="arm-r">${arm(1)}</g>`;
-
-    // --- head ---
-    const ey = 106;
-    function eye(x, side) {
-      if (hurt) return `<path d="M${x - 8} ${ey - 8} l16 16 M${x + 8} ${ey - 8} l-16 16" stroke="${L}" stroke-width="4" stroke-linecap="round"/>`;
-      const outer = x + side * 12, inner = x - side * 12;
-      const iris = (rx, ry) => `<ellipse cx="${x}" cy="${ey}" rx="${rx}" ry="${ry}" fill="${ec}" stroke="${L}" stroke-width="2.5"/><ellipse cx="${x}" cy="${ey + 2}" rx="${rx * .55}" ry="${ry * .58}" fill="${shade(ec, -60)}"/><circle cx="${x - 3}" cy="${ey - 5}" r="${rx * .36}" fill="#fff"/><circle cx="${x + 3}" cy="${ey + 5}" r="1.8" fill="#fff"/>`;
-      const cover = (yy) => `<path d="M${x - 15} ${ey - 22} H${x + 15} V${yy} H${x - 15}Z" fill="${skin}"/>`;
-      const lash = fem ? `<path d="M${outer} ${ey - 7} l${side * 6} -5" stroke="${L}" stroke-width="3" stroke-linecap="round"/>` : '';
-      switch (a.eyes) {
-        case 'proud': return iris(10, 12) + cover(ey - 3) + `<path d="M${x - 13} ${ey - 3} Q${x} ${ey - 6} ${x + 13} ${ey - 3}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>` + lash;
-        case 'squint': return `<path d="M${x - 11} ${ey + 2} Q${x} ${ey - 10} ${x + 11} ${ey + 2}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-        case 'confident': return iris(8.5, 11) + `<path d="M${outer} ${ey - 13} L${inner} ${ey - 6} L${inner} ${ey - 22} L${outer} ${ey - 22}Z" fill="${skin}"/><path d="M${outer} ${ey - 11} L${inner} ${ey - 5}" stroke="${L}" stroke-width="4" stroke-linecap="round"/>` + lash;
-        case 'cool': return iris(9, 11) + cover(ey - 1) + `<path d="M${x - 12} ${ey - 1} H${x + 12}" stroke="${L}" stroke-width="4" stroke-linecap="round"/>` + lash;
-        case 'sleepy': return `<path d="M${x - 10} ${ey} Q${x} ${ey + 8} ${x + 10} ${ey}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-        default: return iris(10, 13) + `<path d="M${x - 12} ${ey - 8} Q${x} ${ey - 19} ${x + 12} ${ey - 8}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>` + lash;
-      }
-    }
-    function brow(x, side) {
-      const outer = x + side * 10, inner = x - side * 10;
-      switch (a.eyes) {
-        case 'confident': return `<path d="M${outer} ${ey - 27} L${inner} ${ey - 21}" stroke="${hcD}" stroke-width="4" stroke-linecap="round"/>`;
-        case 'proud': return `<path d="M${outer} ${ey - 24} L${inner} ${ey - 28}" stroke="${hcD}" stroke-width="3.5" stroke-linecap="round"/>`;
-        case 'cool': return `<path d="M${x - 10} ${ey - 21} H${x + 10}" stroke="${hcD}" stroke-width="4" stroke-linecap="round"/>`;
-        default: return `<path d="M${x - 9} ${ey - 24} Q${x} ${ey - 29} ${x + 9} ${ey - 24}" stroke="${hcD}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
-      }
-    }
-    const mouths = {
-      smile: `<path d="M92 126 Q100 134 108 126" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
-      grin: `<path d="M89 123 Q100 139 111 123 Z" fill="#fff" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M91 127 h18" stroke="${L}" stroke-width="1.5"/>`,
-      open: `<path d="M91 123 Q100 141 109 123 Z" fill="#c9424f" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M95 132 q5 4 10 0" fill="#ff8f9c"/>`,
-      cat: `<path d="M89 124 q5.5 7 11 0 q5.5 7 11 0" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
-      flat: `<path d="M93 128 h14" stroke="${L}" stroke-width="3.5" stroke-linecap="round"/>`,
-      smirk: `<path d="M91 128 Q103 131 110 122" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
-    };
-    const mouth = hurt ? `<path d="M87 128 q4 -6 8 0 q4 6 8 0 q4 -6 8 0" stroke="${L}" stroke-width="3" fill="none"/>` : (mouths[a.mouth] || mouths.smile);
-    const blush = a.blush !== false ? `<ellipse cx="68" cy="122" rx="10" ry="5.5" fill="#ff8f9c" opacity=".45"/><ellipse cx="132" cy="122" rx="10" ry="5.5" fill="#ff8f9c" opacity=".45"/>` : '';
-    const head = `<rect x="91" y="${top - 14}" width="18" height="18" fill="${skinD}" stroke="${L}" stroke-width="2.5"/>`
-      + `<ellipse cx="43" cy="108" rx="8" ry="11" fill="${skin}" stroke="${L}" stroke-width="3"/><ellipse cx="157" cy="108" rx="8" ry="11" fill="${skin}" stroke="${L}" stroke-width="3"/>`
-      + `<ellipse cx="100" cy="98" rx="58" ry="55" fill="${skin}" stroke="${L}" stroke-width="3.5"/>`
-      + blush + brow(76, -1) + brow(124, 1) + eye(76, -1) + eye(124, 1)
-      + `<path d="M98 117 q2 2 4 0" stroke="${skinD}" stroke-width="2.5" fill="none" stroke-linecap="round"/>` + mouth;
-
-    // --- hair front ---
-    const hf = (d) => `<path d="${d}" fill="${hc}" stroke="${hcD}" stroke-width="3" stroke-linejoin="round"/>`;
-    const shine = `<path d="M66 52 Q84 40 104 42" stroke="${hcL}" stroke-width="5" fill="none" stroke-linecap="round" opacity=".75"/>`;
-    let hairFront = '';
-    switch (a.hair) {
-      case 'spiky': hairFront = hf('M40 110 L26 86 L43 82 L28 56 L55 60 L50 30 L76 45 L86 12 L104 38 L122 10 L130 45 L154 30 L150 60 L174 56 L159 82 L176 86 L160 110 Q152 84 140 76 L132 92 L118 74 L104 92 L92 74 L78 92 L66 76 Q50 86 40 110Z') + shine; break;
-      case 'middle': hairFront = hf('M42 114 Q34 32 100 30 Q166 32 158 114 Q156 82 140 66 Q122 54 104 56 L100 68 L96 56 Q78 54 60 66 Q44 82 42 114Z') + shine; break;
-      case 'pony': hairFront = hf('M42 108 Q36 32 100 30 Q164 32 158 108 Q150 76 130 64 Q104 88 62 82 Q48 92 42 108Z') + shine; break;
-      case 'twin': hairFront = hf('M42 110 Q36 32 100 30 Q164 32 158 110 Q152 80 138 72 Q130 86 114 78 Q104 90 92 78 Q78 88 64 74 Q50 86 42 110Z') + shine; break;
-      case 'curly': hairFront = hf('M42 106 Q30 40 100 30 Q170 40 158 106 Q156 88 146 82 Q140 94 128 86 Q120 98 108 88 Q100 98 92 88 Q80 98 72 86 Q60 94 54 82 Q44 88 42 106Z') + shine; break;
-      case 'long': hairFront = hf('M40 120 Q34 32 100 30 Q166 32 160 120 Q156 86 144 74 Q126 82 100 70 Q74 82 56 74 Q44 86 40 120Z') + shine; break;
-      case 'bob': hairFront = hf('M40 112 Q34 32 100 30 Q166 32 160 112 L154 82 Q100 90 46 82Z') + shine; break;
-      case 'bun': hairFront = hf('M42 104 Q36 34 100 32 Q164 34 158 104 Q152 78 136 68 Q116 60 100 64 Q82 58 64 68 Q48 78 42 104Z') + shine; break;
-      case 'bald': hairFront = `<ellipse cx="80" cy="60" rx="14" ry="7" fill="#fff" opacity=".45" transform="rotate(-20 80 60)"/>`; break;
-      default: hairFront = hf('M42 106 Q36 32 100 30 Q164 32 158 106 Q154 82 146 72 Q140 86 126 80 Q116 66 100 74 Q86 64 76 80 Q62 88 54 72 Q46 84 42 106Z') + shine;
-    }
-
-    // --- accessories ---
-    const accs = {
-      sunglasses: `<path d="M44 102 L58 100 M156 102 L142 100" stroke="#222" stroke-width="3"/><path d="M58 98 h32 q2 18 -15 18 q-18 0 -17 -18z M110 98 h32 q1 18 -17 18 q-17 0 -15 -18z" fill="#1d1f2a" stroke="${L}" stroke-width="2.5"/><path d="M90 101 h20" stroke="${L}" stroke-width="3"/><path d="M64 103 l9 -3 M116 103 l9 -3" stroke="#fff" stroke-width="2.5" opacity=".7" stroke-linecap="round"/>`,
-      glasses: `<g fill="#fff" fill-opacity=".15" stroke="${L}" stroke-width="3"><circle cx="76" cy="106" r="14"/><circle cx="124" cy="106" r="14"/></g><path d="M90 104 q10 -4 20 0 M62 104 L45 100 M138 104 L155 100" stroke="${L}" stroke-width="3" fill="none"/>`,
-      mask: `<path fill-rule="evenodd" d="M50 102 Q74 82 100 98 Q126 82 150 102 Q144 124 124 120 Q110 116 100 110 Q90 116 76 120 Q56 124 50 102Z M88 106 a12 9 0 1 0 -24 0 a12 9 0 1 0 24 0Z M136 106 a12 9 0 1 0 -24 0 a12 9 0 1 0 24 0Z" fill="#7b3fb5" stroke="${L}" stroke-width="2.5"/><path d="M50 102 l-10 -8 M150 102 l10 -8" stroke="#7b3fb5" stroke-width="4"/>`,
-      cap: `<path d="M40 82 Q40 26 100 24 Q160 26 160 82 Z" fill="${tc}" stroke="${L}" stroke-width="3"/><path d="M48 78 Q100 94 152 78 Q154 92 100 100 Q46 92 48 78Z" fill="${tcD}" stroke="${L}" stroke-width="3"/><circle cx="100" cy="25" r="5" fill="${tcD}" stroke="${L}" stroke-width="2"/><path d="M100 28 V78" stroke="${tcD}" stroke-width="2"/>`,
-      headband: `<path d="M42 76 Q100 54 158 76 L157 89 Q100 67 43 89Z" fill="#e0424f" stroke="${L}" stroke-width="3"/><path d="M156 80 l18 -10 l-3 14 z M156 85 l16 10 l-13 4 z" fill="#e0424f" stroke="${L}" stroke-width="2.5" stroke-linejoin="round"/>`,
-      earphones: `<path d="M44 104 Q38 18 100 20 Q162 18 156 104" stroke="#2d2f3a" stroke-width="7" fill="none"/><rect x="32" y="92" width="18" height="28" rx="8" fill="#e8505b" stroke="${L}" stroke-width="3"/><rect x="150" y="92" width="18" height="28" rx="8" fill="#e8505b" stroke="${L}" stroke-width="3"/>`,
-    };
-    const acc = accs[a.acc] || '';
-    const bump = o.bump ? `<ellipse cx="128" cy="40" rx="16" ry="13" fill="#f6a3a8" stroke="${L}" stroke-width="3"/><ellipse cx="128" cy="40" rx="7" ry="5" fill="#ef7f8a"/><g transform="translate(68 62) rotate(-20)"><rect x="-17" y="-6" width="34" height="12" rx="5" fill="#f5d7a8" stroke="${L}" stroke-width="2.5"/><path d="M-4 -6 v12 M4 -6 v12" stroke="${L}" stroke-width="1.5"/></g><text x="150" y="30" font-size="18">💫</text>` : '';
-    const stars = hurt ? `<text x="40" y="40" font-size="20">💥</text><text x="140" y="34" font-size="18">⭐</text>` : '';
-
-    let vb = `0 0 200 300`;
-    if (o.crop === 'head') vb = `22 ${12} 156 150`;
-    else if (o.crop === 'torso') vb = `16 ${top - 30 + dy} 168 ${hip - top + 70}`;
-    else if (o.crop === 'legs') vb = `28 ${hip - 22 + dy} 144 ${legLen + 48}`;
-    // head crop ignores dy since head is drawn untranslated in its own group
-    return `<svg class="av" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" aria-label="角色">
-      <g transform="translate(0 ${dy})">${back}${a.hair === 'long' || a.hair === 'twin' || a.hair === 'curly' || a.hair === 'pony' ? '' : ''}</g>
-      <g transform="translate(0 ${o.crop === 'head' ? 0 : dy})">${hairBack}</g>
-      <g transform="translate(0 ${dy})">${legs}${skirt}${torso}${over}${arms}</g>
-      <g transform="translate(0 ${o.crop === 'head' ? 0 : dy})">${head}${hairFront}${acc}${bump}${stars}</g>
-    </svg>`;
-  }
+  const DEFAULT_AVATAR = () => Object.assign({ v: 3, name: '我' }, PRESETS[0][1]);
 
   // ---------- gym background ----------
   function gymBG() {
@@ -1069,7 +1034,7 @@
   const pos = { player: { x: 74, y: 9 }, coach: { ...COACH_HOME } };
   function place(id, p, ms = 0) {
     const el = $(id);
-    const wPct = id === 'coach' ? 30 : 23;
+    const wPct = id === 'coach' ? 30 : 38;
     el.style.transitionDuration = ms + 'ms';
     el.style.left = (p.x - wPct / 2) + '%';
     el.style.bottom = p.y + '%';
@@ -1082,8 +1047,8 @@
     const dx = target.x - from.x, dy = target.y - from.y;
     const dist = Math.hypot(dx, dy * 1.4);
     const ms = Math.max(120, dist / speed * 1000);
-    const flip = $(id + '-flip');
-    if (Math.abs(dx) > 1) flip.classList.toggle('left', dx < 0);
+    if (id === 'coach') { const flip = $('coach-flip'); if (Math.abs(dx) > 1) flip.classList.toggle('left', dx < 0); }
+    else if (playerDoll && dist > 0.5) playerDoll.play('walk', Math.abs(dx) >= Math.abs(dy) * 1.2 ? (dx < 0 ? DIR.left : DIR.right) : (dy > 0 ? DIR.up : DIR.down));
     pos[id] = { x: target.x, y: target.y };
     place(id, pos[id], ms);
     return new Promise(res => setTimeout(res, ms + 30));
@@ -1098,13 +1063,19 @@
     await moveTo('player', clampPos(target), 30);
     if (token !== walkToken) return false;
     el.classList.remove('walking'); el.classList.add('idle');
+    if (playerDoll) playerDoll.play('idle');
     return true;
   }
 
+  let playerDoll = null;
   function renderPlayer(extra = {}) {
     const t = today();
     const bump = S.lastAttack === t && C && C.perDay[t] && C.perDay[t].n < 3;
-    $('player-inner').innerHTML = avatarSVG(S.avatar, { bump, ...extra });
+    if (!playerDoll) {
+      $('player-inner').innerHTML = '<canvas width="64" height="64" class="px"></canvas><div class="bump">🤕</div>';
+      playerDoll = makeDoll($('player-inner').firstElementChild, S.avatar, 'idle', DIR.down);
+    } else playerDoll.setAvatar(S.avatar);
+    $('player-inner').querySelector('.bump').style.display = bump ? 'block' : 'none';
     $('player-tag').textContent = S.avatar.name || '我';
   }
 
@@ -1201,13 +1172,14 @@
     App.closeSheet(true);
     walkToken++;
     const pl = $('player'); pl.classList.remove('walking', 'happy'); pl.classList.add('idle');
+    if (playerDoll) playerDoll.play('idle');
     setCoach('sprint', reason || pick(LINES.sprint));
     const side = pos.player.x > 50 ? -1 : 1;
     await moveTo('coach', clampPos({ x: pos.player.x + side * 15, y: pos.player.y + 1 }), 60);
     $('coach-flip').classList.toggle('left', side > 0);
     setCoach('attack');
     pl.classList.remove('idle'); pl.classList.add('hit');
-    renderPlayer({ hurt: true });
+    if (playerDoll) playerDoll.play('hurt');
     $('app').classList.add('shake');
     fxAt('boom', '碰！！', pos.player, 4);
     setTimeout(() => fxAt('boom', '咚！', { x: pos.player.x + 8, y: pos.player.y }, 14), 450);
@@ -1216,6 +1188,7 @@
     $('app').classList.remove('shake');
     pl.classList.remove('hit'); pl.classList.add('idle');
     S.lastAttack = today(); persist();
+    if (playerDoll) playerDoll.play('idle', DIR.down);
     renderPlayer();
     setCoach('angry', `耐心值只剩 ${C.patience}！今天三項全記完，頭上的包才會消！`);
     await new Promise(r => setTimeout(r, 900));
@@ -1343,29 +1316,29 @@
     return [x0 + nx, y0 + ny, Math.min(w - nx, maxX - minX + 2 * p), Math.min(h - ny, best[1] - best[0] + 2 * p)];
   }
 
-  // ---------- character creator ----------
-  let ccCat = 'face';
+
+  // ---------- character creator (paper-doll) ----------
+  let ccCat = 'body';
+  let ccDir = DIR.down;
+  let ccWalk = true;
   function creatorHTML(prefix) {
     const a = S.avatar;
     const cat = CC_CATS.find(c => c.k === ccCat) || CC_CATS[0];
-    let grid = '';
-    cat.opts.forEach(([key, list], gi) => {
-      if (cat.opts.length > 1) grid += `<div class="cc-sub">${key === 'eyes' ? '眼睛' : key === 'mouth' ? '嘴巴' : ''}</div>`;
-      grid += `<div class="cc-grid">` + list.map(([v, label]) =>
-        `<button class="cc-opt ${a[key] === v ? 'sel' : ''}" onclick="App.setAvatar('${key}','${v}')">${avatarSVG(Object.assign({}, a, { [key]: v }), { crop: cat.crop === 'full' ? null : cat.crop })}<div>${label}</div></button>`).join('') + `</div>`;
+    const parts = LPC_CATALOG[cat.slot] || [];
+    let grid = `<div class="cc-grid">` + parts.map(p =>
+      `<button class="cc-opt ${(cat.slot === 'body' ? a.body : a[cat.slot]) === p.id ? 'sel' : ''}" onclick="App.setAvatar('${cat.slot}','${p.id}')"><canvas data-thumb="${cat.slot}:${p.id}" data-crop="${cat.crop}"></canvas><div>${p.label}</div></button>`).join('') + `</div>`;
+    (cat.swatches || []).forEach(([key, label, mat]) => {
+      grid += `<div class="cc-sub">${label}</div><div class="swatches">` + SWATCH(mat).map(([k, c, name]) =>
+        `<button class="${a[key] === k ? 'sel' : ''}" style="background:${c}" title="${esc(name)}" aria-label="${label} ${esc(name)}" onclick="App.setAvatar('${key}','${k}')"></button>`).join('') + `</div>`;
     });
-    (cat.swatches || []).forEach(([key, label, colors]) => {
-      grid += `<div class="cc-sub">${label}</div><div class="swatches">` + colors.map((c, i) =>
-        `<button class="${a[key] === i ? 'sel' : ''}" style="background:${c}" aria-label="${label} ${i + 1}" onclick="App.setAvatar('${key}',${i})"></button>`).join('') + `</div>`;
-    });
-    if (cat.toggle) {
-      const [key, label] = cat.toggle;
-      grid += `<div class="cc-sub">${label}</div><div class="cc-tabs"><button class="${a[key] !== false ? 'sel' : ''}" onclick="App.setAvatar('${key}',true)">有</button><button class="${a[key] === false ? 'sel' : ''}" onclick="App.setAvatar('${key}',false)">無</button></div>`;
-    }
     return `<h2>角色創造</h2>
-      <div class="cc-stage"><div class="pedestal"></div>${avatarSVG(a)}</div>
-      <div class="cc-height">矮 <input type="range" min="0" max="1" step="0.05" value="${a.height ?? .5}" oninput="App.setAvatar('height', +this.value, true)" aria-label="身高"> 高</div>
-      <div class="gender"><button class="m ${a.gender !== 'f' ? 'sel' : ''}" onclick="App.setAvatar('gender','m')">男 ♂</button><button class="f ${a.gender === 'f' ? 'sel' : ''}" onclick="App.setAvatar('gender','f')">女 ♀</button></div>
+      <div class="cc-stage"><div class="pedestal"></div><canvas class="cc-doll" width="256" height="256"></canvas></div>
+      <div class="cc-turn">
+        <button onclick="App.ccTurn(-1)" aria-label="向左轉">⟲</button>
+        <button onclick="App.ccToggleWalk()">${ccWalk ? '⏸ 停止走路' : '▶ 走路預覽'}</button>
+        <button onclick="App.ccTurn(1)" aria-label="向右轉">⟳</button>
+      </div>
+      <div class="cc-height">身高 矮 <input type="range" min="0.85" max="1.15" step="0.01" value="${a.height ?? 1}" oninput="App.setAvatar('height', +this.value, true)" aria-label="身高"> 高</div>
       <div class="cc-tabs">${CC_CATS.map(c => `<button class="${c.k === ccCat ? 'sel' : ''}" onclick="App.ccTab('${c.k}')">${c.label}</button>`).join('')}</div>
       ${grid}
       <label class="f">角色名字</label>
@@ -1373,21 +1346,34 @@
       <div class="cc-actions">
         <button class="btn gold" onclick="App.randomAvatar()">🎲 隨機變換</button>
         ${prefix === 'ob' ? '' : `<button class="btn" onclick="App.toast('角色已儲存！'); App.switchTab('today')">✅ 完成</button>`}
-      </div>`;
+      </div>
+      <p class="cc-credit">角色素材：Liberated Pixel Cup (LPC) 開源紙娃娃素材，<a href="lpc/CREDITS.md" target="_blank" rel="noopener">作者與授權</a></p>`;
+  }
+  function hydrateCreator(root) {
+    const cv = root.querySelector('.cc-doll');
+    if (cv) { const d = makeDoll(cv, S.avatar, ccWalk ? 'walk' : 'idle', ccDir); root._doll = d; }
+    root.querySelectorAll('canvas[data-thumb]').forEach(c => {
+      const [slot, id] = c.dataset.thumb.split(':');
+      const a = Object.assign({}, S.avatar, { [slot]: id });
+      thumb(c, a, c.dataset.crop);
+    });
   }
   function renderCreators() {
-    const el = $('creator'); if (el && $('view-avatar').classList.contains('active')) el.innerHTML = creatorHTML('main');
-    const ob = $('ob-creator'); if (ob && $('onboard').classList.contains('show')) { ob.innerHTML = creatorHTML('ob'); renderPresets(); }
+    const el = $('creator');
+    if (el && $('view-avatar').classList.contains('active')) { el.innerHTML = creatorHTML('main'); hydrateCreator(el); }
+    const ob = $('ob-creator');
+    if (ob && $('onboard').classList.contains('show')) { ob.innerHTML = creatorHTML('ob'); hydrateCreator(ob); renderPresets(); }
   }
-  function renderStagePreviewOnly() {
-    document.querySelectorAll('.cc-stage').forEach(st => { st.innerHTML = `<div class="pedestal"></div>${avatarSVG(S.avatar)}`; });
+  function refreshCreatorDoll() {
+    [$('creator'), $('ob-creator')].forEach(r => { if (r && r._doll) r._doll.setAvatar(S.avatar); });
   }
 
   // ---------- onboarding ----------
   let obPreset = -1;
   function renderPresets() {
-    $('preset-grid').innerHTML = PRESETS.map(([name, a], i) =>
-      `<button class="preset ${obPreset === i ? 'sel' : ''}" onclick="App.obPick(${i})">${avatarSVG(Object.assign({}, a))}<div>${name}</div></button>`).join('');
+    $('preset-grid').innerHTML = PRESETS.map(([name], i) =>
+      `<button class="preset ${obPreset === i ? 'sel' : ''}" onclick="App.obPick(${i})"><canvas data-preset="${i}"></canvas><div>${name}</div></button>`).join('');
+    $('preset-grid').querySelectorAll('canvas[data-preset]').forEach(c => thumb(c, Object.assign({}, PRESETS[+c.dataset.preset][1]), 'full'));
   }
   function renderObCoach() {
     $('ob-coach').innerHTML = coachMarkup('standby');
@@ -1441,7 +1427,7 @@
       setCoach('inspect', `${S.avatar.name || '你'}，過來登記！`);
       const arrived = await walkPlayer(target);
       if (!arrived) return;
-      $('player-flip').classList.add('left');
+      if (playerDoll) playerDoll.play('idle', DIR.left);
       openSheet();
     },
     closeSheet(silent) {
@@ -1494,21 +1480,24 @@
     },
     // ---- creator ----
     ccTab(k) { ccCat = k; renderCreators(); },
+    ccTurn(n) { ccDir = [DIR.down, DIR.left, DIR.up, DIR.right][([DIR.down, DIR.left, DIR.up, DIR.right].indexOf(ccDir) + n + 4) % 4]; [$('creator'), $('ob-creator')].forEach(r => r && r._doll && r._doll.play(ccWalk ? 'walk' : 'idle', ccDir)); },
+    ccToggleWalk() { ccWalk = !ccWalk; renderCreators(); },
     setAvatar(k, v, light) {
       S.avatar[k] = v; persist();
-      if (light) { renderStagePreviewOnly(); return; }
+      if (light) { refreshCreatorDoll(); return; }
       obPreset = -1;
       renderCreators();
     },
     setName(v) { S.avatar.name = v; persist(); },
     randomAvatar() {
       CC_CATS.forEach(c => {
-        c.opts.forEach(([k, list]) => { S.avatar[k] = pick(list)[0]; });
-        (c.swatches || []).forEach(([k, , colors]) => { S.avatar[k] = Math.floor(Math.random() * colors.length); });
+        const list = LPC_CATALOG[c.slot]; S.avatar[c.slot] = pick(list).id;
+        (c.swatches || []).forEach(([k, , mat]) => { S.avatar[k] = pick(Object.keys(LPC_PAL[mat].pal)); });
       });
-      S.avatar.acc = Math.random() < .5 ? 'none' : S.avatar.acc;
-      S.avatar.gender = Math.random() < .5 ? 'm' : 'f';
-      S.avatar.height = Math.round(Math.random() * 20) / 20;
+      if (Math.random() < .6) S.avatar.hat = 'none';
+      if (Math.random() < .5) S.avatar.acc = 'none';
+      if (S.avatar.hair === 'none' && Math.random() < .7) S.avatar.hair = 'plain';
+      S.avatar.height = Math.round((0.88 + Math.random() * 0.24) * 100) / 100;
       persist(); obPreset = -1; renderCreators();
     },
     // ---- settings ----
@@ -1604,7 +1593,7 @@
     },
     // ---- onboarding ----
     obStart() {
-      obPreset = -1; ccCat = 'face';
+      obPreset = -1; ccCat = 'body';
       $('ob-coach-name').value = S.settings.coachName || '';
       const g = S.settings.goals;
       $('ob-start').value = g.startWeight; $('ob-target').value = g.targetWeight;
@@ -1616,7 +1605,7 @@
     obPick(i) {
       obPreset = i;
       const name = S.avatar.name;
-      S.avatar = Object.assign({ v: 2, name }, PRESETS[i][1]);
+      S.avatar = Object.assign({ v: 3, name }, PRESETS[i][1]);
       persist();
       const keep = obPreset; renderCreators(); obPreset = keep; renderPresets();
     },
@@ -1647,6 +1636,7 @@
   // ---------- boot ----------
   load();
   $('gym-bg').innerHTML = gymBG();
+  $('lpc-authors').textContent = LPC_AUTHORS.join(', ');
   ['m-b', 'm-l', 'm-d', 'm-s', 'kcal', 'ex-type', 'ex-min', 'steps', 'weight', 'fat', 'waist'].forEach(id => $(id).addEventListener('input', updateHints));
   $('no-sugar').addEventListener('change', updateHints);
   place('player', pos.player); place('coach', pos.coach);
