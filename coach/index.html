@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="紀律教練">
+<meta name="theme-color" content="#fff4e3">
+<link rel="apple-touch-icon" href="icon.png">
+<title>紀律教練</title>
+<style>
+  :root {
+    --bg: #fff4e3;
+    --card: #ffffff;
+    --ink: #3b2f2a;
+    --muted: #8a7a70;
+    --line: #f0dfc8;
+    --primary: #e8505b;
+    --primary-soft: #fde3e4;
+    --ok: #3fa86b;
+    --ok-soft: #dcf3e5;
+    --warn: #f0a32b;
+    --stage: #fffaf2;
+    --shadow: 0 4px 14px rgba(120, 80, 40, .10);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    font-size: 15px; line-height: 1.5;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+  #app { max-width: 520px; margin: 0 auto; padding: 12px 16px 0; }
+  #app.shake { animation: screenShake .45s linear 2; }
+  @keyframes screenShake {
+    0%,100% { transform: translate(0,0); } 20% { transform: translate(-8px,4px); }
+    40% { transform: translate(7px,-5px); } 60% { transform: translate(-6px,-3px); } 80% { transform: translate(5px,5px); }
+  }
+
+  header.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  header.top h1 { font-size: 1.15rem; margin: 0; }
+  .lv-badge { background: var(--primary); color: #fff; border-radius: 99px; padding: 3px 10px; font-size: .78rem; font-weight: 700; }
+
+  .card { background: var(--card); border-radius: 18px; padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card h2 { font-size: 1rem; margin: 0 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .done-chip { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--line); color: var(--muted); }
+  .done-chip.on { background: var(--ok-soft); color: var(--ok); }
+
+  /* stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .stat { background: var(--card); border-radius: 14px; padding: 8px; text-align: center; box-shadow: var(--shadow); }
+  .stat b { display: block; font-size: 1.25rem; }
+  .stat span { font-size: .72rem; color: var(--muted); }
+  .patience { margin: 4px 0 10px; }
+  .patience-label { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
+  .bar { height: 12px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 99px; transition: width .6s, background .6s; }
+
+  /* stage */
+  .stage { position: relative; background: var(--stage); border-radius: 20px; height: 300px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 12px; border: 2px solid var(--line); }
+  .stage .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; background: #f6e6cc; }
+  .coach-wrap { position: absolute; left: 6%; bottom: 26px; width: 48%; height: 210px; display: flex; align-items: flex-end; justify-content: center; cursor: pointer; z-index: 2; }
+  .coach-wrap img, .coach-wrap svg { max-width: 100%; max-height: 100%; }
+  .coach-wrap img { mix-blend-mode: multiply; }
+  .player-wrap { position: absolute; right: 6%; bottom: 26px; width: 34%; height: 170px; display: flex; align-items: flex-end; justify-content: center; z-index: 1; }
+  .player-wrap svg { width: 100%; height: 100%; }
+  .bubble { position: absolute; top: 12px; left: 12px; right: 12px; background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 8px 12px; font-weight: 700; font-size: .92rem; z-index: 3; min-height: 44px; }
+  .bubble::after { content: ""; position: absolute; left: 28%; bottom: -10px; border: 8px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
+  .coach-name { font-size: .72rem; color: var(--primary); display: block; }
+  .fx { position: absolute; z-index: 5; pointer-events: none; font-weight: 900; }
+  .boom { left: 50%; top: 45%; transform: translate(-50%,-50%) scale(0); font-size: 3.2rem; color: #ff5a1f; -webkit-text-stroke: 2px #3b2f2a; animation: boom .7s ease-out forwards; }
+  @keyframes boom { 0% { transform: translate(-50%,-50%) scale(0) rotate(-20deg); opacity: 1; } 60% { transform: translate(-50%,-50%) scale(1.3) rotate(8deg); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(1) rotate(0); opacity: 0; } }
+  .pts-pop { right: 18%; top: 40%; font-size: 1.6rem; color: var(--ok); -webkit-text-stroke: 1px #fff; animation: ptsUp 1.4s ease-out forwards; }
+  @keyframes ptsUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-80px); opacity: 0; } }
+
+  /* coach animations */
+  .a-standby { animation: bob 1.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  .a-cheer { animation: jump .6s ease-in-out infinite; }
+  @keyframes jump { 0%,100% { transform: translateY(0) scale(1,1); } 40% { transform: translateY(-34px) scale(.95,1.05); } 85% { transform: translateY(0) scale(1.08,.92); } }
+  .a-dance { animation: dance 1s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes dance { 0%,100% { transform: rotate(-10deg) translateX(-8px); } 50% { transform: rotate(10deg) translateX(8px); } }
+  .a-sprint { animation: sprintIn .8s cubic-bezier(.2,.8,.3,1) both; }
+  @keyframes sprintIn { from { transform: translateX(-160%) skewX(-12deg); filter: blur(2px); } 80% { transform: translateX(10%) skewX(6deg); filter: blur(0); } to { transform: translateX(0); } }
+  .a-angry { animation: angry .25s linear infinite; }
+  @keyframes angry { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px) rotate(-2deg); } 75% { transform: translateX(4px) rotate(2deg); } }
+  .a-attack { animation: attack .35s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes attack { 0%,100% { transform: translateX(40%) rotate(0); } 50% { transform: translateX(55%) rotate(14deg) scale(1.08); } }
+  .a-cry { animation: cry 1.2s ease-in-out infinite; }
+  @keyframes cry { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg) translateY(3px); } }
+  .a-sleep { animation: breathe 2.6s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes breathe { 0%,100% { transform: scale(1,1); } 50% { transform: scale(1.04,.96); } }
+  .a-inspect { animation: inspect 2s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes inspect { 0%,100% { transform: rotate(0); } 30% { transform: rotate(-6deg); } 60% { transform: rotate(4deg); } }
+  .a-goforit { animation: pump .5s ease-in-out infinite; }
+  @keyframes pump { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+  .p-hit { animation: hit .35s linear infinite; }
+  @keyframes hit { 0%,100% { transform: translateX(0); filter: none; } 50% { transform: translateX(10px) rotate(6deg); filter: brightness(1.4) saturate(.4); } }
+  @media (prefers-reduced-motion: reduce) { .coach-wrap > *, .player-wrap > * { animation-duration: 0s !important; animation-iteration-count: 1 !important; } }
+
+  /* forms */
+  label.f { display: block; font-size: .78rem; color: var(--muted); margin: 8px 0 3px; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width: 100%; font: inherit; font-size: 16px; padding: 9px 11px; border-radius: 12px; border: 1.5px solid var(--line); background: #fffdf9; color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .meal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stepper { display: flex; align-items: center; gap: 10px; }
+  .stepper button { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--primary-soft); color: var(--primary); font-size: 1.3rem; font-weight: 700; }
+  .stepper b { font-size: 1.3rem; min-width: 70px; text-align: center; }
+  .check { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #fffdf9; border: 1.5px solid var(--line); margin-top: 8px; font-size: .92rem; }
+  .check input { width: 22px; height: 22px; accent-color: var(--primary); }
+  .goal-hint { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+  .goal-hint.hit { color: var(--ok); font-weight: 700; }
+
+  .btn { display: block; width: 100%; border: none; border-radius: 14px; padding: 13px; font: inherit; font-weight: 700; font-size: 1rem; background: var(--primary); color: #fff; margin-top: 4px; }
+  .btn.secondary { background: var(--primary-soft); color: var(--primary); }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--line); }
+  .btn + .btn { margin-top: 8px; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { margin-top: 0; }
+
+  .breakdown { font-size: .85rem; }
+  .breakdown div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+  .breakdown div:last-child { border: none; font-weight: 700; }
+  .plus { color: var(--ok); font-weight: 700; } .minus { color: var(--primary); font-weight: 700; }
+
+  /* tabs */
+  .view { display: none; } .view.active { display: block; }
+  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 20; }
+  nav.tabs button { flex: 1; max-width: 130px; border: none; background: none; padding: 8px 0 10px; font: inherit; font-size: .72rem; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  nav.tabs button .ic { font-size: 1.35rem; line-height: 1.2; }
+  nav.tabs button.active { color: var(--primary); font-weight: 700; }
+
+  /* avatar maker */
+  .avatar-preview { background: var(--stage); border-radius: 18px; height: 230px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border: 2px solid var(--line); }
+  .avatar-preview svg { height: 210px; }
+  .opt-group { margin-bottom: 10px; }
+  .opt-group > span { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
+  .opts { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .opts::-webkit-scrollbar { display: none; }
+  .opts button { flex: none; border: 2px solid var(--line); background: #fffdf9; border-radius: 12px; padding: 7px 12px; font: inherit; font-size: .85rem; color: var(--ink); }
+  .opts button.sel { border-color: var(--primary); background: var(--primary-soft); font-weight: 700; }
+  .opts button.swatch { width: 38px; height: 38px; padding: 0; border-radius: 50%; }
+  .opts button.swatch.sel { box-shadow: 0 0 0 3px #fff inset; }
+
+  /* coach slots */
+  .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+  .slot { background: var(--stage); border: 2px dashed var(--line); border-radius: 14px; padding: 6px; text-align: center; font-size: .75rem; position: relative; }
+  .slot .thumb { height: 74px; display: flex; align-items: center; justify-content: center; }
+  .slot .thumb img, .slot .thumb svg { max-height: 74px; max-width: 100%; mix-blend-mode: multiply; }
+  .slot.has { border-style: solid; border-color: var(--ok); }
+  .slot input { display: none; }
+  .slot .x { position: absolute; top: 2px; right: 4px; border: none; background: none; color: var(--primary); font-size: 1rem; font-weight: 700; }
+
+  /* history */
+  .hist-item { padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .hist-item:last-child { border: none; }
+  .hist-top { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+  .hist-sub { font-size: .8rem; color: var(--muted); }
+  .dots { display: flex; gap: 4px; }
+  .dots i { font-style: normal; font-size: .72rem; padding: 1px 6px; border-radius: 99px; background: var(--line); color: var(--muted); }
+  .dots i.on { background: var(--ok-soft); color: var(--ok); }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .muted { color: var(--muted); font-size: .82rem; }
+  .steps { padding-left: 20px; margin: 6px 0; font-size: .88rem; }
+  .steps li { margin-bottom: 4px; }
+  .copy-line { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+  .copy-line code { flex: 1; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px; font-size: .82rem; font-family: inherit; }
+  .copy-line button { border: none; background: var(--primary-soft); color: var(--primary); border-radius: 10px; padding: 7px 10px; font: inherit; font-size: .8rem; font-weight: 700; }
+  .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 99px; font-size: .88rem; z-index: 50; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .date-nav button { border: none; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; padding: 7px 12px; font: inherit; font-size: .85rem; color: var(--ink); }
+  .date-nav b { font-size: .95rem; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <h1>🏋️ 紀律教練</h1>
+    <span class="lv-badge" id="lv-badge">Lv.1</span>
+  </header>
+
+  <!-- ===== 今日 ===== -->
+  <section class="view active" id="view-today">
+    <div class="stats">
+      <div class="stat"><b id="st-score">0</b><span>總分</span></div>
+      <div class="stat"><b id="st-today">0</b><span>今日得分</span></div>
+      <div class="stat"><b id="st-streak">0</b><span>連續天數 🔥</span></div>
+    </div>
+    <div class="patience">
+      <div class="patience-label"><span>教練耐心值</span><span id="pat-text">80 / 100</span></div>
+      <div class="bar"><i id="pat-bar"></i></div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="bubble"><span class="coach-name" id="coach-name-tag">教練</span><span id="bubble-text">……</span></div>
+      <div class="floor"></div>
+      <div class="coach-wrap" id="coach-wrap" onclick="App.pokeCoach()"></div>
+      <div class="player-wrap" id="player-wrap"></div>
+    </div>
+
+    <div class="date-nav">
+      <button onclick="App.shiftDay(-1)">◀ 前一天</button>
+      <b id="date-label"></b>
+      <button onclick="App.shiftDay(1)" id="next-day-btn">後一天 ▶</button>
+    </div>
+
+    <div class="card">
+      <h2>🍱 飲食紀錄 <span class="done-chip" id="chip-diet">未記錄</span></h2>
+      <div class="meal-grid">
+        <div><label class="f">早餐</label><input type="text" id="m-b" placeholder="例：蛋餅＋無糖豆漿"></div>
+        <div><label class="f">午餐</label><input type="text" id="m-l" placeholder="例：便當半飯"></div>
+        <div><label class="f">晚餐</label><input type="text" id="m-d" placeholder="例：燙青菜＋雞胸"></div>
+        <div><label class="f">點心／宵夜</label><input type="text" id="m-s" placeholder="例：無"></div>
+      </div>
+      <label class="f">喝水（杯，每杯約 250ml）</label>
+      <div class="stepper">
+        <button type="button" onclick="App.water(-1)">−</button>
+        <b id="water-val">0 杯</b>
+        <button type="button" onclick="App.water(1)">＋</button>
+      </div>
+      <div class="goal-hint" id="hint-water"></div>
+      <label class="check"><input type="checkbox" id="no-sugar"> 今天沒有喝含糖飲料 🥤❌</label>
+      <label class="f">總熱量（大卡，選填）</label>
+      <input type="number" inputmode="numeric" id="kcal" placeholder="例：1600">
+    </div>
+
+    <div class="card">
+      <h2>🏃 運動紀錄 <span class="done-chip" id="chip-ex">未記錄</span></h2>
+      <div class="row">
+        <div>
+          <label class="f">運動項目</label>
+          <select id="ex-type">
+            <option value="">— 選擇 —</option>
+            <option>快走</option><option>慢跑</option><option>重訓</option><option>騎車</option>
+            <option>游泳</option><option>瑜伽／伸展</option><option>球類</option><option>跳繩</option>
+            <option>HIIT</option><option>爬山</option><option>其他</option>
+            <option value="rest">今天是休息日</option>
+          </select>
+        </div>
+        <div><label class="f">時間（分鐘）</label><input type="number" inputmode="numeric" id="ex-min" placeholder="例：30"></div>
+      </div>
+      <label class="f">步數（選填）</label>
+      <input type="number" inputmode="numeric" id="steps" placeholder="例：8000">
+      <div class="goal-hint" id="hint-ex"></div>
+    </div>
+
+    <div class="card">
+      <h2>⚖️ 減脂數據 <span class="done-chip" id="chip-body">未記錄</span></h2>
+      <div class="row3">
+        <div><label class="f">晨起體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="weight" placeholder="74.5"></div>
+        <div><label class="f">體脂 %</label><input type="number" inputmode="decimal" step="0.1" id="fat" placeholder="選填"></div>
+        <div><label class="f">腰圍 cm</label><input type="number" inputmode="decimal" step="0.1" id="waist" placeholder="選填"></div>
+      </div>
+      <div class="goal-hint" id="hint-weight"></div>
+      <label class="f">今日心得（選填）</label>
+      <textarea id="note" placeholder="今天的感覺、嘴饞的時刻、做得好的地方…"></textarea>
+    </div>
+
+    <button class="btn" onclick="App.saveDay()">📮 回報教練（儲存）</button>
+
+    <div class="card" style="margin-top:12px">
+      <h2>🧮 今日計分明細</h2>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+  </section>
+
+  <!-- ===== 紀錄 ===== -->
+  <section class="view" id="view-history">
+    <div class="card">
+      <h2>📉 體重趨勢（近 30 天）</h2>
+      <div class="chart" id="chart"></div>
+    </div>
+    <div class="card">
+      <h2>📅 本週</h2>
+      <div id="week-summary" class="breakdown"></div>
+    </div>
+    <div class="card">
+      <h2>🗂️ 每日紀錄</h2>
+      <div id="hist-list"></div>
+    </div>
+  </section>
+
+  <!-- ===== 主角 ===== -->
+  <section class="view" id="view-avatar">
+    <div class="card">
+      <h2>🧑 捏你的主角</h2>
+      <div class="avatar-preview" id="avatar-preview"></div>
+      <label class="f">主角名字</label>
+      <input type="text" id="player-name" placeholder="例：自律的我" oninput="App.setAvatar('name', this.value)">
+      <div id="avatar-opts" style="margin-top:10px"></div>
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn secondary" onclick="App.randomAvatar()">🎲 隨機</button>
+        <button class="btn" onclick="App.toast('主角已儲存！'); App.switchTab('today')">✅ 完成</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 設定 ===== -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <h2>🎯 目標設定</h2>
+      <div class="row">
+        <div><label class="f">起始體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="g-start"></div>
+        <div><label class="f">目標體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="g-target"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每日運動目標（分鐘）</label><input type="number" inputmode="numeric" id="g-ex"></div>
+        <div><label class="f">每日喝水目標（杯）</label><input type="number" inputmode="numeric" id="g-water"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每週運動天數目標</label><input type="number" inputmode="numeric" id="g-week"></div>
+        <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
+      </div>
+      <p class="muted">開始日期之後，整天沒有任何紀錄會扣 30 分。</p>
+      <button class="btn" onclick="App.saveGoals()">儲存目標</button>
+    </div>
+
+    <div class="card">
+      <h2>🐾 教練設定</h2>
+      <label class="f">教練名字</label>
+      <input type="text" id="coach-name" placeholder="例：呀哈教練">
+      <p class="muted" style="margin-top:10px">可以放你自己的教練圖片（每個動作一張）。圖片只存在這支手機的瀏覽器裡，不會上傳到任何地方。沒放圖的動作會用預設教練。</p>
+      <div class="slots" id="slots"></div>
+      <label class="f" style="margin-top:12px">或上傳一整張「動作表」自動切割（依下面順序，由左到右、由上到下）</label>
+      <div class="row">
+        <div><label class="f">欄數</label><input type="number" id="sheet-cols" value="5" min="1" max="10"></div>
+        <div><label class="f">列數</label><input type="number" id="sheet-rows" value="2" min="1" max="10"></div>
+      </div>
+      <input type="file" accept="image/*" id="sheet-file" style="display:none" onchange="App.uploadSheet(this)">
+      <button class="btn secondary" onclick="document.getElementById('sheet-file').click()">🖼️ 上傳動作表</button>
+      <button class="btn ghost" onclick="App.clearSlots()">清除所有教練圖片</button>
+      <button class="btn" onclick="App.saveCoachName()">儲存教練名字</button>
+    </div>
+
+    <div class="card">
+      <h2>🔔 每日提醒（iPhone 捷徑）</h2>
+      <p class="muted">網頁沒辦法自己定時跳通知，用 iPhone 內建的「捷徑」App 設定最穩：</p>
+      <ol class="steps">
+        <li>先在 Safari 打開這頁 → 分享 → <b>加入主畫面</b>（資料比較不會被清掉）</li>
+        <li>打開「捷徑」App → 下方「<b>自動化</b>」→ 右上「＋」</li>
+        <li>選「<b>特定時間</b>」→ 設 08:00 → 重複「每天」→ 選「<b>立即執行</b>」</li>
+        <li>動作搜尋「<b>顯示通知</b>」，貼上下面的台詞</li>
+        <li>再加一個動作「<b>打開 URL</b>」，貼上這個網頁的網址（點通知會開捷徑，這步讓它直接跳到遊戲）</li>
+        <li>重複建立 12:30、21:00 兩個時段</li>
+      </ol>
+      <div id="notify-lines"></div>
+    </div>
+
+    <div class="card">
+      <h2>💾 資料備份</h2>
+      <p class="muted">資料存在這支手機的瀏覽器裡。建議每週匯出一次備份。</p>
+      <button class="btn secondary" onclick="App.exportData()">⬇️ 匯出備份檔</button>
+      <input type="file" accept="application/json,.json" id="import-file" style="display:none" onchange="App.importData(this)">
+      <button class="btn secondary" onclick="document.getElementById('import-file').click()">⬆️ 匯入備份檔</button>
+      <button class="btn secondary" onclick="App.importCompass()">🧭 從「心智羅盤」匯入體重</button>
+      <button class="btn ghost" onclick="App.resetAll()">🗑️ 清除全部資料</button>
+    </div>
+  </section>
+</div>
+
+<nav class="tabs">
+  <button class="active" data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏠</span>今日</button>
+  <button data-tab="history" onclick="App.switchTab('history')"><span class="ic">📈</span>紀錄</button>
+  <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🧑</span>主角</button>
+  <button data-tab="settings" onclick="App.switchTab('settings')"><span class="ic">⚙️</span>設定</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const KEY = 'coachGame.v1';
+  const IMG_KEY = 'coachGame.img.';
+  const DAY_MS = 86400000;
+
+  const STATES = [
+    ['standby', '待機'], ['cheer', '歡呼'], ['dance', '跳舞'], ['sprint', '衝刺'], ['angry', '生氣'],
+    ['attack', '暴打'], ['cry', '哭哭'], ['sleep', '睡覺'], ['inspect', '檢查'], ['goforit', '加油'],
+  ];
+
+  const LINES = {
+    standby: ['今天也要記錄喔！', '呀哈～我在看著你喔！', '早餐吃了什麼？快告訴我！', '水喝了沒？咕嚕咕嚕！'],
+    cheer: ['呀哈！！做得好！！', '有記錄！加分加分！', '就是這樣！繼續保持！'],
+    dance: ['三項全記！跳舞慶祝！♪', '完美的一天！我要跳舞了！', '你今天超棒的啦！'],
+    sprint: ['我來了！！！', '讓我看看你今天的紀錄！'],
+    angry: ['今天還沒記錄！？', '噗嚕嚕嚕！快去記錄！', '我的耐心快沒了喔……'],
+    attack: ['紀律棒來了！！！', '這是你偷懶的代價！碰！', '耐心值見底了！吃我一棒！'],
+    cry: ['昨天怎麼沒記錄……嗚嗚……', '你不要我了嗎……嗚哇——', '我等你等了一整天……'],
+    sleep: ['呼……呼……（明天也要記錄喔……）', 'Zzz……體重……要記……', '很晚了，快去睡！睡眠也是減脂的一部分！'],
+    inspect: ['嗯……還差一點點喔！', '我檢查一下……還有項目沒記！', '不錯不錯，但還沒全部完成！'],
+    goforit: ['嗶嗶——！加油加油！', '燃燒吧！脂肪！！', '你可以的！再撐一下！', '一起變強吧！'],
+  };
+
+  const TITLES = ['軟爛新手', '覺醒學徒', '自律見習生', '燃脂戰士', '鋼鐵意志', '紀律大師', '傳說紀律王'];
+  const LEVEL_PTS = 300;
+
+  // ---------- date utils ----------
+  const pad = n => String(n).padStart(2, '0');
+  const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return fmt(d); };
+  const today = () => fmt(new Date());
+  const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+  const nice = s => { const d = parse(s); return `${d.getMonth() + 1}/${d.getDate()}（${WEEK[d.getDay()]}）`; };
+  const mondayOf = s => { const d = parse(s); const wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd); return fmt(d); };
+  const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // ---------- storage ----------
+  function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function safeDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  const defaultState = () => ({
+    v: 1,
+    settings: {
+      coachName: '呀哈教練',
+      startDate: today(),
+      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4 },
+    },
+    avatar: { name: '我', skin: 1, face: 'round', hair: 'short', hairColor: 0, eyes: 'dot', mouth: 'smile', blush: true, outfit: 'tee', outfitColor: 2, acc: 'none' },
+    records: {},
+    lastAttack: '',
+  });
+
+  let S;
+  function load() {
+    const raw = safeGet(KEY);
+    S = defaultState();
+    if (raw) {
+      try {
+        const d = JSON.parse(raw);
+        S = Object.assign(S, d);
+        S.settings = Object.assign(defaultState().settings, d.settings || {});
+        S.settings.goals = Object.assign(defaultState().settings.goals, (d.settings || {}).goals || {});
+        S.avatar = Object.assign(defaultState().avatar, d.avatar || {});
+        S.records = d.records || {};
+      } catch (e) {}
+    }
+  }
+  function persist() { if (!safeSet(KEY, JSON.stringify(S))) toast('⚠️ 無法儲存（瀏覽器空間不足或私密模式）'); }
+
+  // ---------- record logic ----------
+  const emptyRec = () => ({ meals: { b: '', l: '', d: '', s: '' }, water: 0, noSugar: false, kcal: '', exType: '', exMin: '', steps: '', weight: '', fat: '', waist: '', note: '' });
+  const rec = d => S.records[d] ? Object.assign(emptyRec(), S.records[d], { meals: Object.assign(emptyRec().meals, S.records[d].meals || {}) }) : emptyRec();
+  const hasDiet = r => Object.values(r.meals).some(v => v && v.trim()) || r.water > 0 || r.noSugar || num(r.kcal) !== null;
+  const hasEx = r => r.exType === 'rest' || (num(r.exMin) || 0) > 0 || (num(r.steps) || 0) > 0;
+  const hasBody = r => num(r.weight) !== null || num(r.fat) !== null || num(r.waist) !== null;
+  const loggedCount = r => (hasDiet(r) ? 1 : 0) + (hasEx(r) ? 1 : 0) + (hasBody(r) ? 1 : 0);
+  const isExDay = r => r.exType !== 'rest' && (num(r.exMin) || 0) > 0;
+
+  function dayItems(d, streakBefore) {
+    const r = rec(d), g = S.settings.goals, items = [];
+    const n = loggedCount(r);
+    if (hasDiet(r)) items.push(['記錄飲食', 10]);
+    if (hasEx(r)) items.push(['記錄運動', 10]);
+    if (hasBody(r)) items.push(['記錄減脂數據', 10]);
+    if (n === 3) items.push(['三項全記獎勵', 15]);
+    if (g.exMin && (num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest') items.push([`達成運動 ${g.exMin} 分鐘`, 20]);
+    if (g.water && r.water >= g.water) items.push([`達成喝水 ${g.water} 杯`, 20]);
+    if (r.noSugar) items.push(['沒喝含糖飲料', 20]);
+    if (n > 0 && streakBefore >= 2) items.push([`連續 ${streakBefore + 1} 天加成`, 10]);
+    return items;
+  }
+
+  // full recompute from history (deterministic, no double counting)
+  function compute() {
+    const t = today();
+    const start = S.settings.startDate && S.settings.startDate <= t ? S.settings.startDate : t;
+    let score = 0, patience = 80, streak = 0, missed = 0;
+    const perDay = {};
+    let d = start;
+    let guard = 0;
+    while (d <= t && guard++ < 4000) {
+      const r = rec(d), n = loggedCount(r);
+      const items = dayItems(d, streak);
+      if (n === 0 && d < t) items.push(['整天沒紀錄', -30]);
+      const pts = items.reduce((a, [, p]) => a + p, 0);
+      perDay[d] = { items, pts, n };
+      score += pts;
+      const goalsHit = items.filter(([l]) => l.startsWith('達成') || l === '沒喝含糖飲料').length;
+      if (n === 0) { if (d < t) { patience -= 35; missed++; streak = 0; } }
+      else { patience += 5 * n + 3 * goalsHit; streak++; }
+      patience = Math.max(0, Math.min(100, patience));
+      d = addDays(d, 1);
+    }
+    // weekly bonus for completed weeks
+    const g = S.settings.goals;
+    let weekBonus = 0;
+    for (let w = mondayOf(start); addDays(w, 6) < t; w = addDays(w, 7)) {
+      let days = 0;
+      for (let i = 0; i < 7; i++) if (isExDay(rec(addDays(w, i)))) days++;
+      if (g.weeklyExDays && days >= g.weeklyExDays) weekBonus += 100;
+    }
+    score += weekBonus;
+    // weight goal
+    const tw = num(g.targetWeight);
+    const reached = tw !== null && Object.keys(S.records).some(k => k >= start && num(S.records[k].weight) !== null && num(S.records[k].weight) <= tw);
+    if (reached) score += 200;
+    // tonight penalty preview
+    const hour = new Date().getHours();
+    const todayN = perDay[t] ? perDay[t].n : 0;
+    if (todayN === 0 && hour >= 21) patience = Math.max(0, patience - 15);
+    const level = Math.max(1, Math.floor(Math.max(0, score) / LEVEL_PTS) + 1);
+    return { score, patience, streak, missed, perDay, weekBonus, reached, level, title: TITLES[Math.min(level - 1, TITLES.length - 1)] };
+  }
+
+  // ---------- coach rendering ----------
+  function coachImg(state) { return safeGet(IMG_KEY + state); }
+
+  function coachSVG(state) {
+    // Original default coach: a round hamster with headband & whistle.
+    const body = '#f2cf9b', belly = '#fff3df', line = '#3b2f2a', cheek = '#f6a3a8';
+    let eyes = `<circle cx="84" cy="100" r="6" fill="${line}"/><circle cx="116" cy="100" r="6" fill="${line}"/><circle cx="86" cy="98" r="2" fill="#fff"/><circle cx="118" cy="98" r="2" fill="#fff"/>`;
+    let mouth = `<path d="M92 116 q8 8 16 0" stroke="${line}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    let brows = '', extra = '', armL = `<path d="M50 150 q-18 -6 -22 -22" stroke="${line}" stroke-width="4" fill="${body}" stroke-linecap="round"/>`, armR = `<path d="M150 150 q18 -6 22 -22" stroke="${line}" stroke-width="4" fill="${body}" stroke-linecap="round"/>`;
+    const happyEyes = `<path d="M78 102 q6 -9 12 0 M110 102 q6 -9 12 0" stroke="${line}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    const openMouth = `<path d="M90 114 q10 16 20 0 z" fill="#c9424f" stroke="${line}" stroke-width="3" stroke-linejoin="round"/>`;
+    const angryBrows = `<path d="M74 86 l18 8 M126 86 l-18 8" stroke="${line}" stroke-width="4" stroke-linecap="round"/>`;
+    const baton = (x, y, rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><rect x="-6" y="-46" width="12" height="60" rx="6" fill="#f08a3c" stroke="${line}" stroke-width="3"/></g>`;
+    switch (state) {
+      case 'cheer':
+        eyes = happyEyes; mouth = openMouth;
+        armL = `<path d="M52 140 q-20 -20 -16 -46" stroke="${line}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        armR = `<path d="M148 140 q20 -20 16 -46" stroke="${line}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        extra = `<g font-size="16"><text x="20" y="40">✨</text><text x="160" y="30">🎉</text><text x="10" y="110">⭐</text><text x="170" y="100">✨</text></g>`;
+        break;
+      case 'dance':
+        eyes = happyEyes; mouth = openMouth;
+        armL = `<path d="M52 140 q-24 -4 -30 -26" stroke="${line}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        extra = `<g font-size="20" fill="${line}"><text x="14" y="60">♪</text><text x="168" y="50">♫</text><text x="176" y="130">♪</text></g>`;
+        break;
+      case 'sprint':
+        brows = angryBrows; mouth = openMouth;
+        extra = baton(160, 140, 30) + `<g stroke="${line}" stroke-width="3" stroke-linecap="round" opacity=".5"><path d="M6 120 h26 M2 140 h30 M10 160 h22"/></g>`;
+        break;
+      case 'angry':
+        brows = angryBrows;
+        mouth = `<path d="M90 120 q10 -8 20 0" stroke="${line}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+        extra = `<g font-size="22"><text x="150" y="50">💢</text><text x="20" y="56">💨</text></g>`;
+        break;
+      case 'attack':
+        brows = angryBrows; mouth = openMouth;
+        armR = `<path d="M148 140 q20 -24 18 -50" stroke="${line}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        extra = baton(168, 80, 25) + `<text x="150" y="30" font-size="22">💥</text>`;
+        break;
+      case 'cry':
+        eyes = `<path d="M76 100 q8 -6 16 0 M108 100 q8 -6 16 0" stroke="${line}" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M80 104 q-4 30 -8 50 M120 104 q4 30 8 50" stroke="#7cc3f0" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+        mouth = `<path d="M88 124 q12 -16 24 0 z" fill="#c9424f" stroke="${line}" stroke-width="3"/>`;
+        break;
+      case 'sleep':
+        eyes = `<path d="M76 102 q8 6 16 0 M108 102 q8 6 16 0" stroke="${line}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        mouth = `<circle cx="100" cy="118" r="4" fill="none" stroke="${line}" stroke-width="3"/>`;
+        extra = `<g font-size="18" fill="#6b8fd6" font-weight="700"><text x="150" y="60">Z</text><text x="166" y="42">z</text><text x="178" y="28">z</text></g><path d="M64 66 q36 -40 72 0 z" fill="#cfe0f7" stroke="${line}" stroke-width="3"/><circle cx="140" cy="62" r="7" fill="#fff" stroke="${line}" stroke-width="3"/>`;
+        break;
+      case 'inspect':
+        brows = `<path d="M76 86 l16 -4 M108 82 l16 4" stroke="${line}" stroke-width="4" stroke-linecap="round"/>`;
+        mouth = `<path d="M92 120 h16" stroke="${line}" stroke-width="3" stroke-linecap="round"/>`;
+        extra = `<g transform="translate(118 132) rotate(8)"><rect x="0" y="0" width="40" height="50" rx="5" fill="#a77b52" stroke="${line}" stroke-width="3"/><rect x="6" y="8" width="28" height="36" fill="#fff"/><path d="M10 18 h18 M10 26 h18 M10 34 h12" stroke="${line}" stroke-width="2"/></g><text x="146" y="78" font-size="18">💦</text>`;
+        break;
+      case 'goforit':
+        brows = angryBrows;
+        mouth = `<circle cx="100" cy="120" r="6" fill="#c9424f" stroke="${line}" stroke-width="3"/>`;
+        armL = `<path d="M52 150 q-26 -4 -24 -30 q8 -6 14 2" stroke="${line}" stroke-width="4" fill="${body}" stroke-linecap="round"/>`;
+        armR = `<path d="M148 150 q26 -4 24 -30 q-8 -6 -14 2" stroke="${line}" stroke-width="4" fill="${body}" stroke-linecap="round"/>`;
+        extra = `<g font-size="26"><text x="4" y="70">🔥</text><text x="166" y="70">🔥</text></g>`;
+        break;
+    }
+    const isSleep = state === 'sleep';
+    const bodyShape = isSleep
+      ? `<ellipse cx="100" cy="138" rx="78" ry="54" fill="${body}" stroke="${line}" stroke-width="4"/><ellipse cx="100" cy="150" rx="46" ry="30" fill="${belly}"/>`
+      : `<ellipse cx="100" cy="128" rx="64" ry="66" fill="${body}" stroke="${line}" stroke-width="4"/><ellipse cx="100" cy="146" rx="40" ry="40" fill="${belly}"/>`;
+    return `<svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg" aria-label="教練">
+      ${extra.includes('font-size="26"') ? extra : ''}
+      <ellipse cx="62" cy="68" rx="16" ry="15" fill="${body}" stroke="${line}" stroke-width="4"/><ellipse cx="62" cy="68" rx="8" ry="8" fill="${cheek}"/>
+      <ellipse cx="138" cy="68" rx="16" ry="15" fill="${body}" stroke="${line}" stroke-width="4"/><ellipse cx="138" cy="68" rx="8" ry="8" fill="${cheek}"/>
+      ${isSleep ? '' : `<ellipse cx="78" cy="196" rx="14" ry="9" fill="${body}" stroke="${line}" stroke-width="4"/><ellipse cx="122" cy="196" rx="14" ry="9" fill="${body}" stroke="${line}" stroke-width="4"/>`}
+      ${bodyShape}
+      ${isSleep ? '' : armL + armR}
+      <path d="M40 84 q60 -22 120 0 l-2 12 q-58 -20 -116 0 z" fill="#e0424f" stroke="${line}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M156 86 l20 -10 l-4 14 z M156 90 l18 10 l-14 4 z" fill="#e0424f" stroke="${line}" stroke-width="3" stroke-linejoin="round"/>
+      ${brows}${eyes}
+      <ellipse cx="70" cy="114" rx="9" ry="5" fill="${cheek}" opacity=".8"/><ellipse cx="130" cy="114" rx="9" ry="5" fill="${cheek}" opacity=".8"/>
+      <ellipse cx="100" cy="108" rx="4" ry="3" fill="#d9777f"/>
+      ${mouth}
+      ${isSleep ? '' : `<path d="M82 134 q18 14 36 0" stroke="#888" stroke-width="2" fill="none"/><rect x="92" y="140" width="16" height="11" rx="4" fill="#c9cdd3" stroke="${line}" stroke-width="2.5"/>`}
+      ${extra.includes('font-size="26"') ? '' : extra}
+    </svg>`;
+  }
+
+  // ---------- player avatar ----------
+  const SKINS = ['#fde3cf', '#f6cfae', '#e8b48a', '#c98e62', '#8d5a3b'];
+  const HAIRC = ['#2d2420', '#5b3a29', '#a0642f', '#e0b45a', '#c4c4c4', '#d65a7a', '#4a6fd6'];
+  const OUTC = ['#e8505b', '#f0a32b', '#3fa86b', '#4a8fd6', '#8b5bd6', '#3b2f2a', '#ffffff'];
+  const AV_OPTS = [
+    ['face', '臉型', [['round', '圓臉'], ['oval', '鵝蛋'], ['square', '方臉']]],
+    ['skin', '膚色', SKINS.map((c, i) => [i, c])],
+    ['hair', '髮型', [['short', '短髮'], ['spiky', '刺蝟'], ['long', '長髮'], ['pony', '馬尾'], ['bun', '包包頭'], ['bob', '妹妹頭'], ['bald', '光頭']]],
+    ['hairColor', '髮色', HAIRC.map((c, i) => [i, c])],
+    ['eyes', '眼睛', [['dot', '豆豆眼'], ['big', '大眼'], ['happy', '笑眼'], ['sleepy', '睏眼'], ['sharp', '銳利']]],
+    ['mouth', '嘴巴', [['smile', '微笑'], ['open', '開心'], ['flat', '一字'], ['cat', '貓嘴']]],
+    ['blush', '腮紅', [[true, '有'], [false, '無']]],
+    ['outfit', '服裝', [['tee', 'T恤'], ['hoodie', '帽T'], ['tank', '背心'], ['jersey', '球衣']]],
+    ['outfitColor', '衣服顏色', OUTC.map((c, i) => [i, c])],
+    ['acc', '配件', [['none', '無'], ['glasses', '眼鏡'], ['cap', '棒球帽'], ['band', '頭帶'], ['towel', '毛巾']]],
+  ];
+
+  function avatarSVG(a, opts = {}) {
+    const L = '#3b2f2a', skin = SKINS[a.skin] || SKINS[1], hc = HAIRC[a.hairColor] || HAIRC[0], oc = OUTC[a.outfitColor] || OUTC[2];
+    const head = a.face === 'oval' ? `<ellipse cx="100" cy="92" rx="46" ry="54" fill="${skin}" stroke="${L}" stroke-width="4"/>`
+      : a.face === 'square' ? `<rect x="54" y="42" width="92" height="100" rx="30" fill="${skin}" stroke="${L}" stroke-width="4"/>`
+      : `<circle cx="100" cy="94" r="50" fill="${skin}" stroke="${L}" stroke-width="4"/>`;
+    let hairBack = '', hairFront = '';
+    switch (a.hair) {
+      case 'short': hairFront = `<path d="M52 88 q0 -50 48 -50 q48 0 48 50 q-14 -26 -48 -24 q-30 -2 -48 24 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
+      case 'spiky': hairFront = `<path d="M52 84 l4 -30 l12 12 l8 -26 l12 18 l12 -24 l10 22 l14 -16 l4 24 l12 -6 l-4 30 q-20 -22 -48 -20 q-28 -2 -46 16 z" fill="${hc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`; break;
+      case 'long': hairBack = `<path d="M50 90 q-6 70 10 100 h80 q16 -30 10 -100 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M50 96 q-2 -58 50 -58 q52 0 50 58 q-10 -30 -30 -32 q-10 14 -40 16 q-20 2 -30 16 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
+      case 'pony': hairBack = `<path d="M140 70 q36 10 26 70 q-6 -30 -26 -40 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M52 88 q0 -50 48 -50 q48 0 48 50 q-16 -22 -60 -22 q-24 4 -36 22 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
+      case 'bun': hairBack = `<circle cx="100" cy="34" r="18" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M52 88 q0 -50 48 -50 q48 0 48 50 q-10 -24 -48 -26 q-38 2 -48 26 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
+      case 'bob': hairBack = `<path d="M46 90 q-2 52 14 60 h80 q16 -8 14 -60 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M48 96 q-4 -60 52 -60 q56 0 52 60 h-12 q-2 -24 -6 -28 h-68 q-4 4 -6 28 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
+    }
+    const eyeMap = {
+      dot: `<circle cx="82" cy="98" r="5" fill="${L}"/><circle cx="118" cy="98" r="5" fill="${L}"/>`,
+      big: `<ellipse cx="82" cy="98" rx="8" ry="10" fill="${L}"/><ellipse cx="118" cy="98" rx="8" ry="10" fill="${L}"/><circle cx="85" cy="94" r="3" fill="#fff"/><circle cx="121" cy="94" r="3" fill="#fff"/>`,
+      happy: `<path d="M74 100 q8 -10 16 0 M110 100 q8 -10 16 0" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+      sleepy: `<path d="M74 98 h16 M110 98 h16" stroke="${L}" stroke-width="4" stroke-linecap="round"/><path d="M76 98 q6 6 12 0 M112 98 q6 6 12 0" fill="${L}"/>`,
+      sharp: `<path d="M72 94 l18 4 l-16 4 z M128 94 l-18 4 l16 4 z" fill="${L}"/>`,
+    };
+    const hurt = opts.hurt;
+    const eyes = hurt ? `<path d="M76 92 l12 12 M88 92 l-12 12 M112 92 l12 12 M124 92 l-12 12" stroke="${L}" stroke-width="4" stroke-linecap="round"/>` : (eyeMap[a.eyes] || eyeMap.dot);
+    const mouthMap = {
+      smile: `<path d="M90 118 q10 9 20 0" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+      open: `<path d="M88 116 q12 18 24 0 z" fill="#c9424f" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`,
+      flat: `<path d="M90 120 h20" stroke="${L}" stroke-width="3.5" stroke-linecap="round"/>`,
+      cat: `<path d="M88 116 q6 7 12 0 q6 7 12 0" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+    };
+    const mouth = hurt ? `<path d="M88 124 q4 -6 8 0 q4 6 8 0 q4 -6 8 0" stroke="${L}" stroke-width="3" fill="none"/>` : (mouthMap[a.mouth] || mouthMap.smile);
+    const blush = a.blush ? `<ellipse cx="70" cy="112" rx="8" ry="5" fill="#f6a3a8" opacity=".8"/><ellipse cx="130" cy="112" rx="8" ry="5" fill="#f6a3a8" opacity=".8"/>` : '';
+    let outfit;
+    switch (a.outfit) {
+      case 'hoodie': outfit = `<path d="M50 230 q0 -66 50 -66 q50 0 50 66 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M76 168 q24 22 48 0" stroke="${L}" stroke-width="3" fill="none"/><path d="M92 184 v20 M108 184 v20" stroke="${L}" stroke-width="2.5"/><rect x="80" y="206" width="40" height="18" rx="6" fill="none" stroke="${L}" stroke-width="2.5"/>`; break;
+      case 'tank': outfit = `<path d="M60 230 q-4 -50 14 -62 h8 q18 20 36 0 h8 q18 12 14 62 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M52 230 q0 -50 22 -62" stroke="${L}" stroke-width="4" fill="${skin}"/><path d="M148 230 q0 -50 -22 -62" stroke="${L}" stroke-width="4" fill="${skin}"/>`; break;
+      case 'jersey': outfit = `<path d="M50 230 q0 -66 50 -66 q50 0 50 66 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M84 166 l16 14 l16 -14" stroke="${L}" stroke-width="3" fill="#fff"/><text x="100" y="218" text-anchor="middle" font-size="28" font-weight="900" fill="#fff" stroke="${L}" stroke-width="1.5">1</text>`; break;
+      default: outfit = `<path d="M50 230 q0 -66 50 -66 q50 0 50 66 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M84 166 q16 12 32 0" stroke="${L}" stroke-width="3" fill="none"/>`;
+    }
+    const accMap = {
+      none: '',
+      glasses: `<g fill="none" stroke="${L}" stroke-width="3"><circle cx="82" cy="98" r="12"/><circle cx="118" cy="98" r="12"/><path d="M94 98 h12"/></g>`,
+      cap: `<path d="M52 72 q48 -54 96 0 z" fill="${oc}" stroke="${L}" stroke-width="3"/><path d="M48 72 h70 q-6 10 -70 4 z" fill="${oc}" stroke="${L}" stroke-width="3"/>`,
+      band: `<path d="M50 78 q50 -20 100 0 l-1 10 q-49 -18 -98 0 z" fill="${oc}" stroke="${L}" stroke-width="3"/>`,
+      towel: `<path d="M58 168 q42 26 84 0 l6 16 q-48 26 -96 0 z" fill="#fff" stroke="${L}" stroke-width="3"/>`,
+    };
+    const bump = opts.bump ? `<g><ellipse cx="128" cy="44" rx="16" ry="14" fill="#f6a3a8" stroke="${L}" stroke-width="3"/><ellipse cx="128" cy="44" rx="7" ry="6" fill="#ef7f8a"/><g transform="translate(70 66) rotate(-20)"><rect x="-16" y="-6" width="32" height="12" rx="5" fill="#f5d7a8" stroke="${L}" stroke-width="2.5"/><path d="M-4 -6 v12 M4 -6 v12" stroke="${L}" stroke-width="1.5"/></g></g>` : '';
+    const sweat = opts.sweat ? `<text x="150" y="70" font-size="20">💦</text>` : '';
+    return `<svg viewBox="0 0 200 232" xmlns="http://www.w3.org/2000/svg" aria-label="主角">
+      ${hairBack}${outfit}
+      <rect x="88" y="138" width="24" height="30" fill="${skin}" stroke="${L}" stroke-width="3"/>
+      ${head}${hairFront}${eyes}${blush}${mouth}${accMap[a.acc] || ''}${bump}${sweat}
+    </svg>`;
+  }
+
+  // ---------- UI state ----------
+  let curDate = today();
+  let C = null;
+  let busy = false;
+  const $ = id => document.getElementById(id);
+
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  function setCoach(state, line) {
+    const wrap = $('coach-wrap');
+    const img = coachImg(state);
+    wrap.innerHTML = img ? `<img src="${img}" alt="教練：${state}">` : coachSVG(state);
+    const el = wrap.firstElementChild;
+    el.classList.add('a-' + state);
+    $('bubble-text').textContent = line || pick(LINES[state]);
+  }
+
+  function renderPlayer(extra = {}) {
+    const t = today();
+    const bump = S.lastAttack === t && C && C.perDay[t] && C.perDay[t].n < 3;
+    $('player-wrap').innerHTML = avatarSVG(S.avatar, { bump, ...extra });
+  }
+
+  function moodState() {
+    const t = today(), hour = new Date().getHours();
+    const n = C.perDay[t] ? C.perDay[t].n : 0;
+    const y = addDays(t, -1);
+    const yMissed = C.perDay[y] && C.perDay[y].n === 0;
+    if (n === 3) return 'dance';
+    if (hour < 5) return 'sleep';
+    if (n === 0 && yMissed) return 'cry';
+    if (n > 0) return 'inspect';
+    if (C.patience < 50 || hour >= 18) return 'angry';
+    return 'standby';
+  }
+
+  function refreshStats() {
+    C = compute();
+    $('st-score').textContent = C.score;
+    const td = C.perDay[curDate];
+    $('st-today').textContent = td ? td.pts : 0;
+    $('st-streak').textContent = C.streak;
+    $('pat-text').textContent = `${C.patience} / 100`;
+    const bar = $('pat-bar');
+    bar.style.width = C.patience + '%';
+    bar.style.background = C.patience >= 60 ? 'var(--ok)' : C.patience >= 30 ? 'var(--warn)' : 'var(--primary)';
+    $('lv-badge').textContent = `Lv.${C.level} ${C.title}`;
+    $('coach-name-tag').textContent = S.settings.coachName || '教練';
+    renderBreakdown();
+  }
+
+  function renderBreakdown() {
+    const d = C.perDay[curDate];
+    const items = d ? d.items : dayItems(curDate, 0);
+    if (!items.length) { $('breakdown').innerHTML = '<p class="muted">還沒有分數。記錄任一項就能加分！</p>'; return; }
+    const total = items.reduce((a, [, p]) => a + p, 0);
+    $('breakdown').innerHTML = items.map(([l, p]) => `<div><span>${esc(l)}</span><span class="${p >= 0 ? 'plus' : 'minus'}">${p >= 0 ? '+' : ''}${p}</span></div>`).join('')
+      + `<div><span>合計</span><span>${total >= 0 ? '+' : ''}${total}</span></div>`;
+  }
+
+  function fillForm() {
+    const r = rec(curDate);
+    $('date-label').textContent = (curDate === today() ? '今天 ' : '') + nice(curDate);
+    $('next-day-btn').disabled = curDate >= today();
+    $('next-day-btn').style.opacity = curDate >= today() ? .4 : 1;
+    $('m-b').value = r.meals.b; $('m-l').value = r.meals.l; $('m-d').value = r.meals.d; $('m-s').value = r.meals.s;
+    $('water-val').dataset.v = r.water; $('water-val').textContent = r.water + ' 杯';
+    $('no-sugar').checked = !!r.noSugar; $('kcal').value = r.kcal;
+    $('ex-type').value = r.exType; $('ex-min').value = r.exMin; $('steps').value = r.steps;
+    $('weight').value = r.weight; $('fat').value = r.fat; $('waist').value = r.waist; $('note').value = r.note;
+    updateHints();
+  }
+
+  function readForm() {
+    return {
+      meals: { b: $('m-b').value.trim(), l: $('m-l').value.trim(), d: $('m-d').value.trim(), s: $('m-s').value.trim() },
+      water: parseInt($('water-val').dataset.v || '0', 10) || 0,
+      noSugar: $('no-sugar').checked, kcal: $('kcal').value,
+      exType: $('ex-type').value, exMin: $('ex-min').value, steps: $('steps').value,
+      weight: $('weight').value, fat: $('fat').value, waist: $('waist').value, note: $('note').value.trim(),
+    };
+  }
+
+  function updateHints() {
+    const r = readForm(), g = S.settings.goals;
+    const chip = (id, on) => { const c = $(id); c.textContent = on ? '已記錄 ✓' : '未記錄'; c.classList.toggle('on', on); };
+    chip('chip-diet', hasDiet(r)); chip('chip-ex', hasEx(r)); chip('chip-body', hasBody(r));
+    const hw = $('hint-water');
+    hw.textContent = g.water ? (r.water >= g.water ? `✓ 達成喝水目標 ${g.water} 杯（+20）` : `目標 ${g.water} 杯，還差 ${g.water - r.water} 杯`) : '';
+    hw.classList.toggle('hit', !!g.water && r.water >= g.water);
+    const he = $('hint-ex'), m = num(r.exMin) || 0;
+    he.textContent = r.exType === 'rest' ? '休息日也算有記錄，好好恢復！' : g.exMin ? (m >= g.exMin ? `✓ 達成運動目標 ${g.exMin} 分鐘（+20）` : `目標 ${g.exMin} 分鐘，還差 ${g.exMin - m} 分鐘`) : '';
+    he.classList.toggle('hit', r.exType !== 'rest' && !!g.exMin && m >= g.exMin);
+    const hwt = $('hint-weight'), w = num(r.weight), sw = num(g.startWeight), tw = num(g.targetWeight);
+    let msg = '';
+    if (w !== null && sw !== null) { const diff = +(w - sw).toFixed(1); msg += `比起始 ${diff > 0 ? '+' : ''}${diff} kg`; }
+    if (w !== null && tw !== null) { const left = +(w - tw).toFixed(1); msg += (msg ? '，' : '') + (left <= 0 ? '🎉 已達成目標體重！' : `距離目標還有 ${left} kg`); }
+    hwt.textContent = msg; hwt.classList.toggle('hit', w !== null && tw !== null && w <= tw);
+  }
+
+  // ---------- attack sequence ----------
+  function runAttack() {
+    busy = true;
+    setCoach('sprint');
+    setTimeout(() => {
+      setCoach('attack');
+      renderPlayer({ hurt: true });
+      $('player-wrap').firstElementChild.classList.add('p-hit');
+      $('app').classList.add('shake');
+      const fx = document.createElement('div'); fx.className = 'fx boom'; fx.textContent = '碰！！';
+      $('stage').appendChild(fx);
+      try { navigator.vibrate && navigator.vibrate([80, 40, 80, 40, 160]); } catch (e) {}
+      setTimeout(() => {
+        fx.remove(); $('app').classList.remove('shake');
+        S.lastAttack = today(); persist();
+        renderPlayer();
+        setCoach('angry', `耐心值只剩 ${C.patience}！今天三項全記完，頭上的包才會消！`);
+        busy = false;
+      }, 1900);
+    }, 900);
+  }
+
+  function popPoints(p) {
+    const fx = document.createElement('div'); fx.className = 'fx pts-pop'; fx.textContent = (p >= 0 ? '+' : '') + p;
+    $('stage').appendChild(fx); setTimeout(() => fx.remove(), 1500);
+  }
+
+  // ---------- history ----------
+  function renderHistory() {
+    C = compute();
+    const t = today();
+    // chart
+    const pts = [];
+    for (let i = 29; i >= 0; i--) { const d = addDays(t, -i); const w = num(rec(d).weight); if (w !== null) pts.push([30 - i, w, d]); }
+    const ch = $('chart');
+    if (pts.length < 2) ch.innerHTML = '<p class="muted">至少要有 2 天的體重紀錄才會出現趨勢圖。</p>';
+    else {
+      const W = 340, H = 170, pl = 34, pr = 10, pt = 14, pb = 24;
+      const ws = pts.map(p => p[1]); const tw = num(S.settings.goals.targetWeight);
+      let lo = Math.min(...ws, tw ?? Infinity), hi = Math.max(...ws);
+      lo = Math.floor(lo - .5); hi = Math.ceil(hi + .5);
+      const x = i => pl + (i - 1) / 29 * (W - pl - pr), y = v => pt + (hi - v) / (hi - lo) * (H - pt - pb);
+      const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)} ${y(p[1]).toFixed(1)}`).join(' ');
+      const ticks = [lo, (lo + hi) / 2, hi].map(v => `<text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="#8a7a70">${v.toFixed(1)}</text><line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="#f0dfc8"/>`).join('');
+      const goal = tw !== null && tw >= lo && tw <= hi ? `<line x1="${pl}" x2="${W - pr}" y1="${y(tw)}" y2="${y(tw)}" stroke="#3fa86b" stroke-dasharray="4 4"/><text x="${W - pr}" y="${y(tw) - 4}" text-anchor="end" font-size="10" fill="#3fa86b">目標 ${tw}</text>` : '';
+      const last = pts[pts.length - 1];
+      ch.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 30 天體重趨勢">${ticks}${goal}
+        <path d="${path}" fill="none" stroke="#e8505b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        ${pts.map(p => `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="3" fill="#e8505b"><title>${nice(p[2])} ${p[1]} kg</title></circle>`).join('')}
+        <text x="${x(last[0])}" y="${y(last[1]) - 8}" text-anchor="end" font-size="11" font-weight="700" fill="#3b2f2a">${last[1]} kg</text>
+        <text x="${pl}" y="${H - 6}" font-size="10" fill="#8a7a70">30 天前</text><text x="${W - pr}" y="${H - 6}" text-anchor="end" font-size="10" fill="#8a7a70">今天</text></svg>`;
+    }
+    // week summary
+    const mon = mondayOf(t); let exDays = 0, logged = 0, wpts = 0, weights = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(mon, i); if (d > t) break; const r = rec(d);
+      if (isExDay(r)) exDays++; if (loggedCount(r) > 0) logged++;
+      if (C.perDay[d]) wpts += C.perDay[d].pts;
+      const w = num(r.weight); if (w !== null) weights.push(w);
+    }
+    const g = S.settings.goals;
+    const avgW = weights.length ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : '—';
+    $('week-summary').innerHTML = `<div><span>有紀錄的天數</span><span>${logged} 天</span></div>
+      <div><span>運動天數</span><span>${exDays} / ${g.weeklyExDays || '—'} 天 ${g.weeklyExDays && exDays >= g.weeklyExDays ? '✅（週日結算 +100）' : ''}</span></div>
+      <div><span>平均體重</span><span>${avgW} kg</span></div>
+      <div><span>本週得分</span><span>${wpts}</span></div>`;
+    // list
+    const days = Object.keys(S.records).filter(d => loggedCount(rec(d)) > 0).sort().reverse();
+    $('hist-list').innerHTML = days.length ? days.map(d => {
+      const r = rec(d), p = C.perDay[d] ? C.perDay[d].pts : '—';
+      const sub = [r.exType && r.exType !== 'rest' ? `${r.exType} ${r.exMin || 0} 分` : r.exType === 'rest' ? '休息日' : '', num(r.weight) !== null ? `${r.weight} kg` : '', r.water ? `水 ${r.water} 杯` : ''].filter(Boolean).join(' · ');
+      return `<div class="hist-item" onclick="App.goto('${d}')"><div class="hist-top"><span>${nice(d)}</span><span class="${p >= 0 ? 'plus' : 'minus'}">${p} 分</span></div>
+        <div class="dots"><i class="${hasDiet(r) ? 'on' : ''}">飲食</i><i class="${hasEx(r) ? 'on' : ''}">運動</i><i class="${hasBody(r) ? 'on' : ''}">數據</i></div>
+        <div class="hist-sub">${esc(sub)}</div></div>`;
+    }).join('') : '<p class="muted">還沒有紀錄，快去「今日」回報教練吧！</p>';
+  }
+
+  // ---------- avatar maker ----------
+  function renderAvatarMaker() {
+    $('avatar-preview').innerHTML = avatarSVG(S.avatar);
+    $('player-name').value = S.avatar.name || '';
+    $('avatar-opts').innerHTML = AV_OPTS.map(([k, label, opts]) => {
+      const isColor = ['skin', 'hairColor', 'outfitColor'].includes(k);
+      return `<div class="opt-group"><span>${label}</span><div class="opts">${opts.map(([v, txt]) =>
+        isColor ? `<button class="swatch ${S.avatar[k] === v ? 'sel' : ''}" style="background:${txt}" aria-label="${label} ${v + 1}" onclick='App.setAvatar("${k}", ${JSON.stringify(v)})'></button>`
+          : `<button class="${S.avatar[k] === v ? 'sel' : ''}" onclick='App.setAvatar("${k}", ${JSON.stringify(v)})'>${txt}</button>`).join('')}</div></div>`;
+    }).join('');
+  }
+
+  // ---------- coach slots ----------
+  function renderSlots() {
+    $('slots').innerHTML = STATES.map(([k, label]) => {
+      const img = coachImg(k);
+      return `<label class="slot ${img ? 'has' : ''}">
+        ${img ? `<button class="x" onclick="event.preventDefault(); App.clearSlot('${k}')" aria-label="移除">×</button>` : ''}
+        <div class="thumb">${img ? `<img src="${img}" alt="">` : coachSVG(k)}</div>
+        <div>${label}</div>
+        <input type="file" accept="image/*" onchange="App.uploadSlot('${k}', this)">
+      </label>`;
+    }).join('');
+  }
+
+  function loadImage(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file); const im = new Image();
+      im.onload = () => { res(im); URL.revokeObjectURL(url); }; im.onerror = rej; im.src = url;
+    });
+  }
+  function toDataURL(src, sx, sy, sw, sh, max = 360) {
+    const sc = Math.min(1, max / Math.max(sw, sh));
+    const c = document.createElement('canvas'); c.width = Math.round(sw * sc); c.height = Math.round(sh * sc);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(src, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.86);
+  }
+  // find the main picture inside a grid cell (skip label text separated by whitespace)
+  function findContent(ctx, x0, y0, w, h) {
+    const data = ctx.getImageData(x0, y0, w, h).data;
+    const ink = (i) => { const r = data[i], g = data[i + 1], b = data[i + 2]; return Math.min(r, g, b) < 215; };
+    const rowInk = new Array(h).fill(0);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x += 2) if (ink((y * w + x) * 4)) rowInk[y]++;
+    const segs = []; let s = -1, gap = 0; const maxGap = Math.max(4, Math.round(h * 0.015));
+    for (let y = 0; y < h; y++) {
+      if (rowInk[y] > 1) { if (s < 0) s = y; gap = 0; }
+      else if (s >= 0) { gap++; if (gap > maxGap) { segs.push([s, y - gap]); s = -1; gap = 0; } }
+    }
+    if (s >= 0) segs.push([s, h - 1]);
+    if (!segs.length) return [x0, y0, w, h];
+    let best = segs[0], bestInk = -1;
+    for (const [a, b] of segs) { let sum = 0; for (let y = a; y <= b; y++) sum += rowInk[y]; if (sum > bestInk) { bestInk = sum; best = [a, b]; } }
+    let minX = w, maxX = 0;
+    for (let y = best[0]; y <= best[1]; y++) for (let x = 0; x < w; x++) if (ink((y * w + x) * 4)) { if (x < minX) minX = x; if (x > maxX) maxX = x; }
+    const p = 8;
+    const nx = Math.max(0, minX - p), ny = Math.max(0, best[0] - p);
+    return [x0 + nx, y0 + ny, Math.min(w - nx, maxX - minX + 2 * p), Math.min(h - ny, best[1] - best[0] + 2 * p)];
+  }
+
+  // ---------- notification lines ----------
+  function renderNotifyLines() {
+    const name = S.settings.coachName || '教練';
+    const lines = [
+      ['08:00', `${name}：起床量體重！早餐吃什麼要回報喔！`],
+      ['12:30', `${name}：午餐記錄了沒？水喝幾杯了？`],
+      ['21:00', `${name}：今天運動了嗎？還沒記錄的話紀律棒伺候！`],
+    ];
+    $('notify-lines').innerHTML = lines.map(([t, l], i) => `<div class="copy-line"><b style="font-size:.8rem">${t}</b><code id="nl-${i}">${esc(l)}</code><button onclick="App.copy('nl-${i}')">複製</button></div>`).join('')
+      + `<div class="copy-line"><b style="font-size:.8rem">網址</b><code id="nl-url">${esc(location.href.split('#')[0])}</code><button onclick="App.copy('nl-url')">複製</button></div>`;
+  }
+
+  function fillSettings() {
+    const g = S.settings.goals;
+    $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
+    $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
+    $('g-startdate').value = S.settings.startDate;
+    $('coach-name').value = S.settings.coachName;
+    renderSlots(); renderNotifyLines();
+  }
+
+  // ---------- public API ----------
+  const App = {
+    toast,
+    switchTab(tab) {
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
+      document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      window.scrollTo(0, 0);
+      if (tab === 'history') renderHistory();
+      if (tab === 'avatar') renderAvatarMaker();
+      if (tab === 'settings') fillSettings();
+      if (tab === 'today') { refreshStats(); renderPlayer(); if (!busy) setCoach(moodState()); }
+    },
+    shiftDay(n) {
+      const d = addDays(curDate, n);
+      if (d > today()) return;
+      curDate = d; fillForm(); refreshStats();
+    },
+    goto(d) { curDate = d; App.switchTab('today'); fillForm(); refreshStats(); },
+    water(n) {
+      const el = $('water-val'); const v = Math.max(0, Math.min(30, (parseInt(el.dataset.v || '0', 10) || 0) + n));
+      el.dataset.v = v; el.textContent = v + ' 杯'; updateHints();
+    },
+    saveDay() {
+      if (busy) return;
+      const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
+      const prevBody = hasBody(rec(curDate));
+      const r = readForm();
+      if (loggedCount(r) === 0 && !r.note) { delete S.records[curDate]; } else S.records[curDate] = r;
+      // set start weight automatically on first weight
+      if (!S.settings.goals.startWeight && num(r.weight) !== null) S.settings.goals.startWeight = r.weight;
+      persist(); refreshStats(); renderPlayer();
+      const after = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
+      const delta = after - before;
+      if (delta) popPoints(delta);
+      const n = loggedCount(r);
+      if (n === 3) {
+        setCoach('cheer', delta > 0 ? `呀哈！+${delta} 分！三項全記！` : '已更新！三項全記，讚！');
+        setTimeout(() => { if (!busy) setCoach('dance'); }, 2400);
+      } else if (n > 0) {
+        setCoach('cheer', delta > 0 ? `有記錄！+${delta} 分！還差 ${3 - n} 項～` : `已更新！還差 ${3 - n} 項～`);
+        setTimeout(() => { if (!busy) setCoach('inspect'); }, 2400);
+      } else {
+        setCoach('angry', '什麼都沒填就按儲存！？');
+      }
+      if (!prevBody && hasBody(r) && C.reached) toast('🎉 達成目標體重！+200 分！');
+      else toast('已回報教練！');
+    },
+    pokeCoach() {
+      if (busy) return;
+      setCoach('goforit');
+      clearTimeout(App._p); App._p = setTimeout(() => { if (!busy) setCoach(moodState()); }, 2600);
+    },
+    setAvatar(k, v) {
+      S.avatar[k] = v; persist();
+      if (k === 'name') { $('avatar-preview').innerHTML = avatarSVG(S.avatar); return; }
+      renderAvatarMaker();
+    },
+    randomAvatar() {
+      AV_OPTS.forEach(([k, , opts]) => { S.avatar[k] = pick(opts)[0]; });
+      persist(); renderAvatarMaker();
+    },
+    saveGoals() {
+      const g = S.settings.goals;
+      g.startWeight = $('g-start').value; g.targetWeight = $('g-target').value;
+      g.exMin = Math.max(0, parseInt($('g-ex').value, 10) || 0);
+      g.water = Math.max(0, parseInt($('g-water').value, 10) || 0);
+      g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('g-week').value, 10) || 0));
+      const sd = $('g-startdate').value; if (sd) S.settings.startDate = sd > today() ? today() : sd;
+      persist(); toast('目標已儲存！');
+    },
+    saveCoachName() {
+      S.settings.coachName = $('coach-name').value.trim() || '教練';
+      persist(); renderNotifyLines(); toast('教練名字已儲存！');
+    },
+    async uploadSlot(k, input) {
+      const f = input.files && input.files[0]; if (!f) return;
+      try {
+        const im = await loadImage(f);
+        const url = toDataURL(im, 0, 0, im.naturalWidth, im.naturalHeight);
+        if (!safeSet(IMG_KEY + k, url)) toast('⚠️ 空間不足，存不下這張圖');
+        renderSlots();
+      } catch (e) { toast('圖片讀取失敗'); }
+      input.value = '';
+    },
+    async uploadSheet(input) {
+      const f = input.files && input.files[0]; if (!f) return;
+      const cols = Math.max(1, parseInt($('sheet-cols').value, 10) || 5), rows = Math.max(1, parseInt($('sheet-rows').value, 10) || 2);
+      try {
+        const im = await loadImage(f);
+        const W = im.naturalWidth, H = im.naturalHeight;
+        const c = document.createElement('canvas'); c.width = W; c.height = H;
+        const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(im, 0, 0);
+        const cw = Math.floor(W / cols), chh = Math.floor(H / rows);
+        let i = 0, saved = 0;
+        for (let r = 0; r < rows; r++) for (let col = 0; col < cols; col++) {
+          if (i >= STATES.length) break;
+          const [x, y, w, h] = findContent(ctx, col * cw, r * chh, cw, chh);
+          if (safeSet(IMG_KEY + STATES[i][0], toDataURL(c, x, y, w, h))) saved++;
+          i++;
+        }
+        renderSlots(); toast(`已切出 ${saved} 個動作！不對的格子可以點它重新上傳`);
+      } catch (e) { toast('動作表處理失敗'); }
+      input.value = '';
+    },
+    clearSlot(k) { safeDel(IMG_KEY + k); renderSlots(); },
+    clearSlots() { if (!confirm('清除所有教練圖片？')) return; STATES.forEach(([k]) => safeDel(IMG_KEY + k)); renderSlots(); toast('已清除'); },
+    copy(id) {
+      const text = $(id).textContent;
+      const done = () => toast('已複製！');
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => toast('請長按文字手動複製'));
+      else toast('請長按文字手動複製');
+    },
+    exportData() {
+      const imgs = {}; STATES.forEach(([k]) => { const v = coachImg(k); if (v) imgs[k] = v; });
+      const blob = new Blob([JSON.stringify({ app: 'coach-game', exportedAt: new Date().toISOString(), state: S, images: imgs })], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `紀律教練備份-${today()}.json`;
+      document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    },
+    importData(input) {
+      const f = input.files && input.files[0]; if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        try {
+          const d = JSON.parse(rd.result);
+          if (!d.state || !d.state.records) throw new Error('bad');
+          if (!confirm('匯入會覆蓋目前的資料，確定嗎？')) return;
+          safeSet(KEY, JSON.stringify(d.state));
+          Object.entries(d.images || {}).forEach(([k, v]) => safeSet(IMG_KEY + k, v));
+          load(); fillSettings(); fillForm(); refreshStats(); toast('匯入完成！');
+        } catch (e) { toast('檔案格式不對'); }
+      };
+      rd.readAsText(f); input.value = '';
+    },
+    importCompass() {
+      let src; try { src = JSON.parse(safeGet('rl_daily_records') || 'null'); } catch (e) { src = null; }
+      if (!src) { toast('找不到心智羅盤的資料（需在同一個網站、同一個瀏覽器）'); return; }
+      let n = 0;
+      Object.entries(src).forEach(([d, r]) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !r || num(r.weight) === null) return;
+        const cur = rec(d); if (num(cur.weight) !== null) return;
+        cur.weight = String(r.weight); S.records[d] = cur; n++;
+      });
+      persist(); refreshStats(); toast(n ? `匯入了 ${n} 天的體重` : '沒有新的體重可以匯入');
+    },
+    resetAll() {
+      if (!confirm('確定清除全部資料？（建議先匯出備份）')) return;
+      if (!confirm('真的確定？這無法復原！')) return;
+      safeDel(KEY); STATES.forEach(([k]) => safeDel(IMG_KEY + k));
+      load(); curDate = today(); fillForm(); App.switchTab('today'); toast('已清除');
+    },
+  };
+  window.App = App;
+
+  // ---------- boot ----------
+  load();
+  ['m-b', 'm-l', 'm-d', 'm-s', 'kcal', 'ex-type', 'ex-min', 'steps', 'weight', 'fat', 'waist'].forEach(id => $(id).addEventListener('input', updateHints));
+  $('no-sugar').addEventListener('change', updateHints);
+  fillForm(); refreshStats(); renderPlayer();
+
+  const t = today();
+  if (C.patience < 30 && S.lastAttack !== t && (C.perDay[t] ? C.perDay[t].n : 0) < 3) {
+    $('bubble-text').textContent = '……';
+    setTimeout(runAttack, 500);
+  } else {
+    setCoach('sprint', pick(LINES.sprint));
+    setTimeout(() => { if (!busy) setCoach(moodState()); }, 1500);
+  }
+
+  // re-evaluate when coming back to the app
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (curDate > today()) curDate = today();
+    refreshStats(); renderPlayer();
+    if (!busy && document.getElementById('view-today').classList.contains('active')) setCoach(moodState());
+  });
+})();
+</script>
+</body>
+</html>
