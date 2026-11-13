@@ -11,18 +11,9 @@
 <title>紀律教練</title>
 <style>
   :root {
-    --bg: #fff4e3;
-    --card: #ffffff;
-    --ink: #3b2f2a;
-    --muted: #8a7a70;
-    --line: #f0dfc8;
-    --primary: #e8505b;
-    --primary-soft: #fde3e4;
-    --ok: #3fa86b;
-    --ok-soft: #dcf3e5;
-    --warn: #f0a32b;
-    --stage: #fffaf2;
-    --shadow: 0 4px 14px rgba(120, 80, 40, .10);
+    --bg: #fff4e3; --card: #ffffff; --ink: #3b2f2a; --muted: #8a7a70; --line: #f0dfc8;
+    --primary: #e8505b; --primary-soft: #fde3e4; --ok: #3fa86b; --ok-soft: #dcf3e5; --warn: #f0a32b;
+    --stage: #fffaf2; --gold: #f2b134; --navy: #2b2f4a; --shadow: 0 4px 14px rgba(120, 80, 40, .10);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
@@ -32,15 +23,14 @@
     font-size: 15px; line-height: 1.5;
     padding-bottom: calc(76px + env(safe-area-inset-bottom));
   }
-  #app { max-width: 520px; margin: 0 auto; padding: 12px 16px 0; }
-  #app.shake { animation: screenShake .45s linear 2; }
+  #app { max-width: 520px; margin: 0 auto; padding: 10px 16px 0; }
+  .shake { animation: screenShake .45s linear 2; }
   @keyframes screenShake {
     0%,100% { transform: translate(0,0); } 20% { transform: translate(-8px,4px); }
     40% { transform: translate(7px,-5px); } 60% { transform: translate(-6px,-3px); } 80% { transform: translate(5px,5px); }
   }
-
-  header.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  header.top h1 { font-size: 1.15rem; margin: 0; }
+  header.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  header.top h1 { font-size: 1.1rem; margin: 0; }
   .lv-badge { background: var(--primary); color: #fff; border-radius: 99px; padding: 3px 10px; font-size: .78rem; font-weight: 700; }
 
   .card { background: var(--card); border-radius: 18px; padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
@@ -48,46 +38,55 @@
   .done-chip { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--line); color: var(--muted); }
   .done-chip.on { background: var(--ok-soft); color: var(--ok); }
 
-  /* stats */
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
-  .stat { background: var(--card); border-radius: 14px; padding: 8px; text-align: center; box-shadow: var(--shadow); }
-  .stat b { display: block; font-size: 1.25rem; }
-  .stat span { font-size: .72rem; color: var(--muted); }
-  .patience { margin: 4px 0 10px; }
-  .patience-label { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
-  .bar { height: 12px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+  .stat { background: var(--card); border-radius: 14px; padding: 6px; text-align: center; box-shadow: var(--shadow); }
+  .stat b { display: block; font-size: 1.15rem; }
+  .stat span { font-size: .7rem; color: var(--muted); }
+  .patience { margin: 2px 0 8px; }
+  .patience-label { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); margin-bottom: 3px; }
+  .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
   .bar i { display: block; height: 100%; border-radius: 99px; transition: width .6s, background .6s; }
 
-  /* stage */
-  .stage { position: relative; background: var(--stage); border-radius: 20px; height: 300px; overflow: hidden; box-shadow: var(--shadow); margin-bottom: 12px; border: 2px solid var(--line); }
-  .stage .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; background: #f6e6cc; }
-  .coach-wrap { position: absolute; left: 6%; bottom: 26px; width: 48%; height: 210px; display: flex; align-items: flex-end; justify-content: center; cursor: pointer; z-index: 2; }
-  .coach-wrap img, .coach-wrap svg { max-width: 100%; max-height: 100%; }
-  .coach-wrap img { mix-blend-mode: multiply; }
-  .player-wrap { position: absolute; right: 6%; bottom: 26px; width: 34%; height: 170px; display: flex; align-items: flex-end; justify-content: center; z-index: 1; }
-  .player-wrap svg { width: 100%; height: 100%; }
-  .bubble { position: absolute; top: 12px; left: 12px; right: 12px; background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 8px 12px; font-weight: 700; font-size: .92rem; z-index: 3; min-height: 44px; }
-  .bubble::after { content: ""; position: absolute; left: 28%; bottom: -10px; border: 8px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
-  .coach-name { font-size: .72rem; color: var(--primary); display: block; }
-  .fx { position: absolute; z-index: 5; pointer-events: none; font-weight: 900; }
-  .boom { left: 50%; top: 45%; transform: translate(-50%,-50%) scale(0); font-size: 3.2rem; color: #ff5a1f; -webkit-text-stroke: 2px #3b2f2a; animation: boom .7s ease-out forwards; }
+  /* ===== gym scene ===== */
+  .gym { position: relative; width: 100%; aspect-ratio: 9 / 10; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); border: 3px solid #5a3a26; background: #f6e7cf; isolation: isolate; z-index: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  .gym > svg.bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .actor { position: absolute; transform-origin: 50% 100%; transition-property: left, bottom; transition-timing-function: linear; }
+  .actor .inner { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+  .actor .flip { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; transition: transform .15s; }
+  .actor .flip.left { transform: scaleX(-1); }
+  #coach { width: 30%; aspect-ratio: 1 / 1.05; cursor: pointer; }
+  #coach img, #coach svg { max-width: 100%; max-height: 100%; }
+  #player { width: 23%; aspect-ratio: 2 / 3; }
+  #player svg { width: 100%; height: 100%; overflow: visible; }
+  .shadow { position: absolute; left: 18%; right: 18%; bottom: -3%; height: 8%; background: rgba(60, 30, 10, .22); border-radius: 50%; z-index: -1; }
+  .marker { position: absolute; left: 50%; top: -8%; transform: translateX(-50%); font-size: 1.3rem; animation: mark 1s ease-in-out infinite; display: none; }
+  .marker.on { display: block; }
+  @keyframes mark { 0%,100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -8px); } }
+  .name-tag { position: absolute; left: 50%; bottom: -14%; transform: translateX(-50%); font-size: .66rem; background: rgba(43, 47, 74, .8); color: #fff; padding: 1px 7px; border-radius: 99px; white-space: nowrap; font-weight: 700; }
+  .bubble { position: absolute; top: 8px; left: 8px; right: 8px; background: #fff; border: 2.5px solid var(--ink); border-radius: 14px; padding: 6px 10px; font-weight: 700; font-size: .88rem; z-index: 200; min-height: 40px; pointer-events: none; }
+  .coach-name { font-size: .7rem; color: var(--primary); display: block; line-height: 1.2; }
+  .tap-hint { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-size: .7rem; color: rgba(255,255,255,.95); text-shadow: 0 1px 2px rgba(0,0,0,.5); pointer-events: none; z-index: 150; }
+  .walk-dot { position: absolute; width: 18px; height: 8px; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); transform: translate(-50%, 50%); animation: dot .6s ease-out forwards; pointer-events: none; z-index: 1; }
+  @keyframes dot { from { opacity: 1; transform: translate(-50%, 50%) scale(.4); } to { opacity: 0; transform: translate(-50%, 50%) scale(1.6); } }
+  .fx { position: absolute; z-index: 300; pointer-events: none; font-weight: 900; }
+  .boom { transform: translate(-50%,-50%) scale(0); font-size: 2.8rem; color: #ff5a1f; -webkit-text-stroke: 2px #3b2f2a; animation: boom .7s ease-out forwards; }
   @keyframes boom { 0% { transform: translate(-50%,-50%) scale(0) rotate(-20deg); opacity: 1; } 60% { transform: translate(-50%,-50%) scale(1.3) rotate(8deg); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(1) rotate(0); opacity: 0; } }
-  .pts-pop { right: 18%; top: 40%; font-size: 1.6rem; color: var(--ok); -webkit-text-stroke: 1px #fff; animation: ptsUp 1.4s ease-out forwards; }
-  @keyframes ptsUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-80px); opacity: 0; } }
+  .pts-pop { font-size: 1.6rem; color: var(--ok); -webkit-text-stroke: 1px #fff; animation: ptsUp 1.4s ease-out forwards; transform: translateX(-50%); }
+  @keyframes ptsUp { from { margin-top: 0; opacity: 1; } to { margin-top: -80px; opacity: 0; } }
 
   /* coach animations */
   .a-standby { animation: bob 1.4s ease-in-out infinite; }
-  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   .a-cheer { animation: jump .6s ease-in-out infinite; }
-  @keyframes jump { 0%,100% { transform: translateY(0) scale(1,1); } 40% { transform: translateY(-34px) scale(.95,1.05); } 85% { transform: translateY(0) scale(1.08,.92); } }
+  @keyframes jump { 0%,100% { transform: translateY(0) scale(1,1); } 40% { transform: translateY(-28px) scale(.95,1.05); } 85% { transform: translateY(0) scale(1.08,.92); } }
   .a-dance { animation: dance 1s ease-in-out infinite; transform-origin: 50% 100%; }
-  @keyframes dance { 0%,100% { transform: rotate(-10deg) translateX(-8px); } 50% { transform: rotate(10deg) translateX(8px); } }
-  .a-sprint { animation: sprintIn .8s cubic-bezier(.2,.8,.3,1) both; }
-  @keyframes sprintIn { from { transform: translateX(-160%) skewX(-12deg); filter: blur(2px); } 80% { transform: translateX(10%) skewX(6deg); filter: blur(0); } to { transform: translateX(0); } }
+  @keyframes dance { 0%,100% { transform: rotate(-10deg) translateX(-6px); } 50% { transform: rotate(10deg) translateX(6px); } }
+  .a-sprint { animation: run .3s ease-in-out infinite; }
+  @keyframes run { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-6px) rotate(4deg); } }
   .a-angry { animation: angry .25s linear infinite; }
   @keyframes angry { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px) rotate(-2deg); } 75% { transform: translateX(4px) rotate(2deg); } }
-  .a-attack { animation: attack .35s ease-in-out infinite; transform-origin: 50% 100%; }
-  @keyframes attack { 0%,100% { transform: translateX(40%) rotate(0); } 50% { transform: translateX(55%) rotate(14deg) scale(1.08); } }
+  .a-attack { animation: attack .3s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes attack { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(14deg) scale(1.08); } }
   .a-cry { animation: cry 1.2s ease-in-out infinite; }
   @keyframes cry { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg) translateY(3px); } }
   .a-sleep { animation: breathe 2.6s ease-in-out infinite; transform-origin: 50% 100%; }
@@ -96,9 +95,25 @@
   @keyframes inspect { 0%,100% { transform: rotate(0); } 30% { transform: rotate(-6deg); } 60% { transform: rotate(4deg); } }
   .a-goforit { animation: pump .5s ease-in-out infinite; }
   @keyframes pump { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-  .p-hit { animation: hit .35s linear infinite; }
-  @keyframes hit { 0%,100% { transform: translateX(0); filter: none; } 50% { transform: translateX(10px) rotate(6deg); filter: brightness(1.4) saturate(.4); } }
-  @media (prefers-reduced-motion: reduce) { .coach-wrap > *, .player-wrap > * { animation-duration: 0s !important; animation-iteration-count: 1 !important; } }
+
+  /* player animations */
+  .av .leg-l, .av .leg-r, .av .arm-l, .av .arm-r { transform-box: fill-box; transform-origin: 50% 0%; }
+  .walking .leg-l { animation: swing .5s ease-in-out infinite; }
+  .walking .leg-r { animation: swing .5s ease-in-out infinite; animation-delay: -.25s; }
+  .walking .arm-l { animation: swing .5s ease-in-out infinite; animation-delay: -.25s; }
+  .walking .arm-r { animation: swing .5s ease-in-out infinite; }
+  .walking .av { animation: walkBob .25s ease-in-out infinite; }
+  @keyframes swing { 0%,100% { transform: rotate(16deg); } 50% { transform: rotate(-16deg); } }
+  @keyframes walkBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3%); } }
+  .idle .av { animation: idle 2.4s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes idle { 0%,100% { transform: scale(1,1); } 50% { transform: scale(1.02,.985); } }
+  .hit .av { animation: hit .3s linear infinite; }
+  @keyframes hit { 0%,100% { transform: translateX(0); filter: none; } 50% { transform: translateX(6%) rotate(8deg); filter: brightness(1.4) saturate(.4); } }
+  .happy .av { animation: hop .5s ease-in-out 3; }
+  @keyframes hop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10%); } }
+  @media (prefers-reduced-motion: reduce) { .actor *, .actor { animation-duration: 0s !important; animation-iteration-count: 1 !important; } }
+
+  .gym-actions { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin: 10px 0 12px; }
 
   /* forms */
   label.f { display: block; font-size: .78rem; color: var(--muted); margin: 8px 0 3px; }
@@ -121,14 +136,33 @@
   .btn { display: block; width: 100%; border: none; border-radius: 14px; padding: 13px; font: inherit; font-weight: 700; font-size: 1rem; background: var(--primary); color: #fff; margin-top: 4px; }
   .btn.secondary { background: var(--primary-soft); color: var(--primary); }
   .btn.ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--line); }
+  .btn.gold { background: var(--gold); color: #3b2f2a; }
   .btn + .btn { margin-top: 8px; }
   .btn-row { display: flex; gap: 8px; }
   .btn-row .btn { margin-top: 0; }
+  .gym-actions .btn { margin-top: 0; }
 
   .breakdown { font-size: .85rem; }
   .breakdown div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed var(--line); }
   .breakdown div:last-child { border: none; font-weight: 700; }
   .plus { color: var(--ok); font-weight: 700; } .minus { color: var(--primary); font-weight: 700; }
+
+  /* record sheet */
+  #sheet { position: fixed; inset: 0; z-index: 30; display: none; }
+  #sheet.show { display: block; }
+  #sheet .backdrop { position: absolute; inset: 0; background: rgba(40, 25, 15, .45); }
+  #sheet .panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto; background: var(--bg); border-radius: 22px 22px 0 0; padding: 0 16px calc(20px + env(safe-area-inset-bottom)); animation: up .25s ease-out; }
+  @keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  #sheet .panel-inner { max-width: 520px; margin: 0 auto; }
+  .sheet-head { position: sticky; top: 0; background: var(--bg); padding: 12px 0 8px; display: flex; align-items: center; gap: 10px; z-index: 2; }
+  .sheet-head .mini { width: 48px; height: 48px; flex: none; display: flex; align-items: flex-end; justify-content: center; }
+  .sheet-head .mini img, .sheet-head .mini svg { max-width: 100%; max-height: 100%; }
+  .sheet-head .t { flex: 1; font-weight: 700; font-size: .95rem; }
+  .sheet-head .t small { display: block; color: var(--muted); font-weight: 400; font-size: .75rem; }
+  .sheet-head button { border: none; background: var(--card); box-shadow: var(--shadow); border-radius: 50%; width: 36px; height: 36px; font-size: 1rem; }
+  .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .date-nav button { border: none; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; padding: 7px 12px; font: inherit; font-size: .85rem; color: var(--ink); }
+  .date-nav b { font-size: .95rem; }
 
   /* tabs */
   .view { display: none; } .view.active { display: block; }
@@ -137,23 +171,43 @@
   nav.tabs button .ic { font-size: 1.35rem; line-height: 1.2; }
   nav.tabs button.active { color: var(--primary); font-weight: 700; }
 
-  /* avatar maker */
-  .avatar-preview { background: var(--stage); border-radius: 18px; height: 230px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; border: 2px solid var(--line); }
-  .avatar-preview svg { height: 210px; }
-  .opt-group { margin-bottom: 10px; }
-  .opt-group > span { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
-  .opts { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-  .opts::-webkit-scrollbar { display: none; }
-  .opts button { flex: none; border: 2px solid var(--line); background: #fffdf9; border-radius: 12px; padding: 7px 12px; font: inherit; font-size: .85rem; color: var(--ink); }
-  .opts button.sel { border-color: var(--primary); background: var(--primary-soft); font-weight: 700; }
-  .opts button.swatch { width: 38px; height: 38px; padding: 0; border-radius: 50%; }
-  .opts button.swatch.sel { box-shadow: 0 0 0 3px #fff inset; }
+  /* ===== character creator ===== */
+  .creator { background: radial-gradient(ellipse at 50% 0%, #4b5a8a 0%, #2b2f4a 55%, #1f2238 100%); border-radius: 20px; padding: 12px; color: #fff; box-shadow: var(--shadow); margin-bottom: 12px; }
+  .creator h2 { text-align: center; color: var(--gold); margin: 0 0 6px; font-size: 1.2rem; letter-spacing: 2px; text-shadow: 0 2px 0 #7a4a10; }
+  .cc-stage { position: relative; height: 270px; display: flex; align-items: flex-end; justify-content: center; }
+  .cc-stage::before { content: ""; position: absolute; left: 50%; top: -12px; width: 70%; height: 100%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(160, 230, 255, .35), rgba(160, 230, 255, 0)); clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%); }
+  .cc-stage .pedestal { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 62%; height: 34px; border-radius: 50%; background: radial-gradient(ellipse, #8fe9ff 0%, #3a7bd5 45%, #2a3560 75%); box-shadow: 0 0 24px rgba(120, 220, 255, .6); }
+  .cc-stage svg { position: relative; height: 250px; z-index: 1; }
+  .cc-height { display: flex; align-items: center; gap: 8px; font-size: .82rem; margin: 6px 4px 8px; }
+  .cc-height input { flex: 1; accent-color: var(--gold); }
+  .gender { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .gender button { border: 2px solid rgba(255,255,255,.25); border-radius: 12px; padding: 9px; font: inherit; font-weight: 700; color: #fff; }
+  .gender .m { background: linear-gradient(180deg, #4aa8ff, #2a6fd6); }
+  .gender .f { background: linear-gradient(180deg, #e070e8, #a53fc0); }
+  .gender button.sel { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 0 14px rgba(242, 177, 52, .6); }
+  .gender button:not(.sel) { opacity: .55; }
+  .cc-tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: 8px; }
+  .cc-tabs::-webkit-scrollbar { display: none; }
+  .cc-tabs button { flex: none; border: none; border-radius: 10px; padding: 7px 11px; font: inherit; font-size: .82rem; background: rgba(255,255,255,.1); color: #dfe4ff; }
+  .cc-tabs button.sel { background: var(--gold); color: #3b2f2a; font-weight: 700; }
+  .cc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .cc-opt { background: #3a4268; border: 2px solid #56609a; border-radius: 12px; padding: 3px 2px 4px; font: inherit; font-size: .7rem; color: #fff; text-align: center; }
+  .cc-opt svg { width: 100%; height: 62px; display: block; }
+  .cc-opt.sel { border-color: var(--gold); background: #57507a; box-shadow: 0 0 10px rgba(242,177,52,.5); }
+  .cc-sub { font-size: .75rem; color: #c5cbef; margin: 10px 0 5px; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swatches button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); padding: 0; }
+  .swatches button.sel { border: 3px solid var(--gold); transform: scale(1.1); }
+  .cc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .cc-actions .btn { margin-top: 0; }
+  .creator input[type=text] { background: #3a4268; border-color: #56609a; color: #fff; }
+  .creator label.f { color: #c5cbef; }
 
   /* coach slots */
   .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
   .slot { background: var(--stage); border: 2px dashed var(--line); border-radius: 14px; padding: 6px; text-align: center; font-size: .75rem; position: relative; }
   .slot .thumb { height: 74px; display: flex; align-items: center; justify-content: center; }
-  .slot .thumb img, .slot .thumb svg { max-height: 74px; max-width: 100%; mix-blend-mode: multiply; }
+  .slot .thumb img, .slot .thumb svg { max-height: 74px; max-width: 100%; }
   .slot.has { border-style: solid; border-color: var(--ok); }
   .slot input { display: none; }
   .slot .x { position: absolute; top: 2px; right: 4px; border: none; background: none; color: var(--primary); font-size: 1rem; font-weight: 700; }
@@ -171,23 +225,36 @@
   .steps { padding-left: 20px; margin: 6px 0; font-size: .88rem; }
   .steps li { margin-bottom: 4px; }
   .copy-line { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
-  .copy-line code { flex: 1; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px; font-size: .82rem; font-family: inherit; }
+  .copy-line code { flex: 1; background: var(--stage); border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px; font-size: .82rem; font-family: inherit; word-break: break-all; }
   .copy-line button { border: none; background: var(--primary-soft); color: var(--primary); border-radius: 10px; padding: 7px 10px; font: inherit; font-size: .8rem; font-weight: 700; }
-  .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 99px; font-size: .88rem; z-index: 50; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+  .toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 16px; border-radius: 99px; font-size: .88rem; z-index: 60; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; }
-  .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .date-nav button { border: none; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; padding: 7px 12px; font: inherit; font-size: .85rem; color: var(--ink); }
-  .date-nav b { font-size: .95rem; }
+
+  /* onboarding */
+  #onboard { position: fixed; inset: 0; background: var(--bg); z-index: 40; overflow-y: auto; display: none; }
+  #onboard.show { display: block; }
+  .ob-inner { max-width: 520px; margin: 0 auto; padding: 18px 16px calc(30px + env(safe-area-inset-bottom)); }
+  .ob-steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; }
+  .ob-steps i { width: 28px; height: 6px; border-radius: 99px; background: var(--line); }
+  .ob-steps i.on { background: var(--primary); }
+  .ob-inner > div > h2 { text-align: center; margin: 4px 0 4px; font-size: 1.25rem; }
+  .ob-inner p.sub { text-align: center; color: var(--muted); margin: 0 0 12px; font-size: .86rem; }
+  .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .preset { background: #3a4268; border: 2px solid #56609a; border-radius: 14px; padding: 4px 2px 6px; text-align: center; font: inherit; font-size: .72rem; color: #fff; }
+  .preset svg { width: 100%; height: 96px; display: block; }
+  .preset.sel { border-color: var(--gold); box-shadow: 0 0 10px rgba(242,177,52,.6); background: #57507a; font-weight: 700; }
+  .ob-coach { background: var(--stage); border: 2px solid var(--line); border-radius: 18px; height: 190px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .ob-coach img, .ob-coach svg { max-height: 170px; max-width: 70%; }
 </style>
 </head>
 <body>
 <div id="app">
   <header class="top">
-    <h1>🏋️ 紀律教練</h1>
+    <h1>🏋️ 紀律健身房</h1>
     <span class="lv-badge" id="lv-badge">Lv.1</span>
   </header>
 
-  <!-- ===== 今日 ===== -->
+  <!-- ===== 健身房 ===== -->
   <section class="view active" id="view-today">
     <div class="stats">
       <div class="stat"><b id="st-score">0</b><span>總分</span></div>
@@ -199,13 +266,127 @@
       <div class="bar"><i id="pat-bar"></i></div>
     </div>
 
-    <div class="stage" id="stage">
+    <div class="gym" id="gym">
+      <svg class="bg" id="gym-bg" viewBox="0 0 360 400" preserveAspectRatio="none" aria-hidden="true"></svg>
       <div class="bubble"><span class="coach-name" id="coach-name-tag">教練</span><span id="bubble-text">……</span></div>
-      <div class="floor"></div>
-      <div class="coach-wrap" id="coach-wrap" onclick="App.pokeCoach()"></div>
-      <div class="player-wrap" id="player-wrap"></div>
+      <div class="actor" id="coach">
+        <div class="shadow"></div>
+        <div class="marker" id="coach-marker">❗</div>
+        <div class="flip" id="coach-flip"><div class="inner" id="coach-inner"></div></div>
+      </div>
+      <div class="actor idle" id="player">
+        <div class="shadow"></div>
+        <div class="flip" id="player-flip"><div class="inner" id="player-inner"></div></div>
+        <div class="name-tag" id="player-tag">我</div>
+      </div>
+      <div class="tap-hint">點地板走路 · 點教練登記紀錄</div>
     </div>
 
+    <div class="gym-actions">
+      <button class="btn" onclick="App.goRegister()">📋 走去找教練登記</button>
+      <button class="btn gold" onclick="App.pokeCoach()">💪 打氣</button>
+    </div>
+
+    <div class="card">
+      <h2>🧮 今日計分明細</h2>
+      <div class="breakdown" id="breakdown"></div>
+    </div>
+  </section>
+
+  <!-- ===== 紀錄 ===== -->
+  <section class="view" id="view-history">
+    <div class="card">
+      <h2>📉 體重趨勢（近 30 天）</h2>
+      <div class="chart" id="chart"></div>
+    </div>
+    <div class="card">
+      <h2>📅 本週</h2>
+      <div id="week-summary" class="breakdown"></div>
+    </div>
+    <div class="card">
+      <h2>🗂️ 每日紀錄</h2>
+      <div id="hist-list"></div>
+    </div>
+  </section>
+
+  <!-- ===== 主角 ===== -->
+  <section class="view" id="view-avatar">
+    <div class="creator" id="creator"></div>
+  </section>
+
+  <!-- ===== 設定 ===== -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <h2>🎯 目標設定</h2>
+      <div class="row">
+        <div><label class="f">起始體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="g-start"></div>
+        <div><label class="f">目標體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="g-target"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每日運動目標（分鐘）</label><input type="number" inputmode="numeric" id="g-ex"></div>
+        <div><label class="f">每日喝水目標（杯）</label><input type="number" inputmode="numeric" id="g-water"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每週運動天數目標</label><input type="number" inputmode="numeric" id="g-week"></div>
+        <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
+      </div>
+      <p class="muted">開始日期之後，整天沒有任何紀錄會扣 30 分。</p>
+      <button class="btn" onclick="App.saveGoals()">儲存目標</button>
+    </div>
+
+    <div class="card">
+      <h2>🐾 教練設定</h2>
+      <label class="f">教練名字</label>
+      <input type="text" id="coach-name" placeholder="例：呀哈教練">
+      <p class="muted" style="margin-top:10px">可以放你自己的教練圖片（每個動作一張）。圖片只存在這支手機的瀏覽器裡，不會上傳到任何地方。沒放圖的動作會用預設教練。</p>
+      <div class="slots" id="slots"></div>
+      <label class="f" style="margin-top:12px">或上傳一整張「動作表」自動切割（依上面順序，由左到右、由上到下）</label>
+      <div class="row">
+        <div><label class="f">欄數</label><input type="number" id="sheet-cols" value="5" min="1" max="10"></div>
+        <div><label class="f">列數</label><input type="number" id="sheet-rows" value="2" min="1" max="10"></div>
+      </div>
+      <input type="file" accept="image/*" id="sheet-file" style="display:none" onchange="App.uploadSheet(this)">
+      <button class="btn secondary" onclick="document.getElementById('sheet-file').click()">🖼️ 上傳動作表</button>
+      <button class="btn ghost" onclick="App.clearSlots()">清除所有教練圖片</button>
+      <button class="btn" onclick="App.saveCoachName()">儲存教練名字</button>
+    </div>
+
+    <div class="card">
+      <h2>🔔 每日提醒（iPhone 捷徑）</h2>
+      <p class="muted">網頁沒辦法自己定時跳通知，用 iPhone 內建的「捷徑」App 設定最穩：</p>
+      <ol class="steps">
+        <li>先在 Safari 打開這頁 → 分享 → <b>加入主畫面</b>（資料比較不會被清掉）</li>
+        <li>打開「捷徑」App → 下方「<b>自動化</b>」→ 右上「＋」</li>
+        <li>選「<b>特定時間</b>」→ 設 08:00 → 重複「每天」→ 選「<b>立即執行</b>」</li>
+        <li>動作搜尋「<b>顯示通知</b>」，貼上下面的台詞</li>
+        <li>再加一個動作「<b>打開 URL</b>」，貼上這個網頁的網址</li>
+        <li>重複建立 12:30、21:00 兩個時段</li>
+      </ol>
+      <div id="notify-lines"></div>
+    </div>
+
+    <div class="card">
+      <h2>💾 資料備份</h2>
+      <p class="muted">資料存在這支手機的瀏覽器裡。建議每週匯出一次備份。</p>
+      <button class="btn secondary" onclick="App.exportData()">⬇️ 匯出備份檔</button>
+      <input type="file" accept="application/json,.json" id="import-file" style="display:none" onchange="App.importData(this)">
+      <button class="btn secondary" onclick="document.getElementById('import-file').click()">⬆️ 匯入備份檔</button>
+      <button class="btn secondary" onclick="App.importCompass()">🧭 從「心智羅盤」匯入體重</button>
+      <button class="btn ghost" onclick="App.obStart()">🔄 重新選擇主角與教練</button>
+      <button class="btn ghost" onclick="App.resetAll()">🗑️ 清除全部資料</button>
+    </div>
+  </section>
+</div>
+
+<!-- ===== 登記櫃台（紀錄表單） ===== -->
+<div id="sheet">
+  <div class="backdrop" onclick="App.closeSheet()"></div>
+  <div class="panel"><div class="panel-inner">
+    <div class="sheet-head">
+      <div class="mini" id="sheet-coach"></div>
+      <div class="t"><span id="sheet-title">登記櫃台</span><small id="sheet-sub">把今天的紀錄交給教練</small></div>
+      <button onclick="App.closeSheet()" aria-label="關閉">✕</button>
+    </div>
     <div class="date-nav">
       <button onclick="App.shiftDay(-1)">◀ 前一天</button>
       <b id="date-label"></b>
@@ -264,115 +445,67 @@
       <textarea id="note" placeholder="今天的感覺、嘴饞的時刻、做得好的地方…"></textarea>
     </div>
 
-    <button class="btn" onclick="App.saveDay()">📮 回報教練（儲存）</button>
-
-    <div class="card" style="margin-top:12px">
-      <h2>🧮 今日計分明細</h2>
-      <div class="breakdown" id="breakdown"></div>
-    </div>
-  </section>
-
-  <!-- ===== 紀錄 ===== -->
-  <section class="view" id="view-history">
-    <div class="card">
-      <h2>📉 體重趨勢（近 30 天）</h2>
-      <div class="chart" id="chart"></div>
-    </div>
-    <div class="card">
-      <h2>📅 本週</h2>
-      <div id="week-summary" class="breakdown"></div>
-    </div>
-    <div class="card">
-      <h2>🗂️ 每日紀錄</h2>
-      <div id="hist-list"></div>
-    </div>
-  </section>
-
-  <!-- ===== 主角 ===== -->
-  <section class="view" id="view-avatar">
-    <div class="card">
-      <h2>🧑 捏你的主角</h2>
-      <div class="avatar-preview" id="avatar-preview"></div>
-      <label class="f">主角名字</label>
-      <input type="text" id="player-name" placeholder="例：自律的我" oninput="App.setAvatar('name', this.value)">
-      <div id="avatar-opts" style="margin-top:10px"></div>
-      <div class="btn-row" style="margin-top:6px">
-        <button class="btn secondary" onclick="App.randomAvatar()">🎲 隨機</button>
-        <button class="btn" onclick="App.toast('主角已儲存！'); App.switchTab('today')">✅ 完成</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== 設定 ===== -->
-  <section class="view" id="view-settings">
-    <div class="card">
-      <h2>🎯 目標設定</h2>
-      <div class="row">
-        <div><label class="f">起始體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="g-start"></div>
-        <div><label class="f">目標體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="g-target"></div>
-      </div>
-      <div class="row">
-        <div><label class="f">每日運動目標（分鐘）</label><input type="number" inputmode="numeric" id="g-ex"></div>
-        <div><label class="f">每日喝水目標（杯）</label><input type="number" inputmode="numeric" id="g-water"></div>
-      </div>
-      <div class="row">
-        <div><label class="f">每週運動天數目標</label><input type="number" inputmode="numeric" id="g-week"></div>
-        <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
-      </div>
-      <p class="muted">開始日期之後，整天沒有任何紀錄會扣 30 分。</p>
-      <button class="btn" onclick="App.saveGoals()">儲存目標</button>
-    </div>
-
-    <div class="card">
-      <h2>🐾 教練設定</h2>
-      <label class="f">教練名字</label>
-      <input type="text" id="coach-name" placeholder="例：呀哈教練">
-      <p class="muted" style="margin-top:10px">可以放你自己的教練圖片（每個動作一張）。圖片只存在這支手機的瀏覽器裡，不會上傳到任何地方。沒放圖的動作會用預設教練。</p>
-      <div class="slots" id="slots"></div>
-      <label class="f" style="margin-top:12px">或上傳一整張「動作表」自動切割（依下面順序，由左到右、由上到下）</label>
-      <div class="row">
-        <div><label class="f">欄數</label><input type="number" id="sheet-cols" value="5" min="1" max="10"></div>
-        <div><label class="f">列數</label><input type="number" id="sheet-rows" value="2" min="1" max="10"></div>
-      </div>
-      <input type="file" accept="image/*" id="sheet-file" style="display:none" onchange="App.uploadSheet(this)">
-      <button class="btn secondary" onclick="document.getElementById('sheet-file').click()">🖼️ 上傳動作表</button>
-      <button class="btn ghost" onclick="App.clearSlots()">清除所有教練圖片</button>
-      <button class="btn" onclick="App.saveCoachName()">儲存教練名字</button>
-    </div>
-
-    <div class="card">
-      <h2>🔔 每日提醒（iPhone 捷徑）</h2>
-      <p class="muted">網頁沒辦法自己定時跳通知，用 iPhone 內建的「捷徑」App 設定最穩：</p>
-      <ol class="steps">
-        <li>先在 Safari 打開這頁 → 分享 → <b>加入主畫面</b>（資料比較不會被清掉）</li>
-        <li>打開「捷徑」App → 下方「<b>自動化</b>」→ 右上「＋」</li>
-        <li>選「<b>特定時間</b>」→ 設 08:00 → 重複「每天」→ 選「<b>立即執行</b>」</li>
-        <li>動作搜尋「<b>顯示通知</b>」，貼上下面的台詞</li>
-        <li>再加一個動作「<b>打開 URL</b>」，貼上這個網頁的網址（點通知會開捷徑，這步讓它直接跳到遊戲）</li>
-        <li>重複建立 12:30、21:00 兩個時段</li>
-      </ol>
-      <div id="notify-lines"></div>
-    </div>
-
-    <div class="card">
-      <h2>💾 資料備份</h2>
-      <p class="muted">資料存在這支手機的瀏覽器裡。建議每週匯出一次備份。</p>
-      <button class="btn secondary" onclick="App.exportData()">⬇️ 匯出備份檔</button>
-      <input type="file" accept="application/json,.json" id="import-file" style="display:none" onchange="App.importData(this)">
-      <button class="btn secondary" onclick="document.getElementById('import-file').click()">⬆️ 匯入備份檔</button>
-      <button class="btn secondary" onclick="App.importCompass()">🧭 從「心智羅盤」匯入體重</button>
-      <button class="btn ghost" onclick="App.resetAll()">🗑️ 清除全部資料</button>
-    </div>
-  </section>
+    <button class="btn" onclick="App.saveDay()">📮 交給教練（儲存）</button>
+  </div></div>
 </div>
 
 <nav class="tabs">
-  <button class="active" data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏠</span>今日</button>
+  <button class="active" data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏋️</span>健身房</button>
   <button data-tab="history" onclick="App.switchTab('history')"><span class="ic">📈</span>紀錄</button>
-  <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🧑</span>主角</button>
+  <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🧑</span>角色</button>
   <button data-tab="settings" onclick="App.switchTab('settings')"><span class="ic">⚙️</span>設定</button>
 </nav>
 <div class="toast" id="toast"></div>
+
+<div id="onboard">
+  <div class="ob-inner">
+    <div class="ob-steps"><i data-s="1"></i><i data-s="2"></i><i data-s="3"></i></div>
+
+    <div class="ob-step" data-step="1">
+      <h2>創造你的角色</h2>
+      <p class="sub">先選一個喜歡的造型，再往下細捏髮型、臉、衣服</p>
+      <div class="creator" style="padding:10px">
+        <div class="preset-grid" id="preset-grid"></div>
+      </div>
+      <div class="creator" id="ob-creator"></div>
+      <button class="btn" onclick="App.obNext(2)">下一步 ▶</button>
+    </div>
+
+    <div class="ob-step" data-step="2">
+      <h2>設定你的教練</h2>
+      <p class="sub">可以上傳你自己的教練動作表（5 欄 × 2 列，順序：待機、歡呼、跳舞、衝刺、生氣／暴打、哭哭、睡覺、檢查、加油）。圖片只存在這支手機裡。不上傳就用預設教練。</p>
+      <div class="ob-coach" id="ob-coach"></div>
+      <label class="f">教練名字</label>
+      <input type="text" id="ob-coach-name" placeholder="例：呀哈教練">
+      <input type="file" accept="image/*" id="ob-sheet" style="display:none" onchange="App.obSheet(this)">
+      <button class="btn secondary" style="margin-top:12px" onclick="document.getElementById('ob-sheet').click()">🖼️ 上傳動作表</button>
+      <div class="slots" id="ob-slots" style="margin-top:10px"></div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn ghost" onclick="App.obNext(1)">◀ 上一步</button>
+        <button class="btn" onclick="App.obNext(3)">下一步 ▶</button>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step="3">
+      <h2>設定目標</h2>
+      <p class="sub">之後在「設定」頁都可以改</p>
+      <div class="row">
+        <div><label class="f">目前體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="ob-start"></div>
+        <div><label class="f">目標體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="ob-target"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每日運動（分鐘）</label><input type="number" inputmode="numeric" id="ob-ex" value="30"></div>
+        <div><label class="f">每日喝水（杯）</label><input type="number" inputmode="numeric" id="ob-water" value="8"></div>
+      </div>
+      <label class="f">每週運動天數</label>
+      <input type="number" inputmode="numeric" id="ob-week" value="4">
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn ghost" onclick="App.obNext(2)">◀ 上一步</button>
+        <button class="btn" onclick="App.obFinish()">🔥 進入健身房！</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -425,7 +558,7 @@
       startDate: today(),
       goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4 },
     },
-    avatar: { name: '我', skin: 1, face: 'round', hair: 'short', hairColor: 0, eyes: 'dot', mouth: 'smile', blush: true, outfit: 'tee', outfitColor: 2, acc: 'none' },
+    avatar: DEFAULT_AVATAR(),
     records: {},
     lastAttack: '',
   });
@@ -440,7 +573,8 @@
         S = Object.assign(S, d);
         S.settings = Object.assign(defaultState().settings, d.settings || {});
         S.settings.goals = Object.assign(defaultState().settings.goals, (d.settings || {}).goals || {});
-        S.avatar = Object.assign(defaultState().avatar, d.avatar || {});
+        if (d.avatar && d.avatar.v === 2) S.avatar = Object.assign(DEFAULT_AVATAR(), d.avatar);
+        else { S.avatar = Object.assign(DEFAULT_AVATAR(), { name: (d.avatar && d.avatar.name) || '我' }); S.onboarded = false; }
         S.records = d.records || {};
       } catch (e) {}
     }
@@ -595,102 +729,383 @@
     </svg>`;
   }
 
-  // ---------- player avatar ----------
-  const SKINS = ['#fde3cf', '#f6cfae', '#e8b48a', '#c98e62', '#8d5a3b'];
-  const HAIRC = ['#2d2420', '#5b3a29', '#a0642f', '#e0b45a', '#c4c4c4', '#d65a7a', '#4a6fd6'];
-  const OUTC = ['#e8505b', '#f0a32b', '#3fa86b', '#4a8fd6', '#8b5bd6', '#3b2f2a', '#ffffff'];
-  const AV_OPTS = [
-    ['face', '臉型', [['round', '圓臉'], ['oval', '鵝蛋'], ['square', '方臉']]],
-    ['skin', '膚色', SKINS.map((c, i) => [i, c])],
-    ['hair', '髮型', [['short', '短髮'], ['spiky', '刺蝟'], ['long', '長髮'], ['pony', '馬尾'], ['bun', '包包頭'], ['bob', '妹妹頭'], ['bald', '光頭']]],
-    ['hairColor', '髮色', HAIRC.map((c, i) => [i, c])],
-    ['eyes', '眼睛', [['dot', '豆豆眼'], ['big', '大眼'], ['happy', '笑眼'], ['sleepy', '睏眼'], ['sharp', '銳利']]],
-    ['mouth', '嘴巴', [['smile', '微笑'], ['open', '開心'], ['flat', '一字'], ['cat', '貓嘴']]],
-    ['blush', '腮紅', [[true, '有'], [false, '無']]],
-    ['outfit', '服裝', [['tee', 'T恤'], ['hoodie', '帽T'], ['tank', '背心'], ['jersey', '球衣']]],
-    ['outfitColor', '衣服顏色', OUTC.map((c, i) => [i, c])],
-    ['acc', '配件', [['none', '無'], ['glasses', '眼鏡'], ['cap', '棒球帽'], ['band', '頭帶'], ['towel', '毛巾']]],
+
+  // ---------- chibi player avatar ----------
+  const SKINS = ['#ffe8d8', '#fcd9bd', '#f2c29b', '#dca679', '#b97a50', '#7d4f33'];
+  const HAIRC = ['#2b211d', '#6b4226', '#a8662e', '#e3b35b', '#ece6da', '#e06b8f', '#4a6fd6', '#c43d3d'];
+  const EYEC = ['#4a3324', '#3f7fd6', '#3fa86b', '#8b5bd6', '#d0882a', '#c03a4a'];
+  const PAL = ['#e8505b', '#f0a32b', '#3fa86b', '#4a8fd6', '#8b5bd6', '#3b3f4a', '#f5f1ea', '#8b5a2b', '#f08fb0', '#2f6e8f'];
+
+  function shade(hex, amt) {
+    const n = parseInt(hex.slice(1), 16);
+    const c = v => Math.max(0, Math.min(255, v + amt));
+    return '#' + ((1 << 24) + (c(n >> 16) << 16) + (c((n >> 8) & 255) << 8) + c(n & 255)).toString(16).slice(1);
+  }
+
+  const CC_CATS = [
+    { k: 'face', label: '臉部', crop: 'head', opts: [['eyes', [['big', '大眼'], ['proud', '傲嬌'], ['squint', '瞇瞇眼'], ['confident', '自信'], ['cool', '冷酷'], ['sleepy', '睏睏眼']]], ['mouth', [['smile', '微笑'], ['grin', '露齒笑'], ['open', '開心'], ['cat', '貓嘴'], ['flat', '一字嘴'], ['smirk', '壞笑']]]],
+      swatches: [['skin', '膚色', SKINS], ['eyeColor', '瞳色', EYEC]], toggle: ['blush', '腮紅'] },
+    { k: 'hair', label: '髮型', crop: 'head', opts: [['hair', [['spiky', '刺蝟頭'], ['short', '短短髮'], ['middle', '中分'], ['pony', '馬尾'], ['twin', '雙馬尾'], ['curly', '捲髮'], ['long', '長直髮'], ['bob', '妹妹頭'], ['bun', '包包頭'], ['bald', '光頭']]]],
+      swatches: [['hairColor', '髮色', HAIRC]] },
+    { k: 'body', label: '體型', crop: 'full', opts: [['body', [['normal', '標準'], ['slim', '纖細'], ['chubby', '胖胖身'], ['muscle', '肌肉身']]]] },
+    { k: 'top', label: '上衣', crop: 'torso', opts: [['top', [['tee', 'T恤'], ['hoodie', '休閒衛衣'], ['jacket', '冒險外套'], ['robe', '魔法長袍'], ['armor', '重裝鎧甲'], ['tank', '運動背心'], ['jersey', '球衣']]]],
+      swatches: [['topColor', '上衣顏色', PAL]] },
+    { k: 'bottom', label: '下身', crop: 'legs', opts: [['bottom', [['joggers', '束口長褲'], ['shorts', '運動短褲'], ['skirt', '百褶短裙'], ['leggings', '緊身褲'], ['armorleg', '防禦護甲']]]],
+      swatches: [['bottomColor', '下身顏色', PAL]] },
+    { k: 'shoes', label: '鞋子', crop: 'legs', opts: [['shoes', [['sneakers', '運動鞋'], ['boots', '戰鬥靴'], ['hightop', '高筒鞋'], ['sandals', '拖鞋']]]],
+      swatches: [['shoeColor', '鞋子顏色', PAL]] },
+    { k: 'acc', label: '配件', crop: 'head', opts: [['acc', [['none', '無'], ['sunglasses', '酷炫墨鏡'], ['glasses', '眼鏡'], ['mask', '神秘面罩'], ['cap', '棒球帽'], ['headband', '運動頭帶'], ['earphones', '耳機']]]] },
   ];
 
-  function avatarSVG(a, opts = {}) {
-    const L = '#3b2f2a', skin = SKINS[a.skin] || SKINS[1], hc = HAIRC[a.hairColor] || HAIRC[0], oc = OUTC[a.outfitColor] || OUTC[2];
-    const head = a.face === 'oval' ? `<ellipse cx="100" cy="92" rx="46" ry="54" fill="${skin}" stroke="${L}" stroke-width="4"/>`
-      : a.face === 'square' ? `<rect x="54" y="42" width="92" height="100" rx="30" fill="${skin}" stroke="${L}" stroke-width="4"/>`
-      : `<circle cx="100" cy="94" r="50" fill="${skin}" stroke="${L}" stroke-width="4"/>`;
-    let hairBack = '', hairFront = '';
+  const PRESETS = [
+    ['刺蝟少年', { gender: 'm', height: .5, body: 'normal', skin: 1, eyes: 'big', eyeColor: 1, mouth: 'grin', blush: true, hair: 'spiky', hairColor: 1, top: 'jacket', topColor: 7, bottom: 'joggers', bottomColor: 5, shoes: 'boots', shoeColor: 7, acc: 'none' }],
+    ['酷炫哥', { gender: 'm', height: .7, body: 'normal', skin: 2, eyes: 'cool', eyeColor: 0, mouth: 'smirk', blush: false, hair: 'spiky', hairColor: 0, top: 'hoodie', topColor: 5, bottom: 'joggers', bottomColor: 5, shoes: 'sneakers', shoeColor: 0, acc: 'sunglasses' }],
+    ['上班族', { gender: 'm', height: .55, body: 'normal', skin: 1, eyes: 'confident', eyeColor: 0, mouth: 'smile', blush: false, hair: 'middle', hairColor: 0, top: 'tee', topColor: 9, bottom: 'joggers', bottomColor: 5, shoes: 'sneakers', shoeColor: 6, acc: 'glasses' }],
+    ['肌肉猛男', { gender: 'm', height: .8, body: 'muscle', skin: 3, eyes: 'confident', eyeColor: 0, mouth: 'grin', blush: false, hair: 'short', hairColor: 0, top: 'tank', topColor: 0, bottom: 'shorts', bottomColor: 5, shoes: 'sneakers', shoeColor: 6, acc: 'headband' }],
+    ['元氣少女', { gender: 'f', height: .35, body: 'normal', skin: 0, eyes: 'big', eyeColor: 1, mouth: 'smile', blush: true, hair: 'twin', hairColor: 1, top: 'tee', topColor: 6, bottom: 'skirt', bottomColor: 0, shoes: 'boots', shoeColor: 7, acc: 'none' }],
+    ['馬尾跑者', { gender: 'f', height: .5, body: 'slim', skin: 1, eyes: 'big', eyeColor: 2, mouth: 'open', blush: true, hair: 'pony', hairColor: 2, top: 'tank', topColor: 3, bottom: 'leggings', bottomColor: 5, shoes: 'sneakers', shoeColor: 8, acc: 'cap' }],
+    ['捲髮甜心', { gender: 'f', height: .4, body: 'normal', skin: 0, eyes: 'proud', eyeColor: 3, mouth: 'cat', blush: true, hair: 'curly', hairColor: 7, top: 'hoodie', topColor: 8, bottom: 'skirt', bottomColor: 4, shoes: 'hightop', shoeColor: 6, acc: 'earphones' }],
+    ['魔法師', { gender: 'f', height: .45, body: 'normal', skin: 1, eyes: 'squint', eyeColor: 3, mouth: 'smile', blush: true, hair: 'long', hairColor: 4, top: 'robe', topColor: 4, bottom: 'leggings', bottomColor: 5, shoes: 'boots', shoeColor: 7, acc: 'none' }],
+  ];
+  const DEFAULT_AVATAR = () => Object.assign({ v: 2, name: '我' }, PRESETS[0][1]);
+
+  function avatarSVG(a, o = {}) {
+    const L = '#3a2a24';
+    const skin = SKINS[a.skin] || SKINS[1], skinD = shade(skin, -30);
+    const hc = HAIRC[a.hairColor] || HAIRC[0], hcD = shade(hc, -55), hcL = shade(hc, 55);
+    const ec = EYEC[a.eyeColor] || EYEC[0];
+    const tc = PAL[a.topColor] ?? PAL[0], tcD = shade(tc, -40);
+    const bc = PAL[a.bottomColor] ?? PAL[5], bcD = shade(bc, -40);
+    const sc = PAL[a.shoeColor] ?? PAL[6], scD = shade(sc, -45);
+    const fem = a.gender === 'f';
+    const h = Math.max(0, Math.min(1, isFinite(+a.height) ? +a.height : .5));
+    const legLen = Math.round(26 + h * 32);
+    const body = a.body || 'normal';
+    const bw = { normal: fem ? 54 : 58, chubby: 78, muscle: 72, slim: 46 }[body] || 58;
+    const x0 = 100 - bw / 2, x1 = 100 + bw / 2;
+    const top = 150, hip = 204, feet = hip + legLen;
+    const dy = 288 - (feet + 10);
+    const hurt = o.hurt;
+    const legOff = { chubby: 18, slim: 10, muscle: 16 }[body] || 13;
+    const legW = { chubby: 24, slim: 14, muscle: 21 }[body] || 18;
+    const aw = { chubby: 16, slim: 11, muscle: 17 }[body] || 13;
+
+    // --- hair back ---
+    let hairBack = '';
+    const hb = (d) => `<path d="${d}" fill="${hc}" stroke="${hcD}" stroke-width="3" stroke-linejoin="round"/>`;
     switch (a.hair) {
-      case 'short': hairFront = `<path d="M52 88 q0 -50 48 -50 q48 0 48 50 q-14 -26 -48 -24 q-30 -2 -48 24 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
-      case 'spiky': hairFront = `<path d="M52 84 l4 -30 l12 12 l8 -26 l12 18 l12 -24 l10 22 l14 -16 l4 24 l12 -6 l-4 30 q-20 -22 -48 -20 q-28 -2 -46 16 z" fill="${hc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`; break;
-      case 'long': hairBack = `<path d="M50 90 q-6 70 10 100 h80 q16 -30 10 -100 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M50 96 q-2 -58 50 -58 q52 0 50 58 q-10 -30 -30 -32 q-10 14 -40 16 q-20 2 -30 16 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
-      case 'pony': hairBack = `<path d="M140 70 q36 10 26 70 q-6 -30 -26 -40 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M52 88 q0 -50 48 -50 q48 0 48 50 q-16 -22 -60 -22 q-24 4 -36 22 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
-      case 'bun': hairBack = `<circle cx="100" cy="34" r="18" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M52 88 q0 -50 48 -50 q48 0 48 50 q-10 -24 -48 -26 q-38 2 -48 26 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
-      case 'bob': hairBack = `<path d="M46 90 q-2 52 14 60 h80 q16 -8 14 -60 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; hairFront = `<path d="M48 96 q-4 -60 52 -60 q56 0 52 60 h-12 q-2 -24 -6 -28 h-68 q-4 4 -6 28 z" fill="${hc}" stroke="${L}" stroke-width="3"/>`; break;
+      case 'pony': hairBack = hb('M138 58 Q190 66 184 128 Q180 172 158 190 Q172 140 148 100Z') + `<circle cx="146" cy="62" r="7" fill="#e0424f" stroke="${L}" stroke-width="2.5"/>`; break;
+      case 'twin': hairBack = hb('M56 62 Q8 70 12 140 Q14 184 36 200 Q30 150 52 112Z') + hb('M144 62 Q192 70 188 140 Q186 184 164 200 Q170 150 148 112Z') + `<circle cx="54" cy="64" r="7" fill="#e0424f" stroke="${L}" stroke-width="2.5"/><circle cx="146" cy="64" r="7" fill="#e0424f" stroke="${L}" stroke-width="2.5"/>`; break;
+      case 'curly': {
+        let c = '';
+        [[44, 70], [36, 100], [40, 130], [52, 152], [156, 70], [164, 100], [160, 130], [148, 152], [64, 44], [100, 34], [136, 44]].forEach(([x, y]) => { c += `<circle cx="${x}" cy="${y}" r="22" fill="${hc}" stroke="${hcD}" stroke-width="3"/>`; });
+        hairBack = c; break;
+      }
+      case 'long': hairBack = hb('M38 100 Q30 28 100 28 Q170 28 162 100 Q172 180 158 214 L42 214 Q28 180 38 100Z'); break;
+      case 'bob': hairBack = hb('M34 100 Q28 28 100 28 Q172 28 166 100 L168 152 Q146 162 132 150 L68 150 Q54 162 32 152Z'); break;
+      case 'bun': hairBack = `<circle cx="100" cy="30" r="22" fill="${hc}" stroke="${hcD}" stroke-width="3"/>`; break;
+      case 'middle': hairBack = hb('M38 108 Q30 30 100 30 Q170 30 162 108 L164 138 Q152 146 146 132 L54 132 Q48 146 36 138Z'); break;
     }
-    const eyeMap = {
-      dot: `<circle cx="82" cy="98" r="5" fill="${L}"/><circle cx="118" cy="98" r="5" fill="${L}"/>`,
-      big: `<ellipse cx="82" cy="98" rx="8" ry="10" fill="${L}"/><ellipse cx="118" cy="98" rx="8" ry="10" fill="${L}"/><circle cx="85" cy="94" r="3" fill="#fff"/><circle cx="121" cy="94" r="3" fill="#fff"/>`,
-      happy: `<path d="M74 100 q8 -10 16 0 M110 100 q8 -10 16 0" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
-      sleepy: `<path d="M74 98 h16 M110 98 h16" stroke="${L}" stroke-width="4" stroke-linecap="round"/><path d="M76 98 q6 6 12 0 M112 98 q6 6 12 0" fill="${L}"/>`,
-      sharp: `<path d="M72 94 l18 4 l-16 4 z M128 94 l-18 4 l16 4 z" fill="${L}"/>`,
-    };
-    const hurt = opts.hurt;
-    const eyes = hurt ? `<path d="M76 92 l12 12 M88 92 l-12 12 M112 92 l12 12 M124 92 l-12 12" stroke="${L}" stroke-width="4" stroke-linecap="round"/>` : (eyeMap[a.eyes] || eyeMap.dot);
-    const mouthMap = {
-      smile: `<path d="M90 118 q10 9 20 0" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
-      open: `<path d="M88 116 q12 18 24 0 z" fill="#c9424f" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`,
-      flat: `<path d="M90 120 h20" stroke="${L}" stroke-width="3.5" stroke-linecap="round"/>`,
-      cat: `<path d="M88 116 q6 7 12 0 q6 7 12 0" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
-    };
-    const mouth = hurt ? `<path d="M88 124 q4 -6 8 0 q4 6 8 0 q4 -6 8 0" stroke="${L}" stroke-width="3" fill="none"/>` : (mouthMap[a.mouth] || mouthMap.smile);
-    const blush = a.blush ? `<ellipse cx="70" cy="112" rx="8" ry="5" fill="#f6a3a8" opacity=".8"/><ellipse cx="130" cy="112" rx="8" ry="5" fill="#f6a3a8" opacity=".8"/>` : '';
-    let outfit;
-    switch (a.outfit) {
-      case 'hoodie': outfit = `<path d="M50 230 q0 -66 50 -66 q50 0 50 66 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M76 168 q24 22 48 0" stroke="${L}" stroke-width="3" fill="none"/><path d="M92 184 v20 M108 184 v20" stroke="${L}" stroke-width="2.5"/><rect x="80" y="206" width="40" height="18" rx="6" fill="none" stroke="${L}" stroke-width="2.5"/>`; break;
-      case 'tank': outfit = `<path d="M60 230 q-4 -50 14 -62 h8 q18 20 36 0 h8 q18 12 14 62 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M52 230 q0 -50 22 -62" stroke="${L}" stroke-width="4" fill="${skin}"/><path d="M148 230 q0 -50 -22 -62" stroke="${L}" stroke-width="4" fill="${skin}"/>`; break;
-      case 'jersey': outfit = `<path d="M50 230 q0 -66 50 -66 q50 0 50 66 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M84 166 l16 14 l16 -14" stroke="${L}" stroke-width="3" fill="#fff"/><text x="100" y="218" text-anchor="middle" font-size="28" font-weight="900" fill="#fff" stroke="${L}" stroke-width="1.5">1</text>`; break;
-      default: outfit = `<path d="M50 230 q0 -66 50 -66 q50 0 50 66 z" fill="${oc}" stroke="${L}" stroke-width="4"/><path d="M84 166 q16 12 32 0" stroke="${L}" stroke-width="3" fill="none"/>`;
+
+    // --- legs ---
+    function leg(cx) {
+      let s = '';
+      const lx = cx - legW / 2;
+      if (a.bottom === 'shorts' || a.bottom === 'skirt') {
+        s += `<rect x="${lx}" y="${hip - 6}" width="${legW}" height="${feet - hip + 4}" rx="${legW / 2.4}" fill="${skin}" stroke="${L}" stroke-width="3"/>`;
+        if (a.bottom === 'shorts') s += `<rect x="${lx - 3}" y="${hip - 8}" width="${legW + 6}" height="24" rx="6" fill="${bc}" stroke="${L}" stroke-width="3"/><path d="M${lx + 2} ${hip + 10} h${legW - 4}" stroke="#fff" stroke-width="2" opacity=".6"/>`;
+      } else if (a.bottom === 'armorleg') {
+        s += `<rect x="${lx - 1}" y="${hip - 6}" width="${legW + 2}" height="${feet - hip + 4}" rx="6" fill="#a7b0ba" stroke="${L}" stroke-width="3"/>`
+          + `<ellipse cx="${cx}" cy="${hip + legLen * .45}" rx="${legW / 2 + 2}" ry="7" fill="#d5dbe2" stroke="${L}" stroke-width="2.5"/>`
+          + `<path d="M${lx + 1} ${hip + 6} h${legW} M${lx + 1} ${feet - 12} h${legW}" stroke="${L}" stroke-width="2"/>`;
+      } else {
+        const w = a.bottom === 'leggings' ? legW - 1 : legW + 3;
+        s += `<rect x="${cx - w / 2}" y="${hip - 6}" width="${w}" height="${feet - hip + 4}" rx="7" fill="${bc}" stroke="${L}" stroke-width="3"/>`;
+        if (a.bottom === 'joggers') s += `<rect x="${cx - w / 2}" y="${feet - 11}" width="${w}" height="9" rx="4" fill="${bcD}" stroke="${L}" stroke-width="2.5"/><path d="M${cx + (cx < 100 ? -w / 2 + 4 : w / 2 - 4)} ${hip} v${legLen - 14}" stroke="#fff" stroke-width="2.5" opacity=".55"/>`;
+      }
+      // shoes
+      switch (a.shoes) {
+        case 'boots':
+          s += `<path d="M${cx - 12} ${feet - 16} h24 v14 q6 2 6 10 h-36 q0 -8 6 -10 z" fill="${sc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M${cx - 12} ${feet - 9} h24" stroke="${scD}" stroke-width="3"/><rect x="${cx - 18}" y="${feet + 6}" width="36" height="5" rx="2" fill="${scD}" stroke="${L}" stroke-width="2"/>`; break;
+        case 'hightop':
+          s += `<path d="M${cx - 12} ${feet - 12} h24 v8 q8 2 8 12 h-40 q0 -10 8 -12 z" fill="${sc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M${cx - 6} ${feet - 8} l12 4 M${cx - 6} ${feet - 2} l12 -4" stroke="${L}" stroke-width="1.8"/><rect x="${cx - 20}" y="${feet + 6}" width="40" height="6" rx="3" fill="#fff" stroke="${L}" stroke-width="2.5"/>`; break;
+        case 'sandals':
+          s += `<ellipse cx="${cx}" cy="${feet + 4}" rx="15" ry="7" fill="${skin}" stroke="${L}" stroke-width="3"/><path d="M${cx - 12} ${feet + 2} q12 -8 24 0" stroke="${sc}" stroke-width="5" fill="none"/><rect x="${cx - 17}" y="${feet + 8}" width="34" height="4" rx="2" fill="${scD}"/>`; break;
+        default:
+          s += `<path d="M${cx - 15} ${feet + 8} q-1 -14 15 -15 q16 1 15 15 z" fill="${sc}" stroke="${L}" stroke-width="3"/><path d="M${cx - 6} ${feet - 3} h12" stroke="${scD}" stroke-width="2"/><rect x="${cx - 17}" y="${feet + 5}" width="34" height="6" rx="3" fill="#fff" stroke="${L}" stroke-width="2.5"/>`;
+      }
+      return s;
     }
-    const accMap = {
-      none: '',
-      glasses: `<g fill="none" stroke="${L}" stroke-width="3"><circle cx="82" cy="98" r="12"/><circle cx="118" cy="98" r="12"/><path d="M94 98 h12"/></g>`,
-      cap: `<path d="M52 72 q48 -54 96 0 z" fill="${oc}" stroke="${L}" stroke-width="3"/><path d="M48 72 h70 q-6 10 -70 4 z" fill="${oc}" stroke="${L}" stroke-width="3"/>`,
-      band: `<path d="M50 78 q50 -20 100 0 l-1 10 q-49 -18 -98 0 z" fill="${oc}" stroke="${L}" stroke-width="3"/>`,
-      towel: `<path d="M58 168 q42 26 84 0 l6 16 q-48 26 -96 0 z" fill="#fff" stroke="${L}" stroke-width="3"/>`,
+    const legs = `<g class="leg-l">${leg(100 - legOff)}</g><g class="leg-r">${leg(100 + legOff)}</g>`;
+
+    // --- torso / top ---
+    let back = '', torso = '', over = '';
+    const T = (fill) => `<rect x="${x0}" y="${top}" width="${bw}" height="${hip - top + 6}" rx="16" fill="${fill}" stroke="${L}" stroke-width="3"/>`;
+    switch (a.top) {
+      case 'hoodie':
+        back = `<path d="M${x0 + 2} ${top + 12} Q100 ${top - 26} ${x1 - 2} ${top + 12}" fill="${tcD}" stroke="${L}" stroke-width="3"/>`;
+        torso = T(tc) + `<path d="M${x0 + 10} ${hip - 14} h${bw - 20} l-5 15 h-${bw - 30} z" fill="${tcD}" stroke="${L}" stroke-width="2.5"/><path d="M94 ${top + 6} v16 M106 ${top + 6} v16" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`;
+        break;
+      case 'jacket':
+        torso = T('#f7f2e8') + `<path d="M${x0} ${top + 12} Q${x0} ${top} ${x0 + 14} ${top} L96 ${top + 8} L91 ${hip + 6} L${x0 + 4} ${hip + 6} Q${x0} ${hip + 6} ${x0} ${hip}Z" fill="${tc}" stroke="${L}" stroke-width="3"/>`
+          + `<path d="M${x1} ${top + 12} Q${x1} ${top} ${x1 - 14} ${top} L104 ${top + 8} L109 ${hip + 6} L${x1 - 4} ${hip + 6} Q${x1} ${hip + 6} ${x1} ${hip}Z" fill="${tc}" stroke="${L}" stroke-width="3"/>`
+          + `<path d="M96 ${top + 8} l-8 12 l6 4 M104 ${top + 8} l8 12 l-6 4" fill="${tcD}" stroke="${L}" stroke-width="2"/>`
+          + `<path d="M${x0 + 8} ${top + 6} L${x1 - 8} ${hip - 6}" stroke="#7a4a26" stroke-width="7" stroke-linecap="round"/>`
+          + `<rect x="${x0}" y="${hip - 8}" width="${bw}" height="8" fill="#6b3f1f" stroke="${L}" stroke-width="2"/><rect x="95" y="${hip - 10}" width="10" height="12" rx="2" fill="#e8c35a" stroke="${L}" stroke-width="2"/>`;
+        break;
+      case 'robe':
+        torso = `<path d="M${x0} ${top + 6} Q100 ${top - 6} ${x1} ${top + 6} L${x1 + 16} ${feet - 10} Q100 ${feet - 2} ${x0 - 16} ${feet - 10} Z" fill="${tc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`
+          + `<path d="M100 ${top + 2} V${feet - 6}" stroke="#f2c14e" stroke-width="5"/><path d="M${x0 - 14} ${feet - 14} Q100 ${feet - 4} ${x1 + 14} ${feet - 14}" stroke="#f2c14e" stroke-width="4" fill="none"/>`
+          + `<rect x="${x0 - 2}" y="${hip - 6}" width="${bw + 4}" height="8" rx="3" fill="${tcD}" stroke="${L}" stroke-width="2"/><circle cx="100" cy="${top + 12}" r="5" fill="#7fd3ff" stroke="${L}" stroke-width="2"/>`;
+        break;
+      case 'armor':
+        torso = T('#a7b0ba') + `<path d="M${x0 + 8} ${top + 8} Q100 ${top + 2} ${x1 - 8} ${top + 8} L${x1 - 12} ${hip - 14} Q100 ${hip - 4} ${x0 + 12} ${hip - 14} Z" fill="#d5dbe2" stroke="${L}" stroke-width="2.5"/>`
+          + `<path d="M100 ${top + 8} V${hip - 8}" stroke="#8c96a1" stroke-width="2"/><rect x="${x0}" y="${hip - 8}" width="${bw}" height="9" fill="#6b3f1f" stroke="${L}" stroke-width="2"/>`;
+        over = `<ellipse cx="${x0 + 2}" cy="${top + 9}" rx="15" ry="11" fill="#d5dbe2" stroke="${L}" stroke-width="3"/><ellipse cx="${x1 - 2}" cy="${top + 9}" rx="15" ry="11" fill="#d5dbe2" stroke="${L}" stroke-width="3"/>`;
+        break;
+      case 'tank':
+        torso = T(skin) + `<path d="M${x0 + 4} ${hip + 6} L${x0 + 4} ${top + 18} Q${x0 + 6} ${top + 2} ${x0 + 16} ${top + 1} L91 ${top + 14} Q100 ${top + 22} 109 ${top + 14} L${x1 - 16} ${top + 1} Q${x1 - 6} ${top + 2} ${x1 - 4} ${top + 18} L${x1 - 4} ${hip + 6}Z" fill="${tc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`;
+        if (body === 'muscle') torso += `<path d="M88 ${top + 30} q12 6 24 0" stroke="${tcD}" stroke-width="2" fill="none"/>`;
+        break;
+      case 'jersey':
+        torso = T(tc) + `<path d="M88 ${top} L100 ${top + 16} L112 ${top}" fill="#fff" stroke="${L}" stroke-width="2.5"/><text x="100" y="${hip - 8}" text-anchor="middle" font-size="22" font-weight="900" fill="#fff" stroke="${L}" stroke-width="1.2" font-family="Arial, sans-serif">7</text>`;
+        break;
+      default:
+        torso = T(tc) + `<path d="M88 ${top + 1} q12 11 24 0" fill="${skin}" stroke="${L}" stroke-width="2.5"/>`;
+    }
+    const skirt = a.bottom === 'skirt' && a.top !== 'robe'
+      ? `<path d="M${x0 - 2} ${hip - 8} L${x1 + 2} ${hip - 8} L${x1 + 13} ${hip + 22} Q100 ${hip + 28} ${x0 - 13} ${hip + 22} Z" fill="${bc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M${x0 + 8} ${hip - 6} l-5 28 M${x0 + bw * .37} ${hip - 6} l-2 30 M${x1 - bw * .37} ${hip - 6} l2 30 M${x1 - 8} ${hip - 6} l5 28" stroke="${bcD}" stroke-width="2"/>`
+      : '';
+
+    // --- arms ---
+    const longSleeve = ['hoodie', 'jacket', 'robe', 'armor'].includes(a.top);
+    const shortSleeve = ['tee', 'jersey'].includes(a.top);
+    const sleeveC = a.top === 'armor' ? '#a7b0ba' : tc;
+    function arm(side) {
+      const sx = side < 0 ? x0 + 6 : x1 - 6, sy = top + 12;
+      const hx = side < 0 ? x0 - 9 : x1 + 9, hy = hip - 4;
+      const d = `M${sx} ${sy} L${hx} ${hy}`;
+      let s = '';
+      if (a.top === 'robe') {
+        s += `<path d="M${sx} ${sy - 4} L${hx - side * 2} ${hy - 6} L${hx + side * 12} ${hy + 2} L${sx + side * 6} ${sy + 6} Z" fill="${tc}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`;
+        s += `<circle cx="${hx}" cy="${hy + 2}" r="7.5" fill="${skin}" stroke="${L}" stroke-width="3"/>`;
+        return s;
+      }
+      s += `<path d="${d}" stroke="${L}" stroke-width="${aw + 6}" stroke-linecap="round"/><path d="${d}" stroke="${skin}" stroke-width="${aw}" stroke-linecap="round"/>`;
+      if (longSleeve) s += `<path d="${d}" stroke="${sleeveC}" stroke-width="${aw}" stroke-linecap="round"/><path d="M${hx - 5} ${hy - 7} l10 3" stroke="${shade(sleeveC, -40)}" stroke-width="3" stroke-linecap="round"/>`;
+      else if (shortSleeve) { const mx = sx + (hx - sx) * .42, my = sy + (hy - sy) * .42; s += `<path d="M${sx} ${sy} L${mx} ${my}" stroke="${L}" stroke-width="${aw + 8}" stroke-linecap="round"/><path d="M${sx} ${sy} L${mx} ${my}" stroke="${tc}" stroke-width="${aw + 2}" stroke-linecap="round"/>`; }
+      if (body === 'muscle' && !longSleeve) s += `<circle cx="${sx + (hx - sx) * .35}" cy="${sy + (hy - sy) * .35}" r="${aw / 2 + 2}" fill="${skin}" stroke="${L}" stroke-width="2"/>`;
+      const handC = a.top === 'armor' ? '#8c96a1' : skin;
+      s += `<circle cx="${hx}" cy="${hy + 2}" r="${aw / 2 + 2}" fill="${handC}" stroke="${L}" stroke-width="3"/>`;
+      return s;
+    }
+    const arms = `<g class="arm-l">${arm(-1)}</g><g class="arm-r">${arm(1)}</g>`;
+
+    // --- head ---
+    const ey = 106;
+    function eye(x, side) {
+      if (hurt) return `<path d="M${x - 8} ${ey - 8} l16 16 M${x + 8} ${ey - 8} l-16 16" stroke="${L}" stroke-width="4" stroke-linecap="round"/>`;
+      const outer = x + side * 12, inner = x - side * 12;
+      const iris = (rx, ry) => `<ellipse cx="${x}" cy="${ey}" rx="${rx}" ry="${ry}" fill="${ec}" stroke="${L}" stroke-width="2.5"/><ellipse cx="${x}" cy="${ey + 2}" rx="${rx * .55}" ry="${ry * .58}" fill="${shade(ec, -60)}"/><circle cx="${x - 3}" cy="${ey - 5}" r="${rx * .36}" fill="#fff"/><circle cx="${x + 3}" cy="${ey + 5}" r="1.8" fill="#fff"/>`;
+      const cover = (yy) => `<path d="M${x - 15} ${ey - 22} H${x + 15} V${yy} H${x - 15}Z" fill="${skin}"/>`;
+      const lash = fem ? `<path d="M${outer} ${ey - 7} l${side * 6} -5" stroke="${L}" stroke-width="3" stroke-linecap="round"/>` : '';
+      switch (a.eyes) {
+        case 'proud': return iris(10, 12) + cover(ey - 3) + `<path d="M${x - 13} ${ey - 3} Q${x} ${ey - 6} ${x + 13} ${ey - 3}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>` + lash;
+        case 'squint': return `<path d="M${x - 11} ${ey + 2} Q${x} ${ey - 10} ${x + 11} ${ey + 2}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        case 'confident': return iris(8.5, 11) + `<path d="M${outer} ${ey - 13} L${inner} ${ey - 6} L${inner} ${ey - 22} L${outer} ${ey - 22}Z" fill="${skin}"/><path d="M${outer} ${ey - 11} L${inner} ${ey - 5}" stroke="${L}" stroke-width="4" stroke-linecap="round"/>` + lash;
+        case 'cool': return iris(9, 11) + cover(ey - 1) + `<path d="M${x - 12} ${ey - 1} H${x + 12}" stroke="${L}" stroke-width="4" stroke-linecap="round"/>` + lash;
+        case 'sleepy': return `<path d="M${x - 10} ${ey} Q${x} ${ey + 8} ${x + 10} ${ey}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+        default: return iris(10, 13) + `<path d="M${x - 12} ${ey - 8} Q${x} ${ey - 19} ${x + 12} ${ey - 8}" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>` + lash;
+      }
+    }
+    function brow(x, side) {
+      const outer = x + side * 10, inner = x - side * 10;
+      switch (a.eyes) {
+        case 'confident': return `<path d="M${outer} ${ey - 27} L${inner} ${ey - 21}" stroke="${hcD}" stroke-width="4" stroke-linecap="round"/>`;
+        case 'proud': return `<path d="M${outer} ${ey - 24} L${inner} ${ey - 28}" stroke="${hcD}" stroke-width="3.5" stroke-linecap="round"/>`;
+        case 'cool': return `<path d="M${x - 10} ${ey - 21} H${x + 10}" stroke="${hcD}" stroke-width="4" stroke-linecap="round"/>`;
+        default: return `<path d="M${x - 9} ${ey - 24} Q${x} ${ey - 29} ${x + 9} ${ey - 24}" stroke="${hcD}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
+      }
+    }
+    const mouths = {
+      smile: `<path d="M92 126 Q100 134 108 126" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+      grin: `<path d="M89 123 Q100 139 111 123 Z" fill="#fff" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M91 127 h18" stroke="${L}" stroke-width="1.5"/>`,
+      open: `<path d="M91 123 Q100 141 109 123 Z" fill="#c9424f" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M95 132 q5 4 10 0" fill="#ff8f9c"/>`,
+      cat: `<path d="M89 124 q5.5 7 11 0 q5.5 7 11 0" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+      flat: `<path d="M93 128 h14" stroke="${L}" stroke-width="3.5" stroke-linecap="round"/>`,
+      smirk: `<path d="M91 128 Q103 131 110 122" stroke="${L}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
     };
-    const bump = opts.bump ? `<g><ellipse cx="128" cy="44" rx="16" ry="14" fill="#f6a3a8" stroke="${L}" stroke-width="3"/><ellipse cx="128" cy="44" rx="7" ry="6" fill="#ef7f8a"/><g transform="translate(70 66) rotate(-20)"><rect x="-16" y="-6" width="32" height="12" rx="5" fill="#f5d7a8" stroke="${L}" stroke-width="2.5"/><path d="M-4 -6 v12 M4 -6 v12" stroke="${L}" stroke-width="1.5"/></g></g>` : '';
-    const sweat = opts.sweat ? `<text x="150" y="70" font-size="20">💦</text>` : '';
-    return `<svg viewBox="0 0 200 232" xmlns="http://www.w3.org/2000/svg" aria-label="主角">
-      ${hairBack}${outfit}
-      <rect x="88" y="138" width="24" height="30" fill="${skin}" stroke="${L}" stroke-width="3"/>
-      ${head}${hairFront}${eyes}${blush}${mouth}${accMap[a.acc] || ''}${bump}${sweat}
+    const mouth = hurt ? `<path d="M87 128 q4 -6 8 0 q4 6 8 0 q4 -6 8 0" stroke="${L}" stroke-width="3" fill="none"/>` : (mouths[a.mouth] || mouths.smile);
+    const blush = a.blush !== false ? `<ellipse cx="68" cy="122" rx="10" ry="5.5" fill="#ff8f9c" opacity=".45"/><ellipse cx="132" cy="122" rx="10" ry="5.5" fill="#ff8f9c" opacity=".45"/>` : '';
+    const head = `<rect x="91" y="${top - 14}" width="18" height="18" fill="${skinD}" stroke="${L}" stroke-width="2.5"/>`
+      + `<ellipse cx="43" cy="108" rx="8" ry="11" fill="${skin}" stroke="${L}" stroke-width="3"/><ellipse cx="157" cy="108" rx="8" ry="11" fill="${skin}" stroke="${L}" stroke-width="3"/>`
+      + `<ellipse cx="100" cy="98" rx="58" ry="55" fill="${skin}" stroke="${L}" stroke-width="3.5"/>`
+      + blush + brow(76, -1) + brow(124, 1) + eye(76, -1) + eye(124, 1)
+      + `<path d="M98 117 q2 2 4 0" stroke="${skinD}" stroke-width="2.5" fill="none" stroke-linecap="round"/>` + mouth;
+
+    // --- hair front ---
+    const hf = (d) => `<path d="${d}" fill="${hc}" stroke="${hcD}" stroke-width="3" stroke-linejoin="round"/>`;
+    const shine = `<path d="M66 52 Q84 40 104 42" stroke="${hcL}" stroke-width="5" fill="none" stroke-linecap="round" opacity=".75"/>`;
+    let hairFront = '';
+    switch (a.hair) {
+      case 'spiky': hairFront = hf('M40 110 L26 86 L43 82 L28 56 L55 60 L50 30 L76 45 L86 12 L104 38 L122 10 L130 45 L154 30 L150 60 L174 56 L159 82 L176 86 L160 110 Q152 84 140 76 L132 92 L118 74 L104 92 L92 74 L78 92 L66 76 Q50 86 40 110Z') + shine; break;
+      case 'middle': hairFront = hf('M42 114 Q34 32 100 30 Q166 32 158 114 Q156 82 140 66 Q122 54 104 56 L100 68 L96 56 Q78 54 60 66 Q44 82 42 114Z') + shine; break;
+      case 'pony': hairFront = hf('M42 108 Q36 32 100 30 Q164 32 158 108 Q150 76 130 64 Q104 88 62 82 Q48 92 42 108Z') + shine; break;
+      case 'twin': hairFront = hf('M42 110 Q36 32 100 30 Q164 32 158 110 Q152 80 138 72 Q130 86 114 78 Q104 90 92 78 Q78 88 64 74 Q50 86 42 110Z') + shine; break;
+      case 'curly': hairFront = hf('M42 106 Q30 40 100 30 Q170 40 158 106 Q156 88 146 82 Q140 94 128 86 Q120 98 108 88 Q100 98 92 88 Q80 98 72 86 Q60 94 54 82 Q44 88 42 106Z') + shine; break;
+      case 'long': hairFront = hf('M40 120 Q34 32 100 30 Q166 32 160 120 Q156 86 144 74 Q126 82 100 70 Q74 82 56 74 Q44 86 40 120Z') + shine; break;
+      case 'bob': hairFront = hf('M40 112 Q34 32 100 30 Q166 32 160 112 L154 82 Q100 90 46 82Z') + shine; break;
+      case 'bun': hairFront = hf('M42 104 Q36 34 100 32 Q164 34 158 104 Q152 78 136 68 Q116 60 100 64 Q82 58 64 68 Q48 78 42 104Z') + shine; break;
+      case 'bald': hairFront = `<ellipse cx="80" cy="60" rx="14" ry="7" fill="#fff" opacity=".45" transform="rotate(-20 80 60)"/>`; break;
+      default: hairFront = hf('M42 106 Q36 32 100 30 Q164 32 158 106 Q154 82 146 72 Q140 86 126 80 Q116 66 100 74 Q86 64 76 80 Q62 88 54 72 Q46 84 42 106Z') + shine;
+    }
+
+    // --- accessories ---
+    const accs = {
+      sunglasses: `<path d="M44 102 L58 100 M156 102 L142 100" stroke="#222" stroke-width="3"/><path d="M58 98 h32 q2 18 -15 18 q-18 0 -17 -18z M110 98 h32 q1 18 -17 18 q-17 0 -15 -18z" fill="#1d1f2a" stroke="${L}" stroke-width="2.5"/><path d="M90 101 h20" stroke="${L}" stroke-width="3"/><path d="M64 103 l9 -3 M116 103 l9 -3" stroke="#fff" stroke-width="2.5" opacity=".7" stroke-linecap="round"/>`,
+      glasses: `<g fill="#fff" fill-opacity=".15" stroke="${L}" stroke-width="3"><circle cx="76" cy="106" r="14"/><circle cx="124" cy="106" r="14"/></g><path d="M90 104 q10 -4 20 0 M62 104 L45 100 M138 104 L155 100" stroke="${L}" stroke-width="3" fill="none"/>`,
+      mask: `<path fill-rule="evenodd" d="M50 102 Q74 82 100 98 Q126 82 150 102 Q144 124 124 120 Q110 116 100 110 Q90 116 76 120 Q56 124 50 102Z M88 106 a12 9 0 1 0 -24 0 a12 9 0 1 0 24 0Z M136 106 a12 9 0 1 0 -24 0 a12 9 0 1 0 24 0Z" fill="#7b3fb5" stroke="${L}" stroke-width="2.5"/><path d="M50 102 l-10 -8 M150 102 l10 -8" stroke="#7b3fb5" stroke-width="4"/>`,
+      cap: `<path d="M40 82 Q40 26 100 24 Q160 26 160 82 Z" fill="${tc}" stroke="${L}" stroke-width="3"/><path d="M48 78 Q100 94 152 78 Q154 92 100 100 Q46 92 48 78Z" fill="${tcD}" stroke="${L}" stroke-width="3"/><circle cx="100" cy="25" r="5" fill="${tcD}" stroke="${L}" stroke-width="2"/><path d="M100 28 V78" stroke="${tcD}" stroke-width="2"/>`,
+      headband: `<path d="M42 76 Q100 54 158 76 L157 89 Q100 67 43 89Z" fill="#e0424f" stroke="${L}" stroke-width="3"/><path d="M156 80 l18 -10 l-3 14 z M156 85 l16 10 l-13 4 z" fill="#e0424f" stroke="${L}" stroke-width="2.5" stroke-linejoin="round"/>`,
+      earphones: `<path d="M44 104 Q38 18 100 20 Q162 18 156 104" stroke="#2d2f3a" stroke-width="7" fill="none"/><rect x="32" y="92" width="18" height="28" rx="8" fill="#e8505b" stroke="${L}" stroke-width="3"/><rect x="150" y="92" width="18" height="28" rx="8" fill="#e8505b" stroke="${L}" stroke-width="3"/>`,
+    };
+    const acc = accs[a.acc] || '';
+    const bump = o.bump ? `<ellipse cx="128" cy="40" rx="16" ry="13" fill="#f6a3a8" stroke="${L}" stroke-width="3"/><ellipse cx="128" cy="40" rx="7" ry="5" fill="#ef7f8a"/><g transform="translate(68 62) rotate(-20)"><rect x="-17" y="-6" width="34" height="12" rx="5" fill="#f5d7a8" stroke="${L}" stroke-width="2.5"/><path d="M-4 -6 v12 M4 -6 v12" stroke="${L}" stroke-width="1.5"/></g><text x="150" y="30" font-size="18">💫</text>` : '';
+    const stars = hurt ? `<text x="40" y="40" font-size="20">💥</text><text x="140" y="34" font-size="18">⭐</text>` : '';
+
+    let vb = `0 0 200 300`;
+    if (o.crop === 'head') vb = `22 ${12} 156 150`;
+    else if (o.crop === 'torso') vb = `16 ${top - 30 + dy} 168 ${hip - top + 70}`;
+    else if (o.crop === 'legs') vb = `28 ${hip - 22 + dy} 144 ${legLen + 48}`;
+    // head crop ignores dy since head is drawn untranslated in its own group
+    return `<svg class="av" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" aria-label="角色">
+      <g transform="translate(0 ${dy})">${back}${a.hair === 'long' || a.hair === 'twin' || a.hair === 'curly' || a.hair === 'pony' ? '' : ''}</g>
+      <g transform="translate(0 ${o.crop === 'head' ? 0 : dy})">${hairBack}</g>
+      <g transform="translate(0 ${dy})">${legs}${skirt}${torso}${over}${arms}</g>
+      <g transform="translate(0 ${o.crop === 'head' ? 0 : dy})">${head}${hairFront}${acc}${bump}${stars}</g>
     </svg>`;
+  }
+
+  // ---------- gym background ----------
+  function gymBG() {
+    const L = '#4a2f1f';
+    let planks = '';
+    for (let i = 0; i < 9; i++) { const y = 215 + i * i * 2.4 + i * 4; planks += `<path d="M0 ${y.toFixed(1)} H360" stroke="#c4925e" stroke-width="1.5"/>`; }
+    for (let i = -6; i <= 6; i++) planks += `<path d="M${180 + i * 22} 215 L${180 + i * 70} 400" stroke="#c4925e" stroke-width="1.2" opacity=".7"/>`;
+    return `
+      <defs>
+        <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#d9f1ff"/></linearGradient>
+        <linearGradient id="floorG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d79c63"/><stop offset="1" stop-color="#e9b77f"/></linearGradient>
+        <radialGradient id="lamp" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#fff6c9" stop-opacity=".7"/><stop offset="1" stop-color="#fff6c9" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="360" height="215" fill="#f3dfc0"/>
+      <rect y="168" width="360" height="47" fill="#e2c296"/><path d="M0 168 H360" stroke="#b98a58" stroke-width="4"/>
+      <!-- window -->
+      <rect x="138" y="26" width="96" height="84" rx="6" fill="url(#sky)" stroke="${L}" stroke-width="4"/>
+      <circle cx="210" cy="50" r="11" fill="#ffe27a"/><path d="M150 92 q14 -10 28 0 q10 -8 22 0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M186 26 V110 M138 66 H234" stroke="${L}" stroke-width="4"/>
+      <!-- clock -->
+      <circle cx="62" cy="30" r="15" fill="#fff" stroke="${L}" stroke-width="3"/><path d="M62 30 V20 M62 30 l7 4" stroke="${L}" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- reception board -->
+      <rect x="16" y="54" width="94" height="40" rx="6" fill="#2f6e8f" stroke="${L}" stroke-width="3"/>
+      <text x="63" y="81" text-anchor="middle" font-size="18" font-weight="900" fill="#fff" font-family="-apple-system, 'PingFang TC', sans-serif">📋 登記處</text>
+      <!-- poster -->
+      <g transform="rotate(4 280 70)"><rect x="248" y="34" width="66" height="74" rx="4" fill="#fff6e8" stroke="${L}" stroke-width="3"/>
+        <text x="281" y="58" text-anchor="middle" font-size="12" font-weight="900" fill="#e8505b" font-family="Arial Black, sans-serif">NO PAIN</text>
+        <text x="281" y="74" text-anchor="middle" font-size="12" font-weight="900" fill="#e8505b" font-family="Arial Black, sans-serif">NO GAIN</text>
+        <text x="281" y="98" text-anchor="middle" font-size="18">🔥💪</text></g>
+      <!-- punching bag -->
+      <path d="M338 0 V24" stroke="#555" stroke-width="3"/><rect x="322" y="24" width="32" height="92" rx="14" fill="#c43d3d" stroke="${L}" stroke-width="3"/><path d="M322 44 h32 M322 98 h32" stroke="#8e2a2a" stroke-width="3"/>
+      <!-- floor -->
+      <rect y="215" width="360" height="185" fill="url(#floorG)"/>${planks}
+      <path d="M0 215 H360" stroke="#9c6a3d" stroke-width="3"/>
+      <!-- mat -->
+      <path d="M110 300 L300 300 L330 380 L80 380 Z" fill="#6aa58a" opacity=".55"/>
+      <!-- treadmill -->
+      <g><path d="M150 206 L232 206 L240 228 L146 228 Z" fill="#3b3f4a" stroke="${L}" stroke-width="3"/><rect x="206" y="150" width="10" height="58" fill="#5b616e" stroke="${L}" stroke-width="2.5"/><rect x="196" y="140" width="34" height="16" rx="4" fill="#5b616e" stroke="${L}" stroke-width="2.5"/><rect x="202" y="144" width="14" height="7" fill="#7fe0ff"/></g>
+      <!-- dumbbell rack -->
+      <g><rect x="252" y="176" width="100" height="10" fill="#7a4a26" stroke="${L}" stroke-width="2.5"/><rect x="258" y="186" width="6" height="34" fill="#7a4a26" stroke="${L}" stroke-width="2"/><rect x="340" y="186" width="6" height="34" fill="#7a4a26" stroke="${L}" stroke-width="2"/>
+        ${[266, 292, 318].map(x => `<rect x="${x - 2}" y="166" width="22" height="5" fill="#888"/><rect x="${x - 6}" y="161" width="9" height="15" rx="2" fill="#3b3f4a"/><rect x="${x + 15}" y="161" width="9" height="15" rx="2" fill="#3b3f4a"/>`).join('')}</g>
+      <!-- kettlebells -->
+      <g><path d="M262 232 q10 -14 20 0" stroke="#3b3f4a" stroke-width="5" fill="none"/><circle cx="272" cy="240" r="11" fill="#3b3f4a"/>
+         <path d="M290 236 q8 -12 16 0" stroke="#e8505b" stroke-width="4" fill="none"/><circle cx="298" cy="242" r="9" fill="#e8505b"/></g>
+      <!-- reception desk -->
+      <g><rect x="10" y="196" width="104" height="14" rx="4" fill="#d9a06b" stroke="${L}" stroke-width="3"/>
+         <rect x="16" y="210" width="92" height="52" fill="#b5764a" stroke="${L}" stroke-width="3"/>
+         <path d="M16 236 H108" stroke="#8e5a35" stroke-width="2"/>
+         <rect x="26" y="180" width="20" height="18" rx="2" fill="#fff" stroke="${L}" stroke-width="2.5" transform="rotate(-8 36 189)"/>
+         <rect x="86" y="178" width="10" height="20" rx="3" fill="#7fd3ff" stroke="${L}" stroke-width="2.5"/>
+         <text x="62" y="254" text-anchor="middle" font-size="11" font-weight="700" fill="#fff6e8" font-family="-apple-system, 'PingFang TC', sans-serif">每日紀錄 ✔</text></g>
+      <ellipse cx="180" cy="0" rx="160" ry="120" fill="url(#lamp)"/>`;
   }
 
   // ---------- UI state ----------
   let curDate = today();
   let C = null;
   let busy = false;
+  let coachState = 'standby';
   const $ = id => document.getElementById(id);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
   function toast(msg) {
     const t = $('toast'); t.textContent = msg; t.classList.add('show');
     clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
   }
-  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-  function setCoach(state, line) {
-    const wrap = $('coach-wrap');
+  function coachMarkup(state) {
     const img = coachImg(state);
-    wrap.innerHTML = img ? `<img src="${img}" alt="教練：${state}">` : coachSVG(state);
-    const el = wrap.firstElementChild;
-    el.classList.add('a-' + state);
-    $('bubble-text').textContent = line || pick(LINES[state]);
+    return img ? `<img src="${img}" alt="教練">` : coachSVG(state);
+  }
+  function setCoach(state, line) {
+    coachState = state;
+    const inner = $('coach-inner');
+    inner.innerHTML = coachMarkup(state);
+    inner.firstElementChild.classList.add('a-' + state);
+    if (line !== false) $('bubble-text').textContent = line || pick(LINES[state]);
+  }
+
+  // ----- actors & movement -----
+  const COACH_HOME = { x: 44, y: 30 };
+  const pos = { player: { x: 74, y: 9 }, coach: { ...COACH_HOME } };
+  function place(id, p, ms = 0) {
+    const el = $(id);
+    const wPct = id === 'coach' ? 30 : 23;
+    el.style.transitionDuration = ms + 'ms';
+    el.style.left = (p.x - wPct / 2) + '%';
+    el.style.bottom = p.y + '%';
+    const s = 1 - (p.y - 3) / 37 * 0.22;
+    el.style.transform = `scale(${s.toFixed(3)})`;
+    el.style.zIndex = String(100 - Math.round(p.y));
+  }
+  function moveTo(id, target, speed = 32) {
+    const from = pos[id];
+    const dx = target.x - from.x, dy = target.y - from.y;
+    const dist = Math.hypot(dx, dy * 1.4);
+    const ms = Math.max(120, dist / speed * 1000);
+    const flip = $(id + '-flip');
+    if (Math.abs(dx) > 1) flip.classList.toggle('left', dx < 0);
+    pos[id] = { x: target.x, y: target.y };
+    place(id, pos[id], ms);
+    return new Promise(res => setTimeout(res, ms + 30));
+  }
+  const clampPos = p => ({ x: Math.max(10, Math.min(90, p.x)), y: Math.max(3, Math.min(40, p.y)) });
+
+  let walkToken = 0;
+  async function walkPlayer(target) {
+    const token = ++walkToken;
+    const el = $('player');
+    el.classList.remove('idle', 'happy'); el.classList.add('walking');
+    await moveTo('player', clampPos(target), 30);
+    if (token !== walkToken) return false;
+    el.classList.remove('walking'); el.classList.add('idle');
+    return true;
   }
 
   function renderPlayer(extra = {}) {
     const t = today();
     const bump = S.lastAttack === t && C && C.perDay[t] && C.perDay[t].n < 3;
-    $('player-wrap').innerHTML = avatarSVG(S.avatar, { bump, ...extra });
+    $('player-inner').innerHTML = avatarSVG(S.avatar, { bump, ...extra });
+    $('player-tag').textContent = S.avatar.name || '我';
   }
 
   function moodState() {
@@ -709,7 +1124,7 @@
   function refreshStats() {
     C = compute();
     $('st-score').textContent = C.score;
-    const td = C.perDay[curDate];
+    const td = C.perDay[today()];
     $('st-today').textContent = td ? td.pts : 0;
     $('st-streak').textContent = C.streak;
     $('pat-text').textContent = `${C.patience} / 100`;
@@ -718,13 +1133,16 @@
     bar.style.background = C.patience >= 60 ? 'var(--ok)' : C.patience >= 30 ? 'var(--warn)' : 'var(--primary)';
     $('lv-badge').textContent = `Lv.${C.level} ${C.title}`;
     $('coach-name-tag').textContent = S.settings.coachName || '教練';
+    const n = td ? td.n : 0;
+    $('coach-marker').classList.toggle('on', n < 3);
+    $('coach-marker').textContent = n === 0 ? '❗' : '📋';
     renderBreakdown();
   }
 
   function renderBreakdown() {
-    const d = C.perDay[curDate];
-    const items = d ? d.items : dayItems(curDate, 0);
-    if (!items.length) { $('breakdown').innerHTML = '<p class="muted">還沒有分數。記錄任一項就能加分！</p>'; return; }
+    const d = C.perDay[today()];
+    const items = d ? d.items : [];
+    if (!items.length) { $('breakdown').innerHTML = '<p class="muted">今天還沒有分數。走去櫃台找教練登記，就能加分！</p>'; return; }
     const total = items.reduce((a, [, p]) => a + p, 0);
     $('breakdown').innerHTML = items.map(([l, p]) => `<div><span>${esc(l)}</span><span class="${p >= 0 ? 'plus' : 'minus'}">${p >= 0 ? '+' : ''}${p}</span></div>`).join('')
       + `<div><span>合計</span><span>${total >= 0 ? '+' : ''}${total}</span></div>`;
@@ -770,31 +1188,52 @@
     hwt.textContent = msg; hwt.classList.toggle('hit', w !== null && tw !== null && w <= tw);
   }
 
-  // ---------- attack sequence ----------
-  function runAttack() {
-    busy = true;
-    setCoach('sprint');
-    setTimeout(() => {
-      setCoach('attack');
-      renderPlayer({ hurt: true });
-      $('player-wrap').firstElementChild.classList.add('p-hit');
-      $('app').classList.add('shake');
-      const fx = document.createElement('div'); fx.className = 'fx boom'; fx.textContent = '碰！！';
-      $('stage').appendChild(fx);
-      try { navigator.vibrate && navigator.vibrate([80, 40, 80, 40, 160]); } catch (e) {}
-      setTimeout(() => {
-        fx.remove(); $('app').classList.remove('shake');
-        S.lastAttack = today(); persist();
-        renderPlayer();
-        setCoach('angry', `耐心值只剩 ${C.patience}！今天三項全記完，頭上的包才會消！`);
-        busy = false;
-      }, 1900);
-    }, 900);
+  function fxAt(cls, text, p, extraY = 0) {
+    const fx = document.createElement('div'); fx.className = 'fx ' + cls; fx.textContent = text;
+    fx.style.left = p.x + '%'; fx.style.bottom = (p.y + 16 + extraY) + '%';
+    $('gym').appendChild(fx); setTimeout(() => fx.remove(), 1500);
   }
 
-  function popPoints(p) {
-    const fx = document.createElement('div'); fx.className = 'fx pts-pop'; fx.textContent = (p >= 0 ? '+' : '') + p;
-    $('stage').appendChild(fx); setTimeout(() => fx.remove(), 1500);
+  // ----- attack: coach runs over and smashes the player -----
+  async function runAttack(reason) {
+    if (busy) return;
+    busy = true;
+    App.closeSheet(true);
+    walkToken++;
+    const pl = $('player'); pl.classList.remove('walking', 'happy'); pl.classList.add('idle');
+    setCoach('sprint', reason || pick(LINES.sprint));
+    const side = pos.player.x > 50 ? -1 : 1;
+    await moveTo('coach', clampPos({ x: pos.player.x + side * 15, y: pos.player.y + 1 }), 60);
+    $('coach-flip').classList.toggle('left', side > 0);
+    setCoach('attack');
+    pl.classList.remove('idle'); pl.classList.add('hit');
+    renderPlayer({ hurt: true });
+    $('app').classList.add('shake');
+    fxAt('boom', '碰！！', pos.player, 4);
+    setTimeout(() => fxAt('boom', '咚！', { x: pos.player.x + 8, y: pos.player.y }, 14), 450);
+    try { navigator.vibrate && navigator.vibrate([80, 40, 80, 40, 160]); } catch (e) {}
+    await new Promise(r => setTimeout(r, 1700));
+    $('app').classList.remove('shake');
+    pl.classList.remove('hit'); pl.classList.add('idle');
+    S.lastAttack = today(); persist();
+    renderPlayer();
+    setCoach('angry', `耐心值只剩 ${C.patience}！今天三項全記完，頭上的包才會消！`);
+    await new Promise(r => setTimeout(r, 900));
+    setCoach('standby', false);
+    await moveTo('coach', COACH_HOME, 36);
+    $('coach-flip').classList.remove('left');
+    setCoach('angry', false);
+    busy = false;
+  }
+
+  function openSheet() {
+    curDate = today(); fillForm();
+    $('sheet-coach').innerHTML = coachMarkup('inspect');
+    const n = C.perDay[today()] ? C.perDay[today()].n : 0;
+    $('sheet-title').textContent = `${S.settings.coachName || '教練'}的登記櫃台`;
+    $('sheet-sub').textContent = n === 3 ? '今天三項都記完了！要修改也可以' : `今天還差 ${3 - n} 項紀錄`;
+    $('sheet').classList.add('show');
+    document.body.style.overflow = 'hidden';
   }
 
   // ---------- history ----------
@@ -847,18 +1286,6 @@
     }).join('') : '<p class="muted">還沒有紀錄，快去「今日」回報教練吧！</p>';
   }
 
-  // ---------- avatar maker ----------
-  function renderAvatarMaker() {
-    $('avatar-preview').innerHTML = avatarSVG(S.avatar);
-    $('player-name').value = S.avatar.name || '';
-    $('avatar-opts').innerHTML = AV_OPTS.map(([k, label, opts]) => {
-      const isColor = ['skin', 'hairColor', 'outfitColor'].includes(k);
-      return `<div class="opt-group"><span>${label}</span><div class="opts">${opts.map(([v, txt]) =>
-        isColor ? `<button class="swatch ${S.avatar[k] === v ? 'sel' : ''}" style="background:${txt}" aria-label="${label} ${v + 1}" onclick='App.setAvatar("${k}", ${JSON.stringify(v)})'></button>`
-          : `<button class="${S.avatar[k] === v ? 'sel' : ''}" onclick='App.setAvatar("${k}", ${JSON.stringify(v)})'>${txt}</button>`).join('')}</div></div>`;
-    }).join('');
-  }
-
   // ---------- coach slots ----------
   function renderSlots() {
     $('slots').innerHTML = STATES.map(([k, label]) => {
@@ -881,9 +1308,18 @@
   function toDataURL(src, sx, sy, sw, sh, max = 360) {
     const sc = Math.min(1, max / Math.max(sw, sh));
     const c = document.createElement('canvas'); c.width = Math.round(sw * sc); c.height = Math.round(sh * sc);
-    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    const ctx = c.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(src, sx, sy, sw, sh, 0, 0, c.width, c.height);
-    return c.toDataURL('image/jpeg', 0.86);
+    // make the paper-white background transparent (soft edge)
+    try {
+      const id = ctx.getImageData(0, 0, c.width, c.height), d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const m = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (m >= 238) d[i + 3] = 0; else if (m >= 222) d[i + 3] = Math.round(255 * (238 - m) / 16);
+      }
+      ctx.putImageData(id, 0, 0);
+    } catch (e) {}
+    return c.toDataURL('image/png');
   }
   // find the main picture inside a grid cell (skip label text separated by whitespace)
   function findContent(ctx, x0, y0, w, h) {
@@ -907,6 +1343,60 @@
     return [x0 + nx, y0 + ny, Math.min(w - nx, maxX - minX + 2 * p), Math.min(h - ny, best[1] - best[0] + 2 * p)];
   }
 
+  // ---------- character creator ----------
+  let ccCat = 'face';
+  function creatorHTML(prefix) {
+    const a = S.avatar;
+    const cat = CC_CATS.find(c => c.k === ccCat) || CC_CATS[0];
+    let grid = '';
+    cat.opts.forEach(([key, list], gi) => {
+      if (cat.opts.length > 1) grid += `<div class="cc-sub">${key === 'eyes' ? '眼睛' : key === 'mouth' ? '嘴巴' : ''}</div>`;
+      grid += `<div class="cc-grid">` + list.map(([v, label]) =>
+        `<button class="cc-opt ${a[key] === v ? 'sel' : ''}" onclick="App.setAvatar('${key}','${v}')">${avatarSVG(Object.assign({}, a, { [key]: v }), { crop: cat.crop === 'full' ? null : cat.crop })}<div>${label}</div></button>`).join('') + `</div>`;
+    });
+    (cat.swatches || []).forEach(([key, label, colors]) => {
+      grid += `<div class="cc-sub">${label}</div><div class="swatches">` + colors.map((c, i) =>
+        `<button class="${a[key] === i ? 'sel' : ''}" style="background:${c}" aria-label="${label} ${i + 1}" onclick="App.setAvatar('${key}',${i})"></button>`).join('') + `</div>`;
+    });
+    if (cat.toggle) {
+      const [key, label] = cat.toggle;
+      grid += `<div class="cc-sub">${label}</div><div class="cc-tabs"><button class="${a[key] !== false ? 'sel' : ''}" onclick="App.setAvatar('${key}',true)">有</button><button class="${a[key] === false ? 'sel' : ''}" onclick="App.setAvatar('${key}',false)">無</button></div>`;
+    }
+    return `<h2>角色創造</h2>
+      <div class="cc-stage"><div class="pedestal"></div>${avatarSVG(a)}</div>
+      <div class="cc-height">矮 <input type="range" min="0" max="1" step="0.05" value="${a.height ?? .5}" oninput="App.setAvatar('height', +this.value, true)" aria-label="身高"> 高</div>
+      <div class="gender"><button class="m ${a.gender !== 'f' ? 'sel' : ''}" onclick="App.setAvatar('gender','m')">男 ♂</button><button class="f ${a.gender === 'f' ? 'sel' : ''}" onclick="App.setAvatar('gender','f')">女 ♀</button></div>
+      <div class="cc-tabs">${CC_CATS.map(c => `<button class="${c.k === ccCat ? 'sel' : ''}" onclick="App.ccTab('${c.k}')">${c.label}</button>`).join('')}</div>
+      ${grid}
+      <label class="f">角色名字</label>
+      <input type="text" value="${esc(a.name || '')}" placeholder="例：自律的我" oninput="App.setName(this.value)">
+      <div class="cc-actions">
+        <button class="btn gold" onclick="App.randomAvatar()">🎲 隨機變換</button>
+        ${prefix === 'ob' ? '' : `<button class="btn" onclick="App.toast('角色已儲存！'); App.switchTab('today')">✅ 完成</button>`}
+      </div>`;
+  }
+  function renderCreators() {
+    const el = $('creator'); if (el && $('view-avatar').classList.contains('active')) el.innerHTML = creatorHTML('main');
+    const ob = $('ob-creator'); if (ob && $('onboard').classList.contains('show')) { ob.innerHTML = creatorHTML('ob'); renderPresets(); }
+  }
+  function renderStagePreviewOnly() {
+    document.querySelectorAll('.cc-stage').forEach(st => { st.innerHTML = `<div class="pedestal"></div>${avatarSVG(S.avatar)}`; });
+  }
+
+  // ---------- onboarding ----------
+  let obPreset = -1;
+  function renderPresets() {
+    $('preset-grid').innerHTML = PRESETS.map(([name, a], i) =>
+      `<button class="preset ${obPreset === i ? 'sel' : ''}" onclick="App.obPick(${i})">${avatarSVG(Object.assign({}, a))}<div>${name}</div></button>`).join('');
+  }
+  function renderObCoach() {
+    $('ob-coach').innerHTML = coachMarkup('standby');
+    $('ob-slots').innerHTML = STATES.map(([k, label]) => {
+      const im = coachImg(k);
+      return `<div class="slot ${im ? 'has' : ''}"><div class="thumb">${im ? `<img src="${im}" alt="">` : coachSVG(k)}</div><div>${label}</div></div>`;
+    }).join('');
+  }
+
   // ---------- notification lines ----------
   function renderNotifyLines() {
     const name = S.settings.coachName || '教練';
@@ -928,6 +1418,11 @@
     renderSlots(); renderNotifyLines();
   }
 
+  function sceneMood() {
+    if (busy) return;
+    setCoach(moodState());
+  }
+
   // ---------- public API ----------
   const App = {
     toast,
@@ -936,16 +1431,31 @@
       document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
       window.scrollTo(0, 0);
       if (tab === 'history') renderHistory();
-      if (tab === 'avatar') renderAvatarMaker();
+      if (tab === 'avatar') renderCreators();
       if (tab === 'settings') fillSettings();
-      if (tab === 'today') { refreshStats(); renderPlayer(); if (!busy) setCoach(moodState()); }
+      if (tab === 'today') { refreshStats(); renderPlayer(); sceneMood(); }
+    },
+    async goRegister() {
+      if (busy) return;
+      const target = { x: COACH_HOME.x + 17, y: COACH_HOME.y - 4 };
+      setCoach('inspect', `${S.avatar.name || '你'}，過來登記！`);
+      const arrived = await walkPlayer(target);
+      if (!arrived) return;
+      $('player-flip').classList.add('left');
+      openSheet();
+    },
+    closeSheet(silent) {
+      if (!$('sheet').classList.contains('show')) return;
+      $('sheet').classList.remove('show');
+      document.body.style.overflow = '';
+      if (!silent && !busy) sceneMood();
     },
     shiftDay(n) {
       const d = addDays(curDate, n);
       if (d > today()) return;
-      curDate = d; fillForm(); refreshStats();
+      curDate = d; fillForm();
     },
-    goto(d) { curDate = d; App.switchTab('today'); fillForm(); refreshStats(); },
+    goto(d) { App.switchTab('today'); openSheet(); curDate = d; fillForm(); },
     water(n) {
       const el = $('water-val'); const v = Math.max(0, Math.min(30, (parseInt(el.dataset.v || '0', 10) || 0) + n));
       el.dataset.v = v; el.textContent = v + ' 杯'; updateHints();
@@ -955,40 +1465,53 @@
       const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       const prevBody = hasBody(rec(curDate));
       const r = readForm();
-      if (loggedCount(r) === 0 && !r.note) { delete S.records[curDate]; } else S.records[curDate] = r;
-      // set start weight automatically on first weight
+      if (loggedCount(r) === 0 && !r.note) delete S.records[curDate]; else S.records[curDate] = r;
       if (!S.settings.goals.startWeight && num(r.weight) !== null) S.settings.goals.startWeight = r.weight;
-      persist(); refreshStats(); renderPlayer();
+      persist();
+      refreshStats();
       const after = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       const delta = after - before;
-      if (delta) popPoints(delta);
+      App.closeSheet(true);
+      renderPlayer();
       const n = loggedCount(r);
+      if (n === 0) { runAttack('什麼都沒填就交給我！？吃我一棒！'); return; }
+      if (delta) fxAt('pts-pop', (delta > 0 ? '+' : '') + delta, pos.player);
+      const pl = $('player'); pl.classList.remove('idle'); pl.classList.add('happy');
+      setTimeout(() => { pl.classList.remove('happy'); pl.classList.add('idle'); }, 1600);
       if (n === 3) {
         setCoach('cheer', delta > 0 ? `呀哈！+${delta} 分！三項全記！` : '已更新！三項全記，讚！');
         setTimeout(() => { if (!busy) setCoach('dance'); }, 2400);
-      } else if (n > 0) {
+      } else {
         setCoach('cheer', delta > 0 ? `有記錄！+${delta} 分！還差 ${3 - n} 項～` : `已更新！還差 ${3 - n} 項～`);
         setTimeout(() => { if (!busy) setCoach('inspect'); }, 2400);
-      } else {
-        setCoach('angry', '什麼都沒填就按儲存！？');
       }
       if (!prevBody && hasBody(r) && C.reached) toast('🎉 達成目標體重！+200 分！');
-      else toast('已回報教練！');
     },
     pokeCoach() {
       if (busy) return;
       setCoach('goforit');
-      clearTimeout(App._p); App._p = setTimeout(() => { if (!busy) setCoach(moodState()); }, 2600);
+      clearTimeout(App._p); App._p = setTimeout(sceneMood, 2600);
     },
-    setAvatar(k, v) {
+    // ---- creator ----
+    ccTab(k) { ccCat = k; renderCreators(); },
+    setAvatar(k, v, light) {
       S.avatar[k] = v; persist();
-      if (k === 'name') { $('avatar-preview').innerHTML = avatarSVG(S.avatar); return; }
-      renderAvatarMaker();
+      if (light) { renderStagePreviewOnly(); return; }
+      obPreset = -1;
+      renderCreators();
     },
+    setName(v) { S.avatar.name = v; persist(); },
     randomAvatar() {
-      AV_OPTS.forEach(([k, , opts]) => { S.avatar[k] = pick(opts)[0]; });
-      persist(); renderAvatarMaker();
+      CC_CATS.forEach(c => {
+        c.opts.forEach(([k, list]) => { S.avatar[k] = pick(list)[0]; });
+        (c.swatches || []).forEach(([k, , colors]) => { S.avatar[k] = Math.floor(Math.random() * colors.length); });
+      });
+      S.avatar.acc = Math.random() < .5 ? 'none' : S.avatar.acc;
+      S.avatar.gender = Math.random() < .5 ? 'm' : 'f';
+      S.avatar.height = Math.round(Math.random() * 20) / 20;
+      persist(); obPreset = -1; renderCreators();
     },
+    // ---- settings ----
     saveGoals() {
       const g = S.settings.goals;
       g.startWeight = $('g-start').value; g.targetWeight = $('g-target').value;
@@ -1000,7 +1523,7 @@
     },
     saveCoachName() {
       S.settings.coachName = $('coach-name').value.trim() || '教練';
-      persist(); renderNotifyLines(); toast('教練名字已儲存！');
+      persist(); renderNotifyLines(); refreshStats(); toast('教練名字已儲存！');
     },
     async uploadSlot(k, input) {
       const f = input.files && input.files[0]; if (!f) return;
@@ -1008,13 +1531,14 @@
         const im = await loadImage(f);
         const url = toDataURL(im, 0, 0, im.naturalWidth, im.naturalHeight);
         if (!safeSet(IMG_KEY + k, url)) toast('⚠️ 空間不足，存不下這張圖');
-        renderSlots();
+        renderSlots(); setCoach(coachState, false);
       } catch (e) { toast('圖片讀取失敗'); }
       input.value = '';
     },
-    async uploadSheet(input) {
+    async uploadSheet(input, cols, rows) {
       const f = input.files && input.files[0]; if (!f) return;
-      const cols = Math.max(1, parseInt($('sheet-cols').value, 10) || 5), rows = Math.max(1, parseInt($('sheet-rows').value, 10) || 2);
+      cols = cols || Math.max(1, parseInt($('sheet-cols').value, 10) || 5);
+      rows = rows || Math.max(1, parseInt($('sheet-rows').value, 10) || 2);
       try {
         const im = await loadImage(f);
         const W = im.naturalWidth, H = im.naturalHeight;
@@ -1028,16 +1552,16 @@
           if (safeSet(IMG_KEY + STATES[i][0], toDataURL(c, x, y, w, h))) saved++;
           i++;
         }
-        renderSlots(); toast(`已切出 ${saved} 個動作！不對的格子可以點它重新上傳`);
+        renderSlots(); setCoach(coachState, false);
+        toast(`已切出 ${saved} 個動作！不對的格子可以點它重新上傳`);
       } catch (e) { toast('動作表處理失敗'); }
       input.value = '';
     },
-    clearSlot(k) { safeDel(IMG_KEY + k); renderSlots(); },
-    clearSlots() { if (!confirm('清除所有教練圖片？')) return; STATES.forEach(([k]) => safeDel(IMG_KEY + k)); renderSlots(); toast('已清除'); },
+    clearSlot(k) { safeDel(IMG_KEY + k); renderSlots(); setCoach(coachState, false); },
+    clearSlots() { if (!confirm('清除所有教練圖片？')) return; STATES.forEach(([k]) => safeDel(IMG_KEY + k)); renderSlots(); setCoach(coachState, false); toast('已清除'); },
     copy(id) {
       const text = $(id).textContent;
-      const done = () => toast('已複製！');
-      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => toast('請長按文字手動複製'));
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('已複製！'), () => toast('請長按文字手動複製'));
       else toast('請長按文字手動複製');
     },
     exportData() {
@@ -1056,7 +1580,7 @@
           if (!confirm('匯入會覆蓋目前的資料，確定嗎？')) return;
           safeSet(KEY, JSON.stringify(d.state));
           Object.entries(d.images || {}).forEach(([k, v]) => safeSet(IMG_KEY + k, v));
-          load(); fillSettings(); fillForm(); refreshStats(); toast('匯入完成！');
+          load(); fillSettings(); refreshStats(); renderPlayer(); sceneMood(); toast('匯入完成！');
         } catch (e) { toast('檔案格式不對'); }
       };
       rd.readAsText(f); input.value = '';
@@ -1076,32 +1600,89 @@
       if (!confirm('確定清除全部資料？（建議先匯出備份）')) return;
       if (!confirm('真的確定？這無法復原！')) return;
       safeDel(KEY); STATES.forEach(([k]) => safeDel(IMG_KEY + k));
-      load(); curDate = today(); fillForm(); App.switchTab('today'); toast('已清除');
+      load(); App.obStart();
+    },
+    // ---- onboarding ----
+    obStart() {
+      obPreset = -1; ccCat = 'face';
+      $('ob-coach-name').value = S.settings.coachName || '';
+      const g = S.settings.goals;
+      $('ob-start').value = g.startWeight; $('ob-target').value = g.targetWeight;
+      $('ob-ex').value = g.exMin; $('ob-water').value = g.water; $('ob-week').value = g.weeklyExDays;
+      $('onboard').classList.add('show');
+      renderCreators(); renderObCoach();
+      App.obNext(1);
+    },
+    obPick(i) {
+      obPreset = i;
+      const name = S.avatar.name;
+      S.avatar = Object.assign({ v: 2, name }, PRESETS[i][1]);
+      persist();
+      const keep = obPreset; renderCreators(); obPreset = keep; renderPresets();
+    },
+    obNext(step) {
+      if (step === 2) renderObCoach();
+      document.querySelectorAll('.ob-step').forEach(el => el.style.display = el.dataset.step == step ? 'block' : 'none');
+      document.querySelectorAll('.ob-steps i').forEach(el => el.classList.toggle('on', +el.dataset.s <= step));
+      $('onboard').scrollTop = 0;
+    },
+    async obSheet(input) { await App.uploadSheet(input, 5, 2); renderObCoach(); },
+    obFinish() {
+      S.settings.coachName = $('ob-coach-name').value.trim() || S.settings.coachName || '教練';
+      const g = S.settings.goals;
+      g.startWeight = $('ob-start').value; g.targetWeight = $('ob-target').value;
+      g.exMin = Math.max(0, parseInt($('ob-ex').value, 10) || 0);
+      g.water = Math.max(0, parseInt($('ob-water').value, 10) || 0);
+      g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('ob-week').value, 10) || 0));
+      if (!S.avatar.name) S.avatar.name = '我';
+      S.onboarded = true; persist();
+      $('onboard').classList.remove('show');
+      App.switchTab('today');
+      setCoach('goforit', `${S.avatar.name}！歡迎來到紀律健身房！從今天起由我來盯你！`);
+      setTimeout(sceneMood, 3000);
     },
   };
   window.App = App;
 
   // ---------- boot ----------
   load();
+  $('gym-bg').innerHTML = gymBG();
   ['m-b', 'm-l', 'm-d', 'm-s', 'kcal', 'ex-type', 'ex-min', 'steps', 'weight', 'fat', 'waist'].forEach(id => $(id).addEventListener('input', updateHints));
   $('no-sugar').addEventListener('change', updateHints);
-  fillForm(); refreshStats(); renderPlayer();
+  place('player', pos.player); place('coach', pos.coach);
+  refreshStats(); renderPlayer(); fillForm();
 
-  const t = today();
-  if (C.patience < 30 && S.lastAttack !== t && (C.perDay[t] ? C.perDay[t].n : 0) < 3) {
-    $('bubble-text').textContent = '……';
-    setTimeout(runAttack, 500);
+  // tap to walk / tap coach to register
+  $('gym').addEventListener('click', e => {
+    if (busy) return;
+    if (e.target.closest('#coach')) { App.goRegister(); return; }
+    const r = $('gym').getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width * 100;
+    const y = (r.bottom - e.clientY) / r.height * 100;
+    if (y > 46) return; // wall
+    const dot = document.createElement('div'); dot.className = 'walk-dot';
+    const c = clampPos({ x, y }); dot.style.left = c.x + '%'; dot.style.bottom = c.y + '%';
+    $('gym').appendChild(dot); setTimeout(() => dot.remove(), 700);
+    walkPlayer({ x, y });
+  });
+
+  const t0 = today();
+  if (!S.onboarded) {
+    setCoach('standby');
+    App.obStart();
+  } else if (C.patience < 30 && S.lastAttack !== t0 && (C.perDay[t0] ? C.perDay[t0].n : 0) < 3) {
+    setCoach('angry', '……');
+    setTimeout(() => runAttack('耐心值見底了！給我過來！！'), 700);
   } else {
-    setCoach('sprint', pick(LINES.sprint));
-    setTimeout(() => { if (!busy) setCoach(moodState()); }, 1500);
+    setCoach('standby', pick(LINES.standby));
+    setTimeout(sceneMood, 1500);
   }
 
-  // re-evaluate when coming back to the app
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     if (curDate > today()) curDate = today();
     refreshStats(); renderPlayer();
-    if (!busy && document.getElementById('view-today').classList.contains('active')) setCoach(moodState());
+    if ($('view-today').classList.contains('active')) sceneMood();
   });
 })();
 </script>
