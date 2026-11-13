@@ -118,7 +118,30 @@
   @keyframes hop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10%); } }
   @media (prefers-reduced-motion: reduce) { .actor *, .actor { animation-duration: 0s !important; animation-iteration-count: 1 !important; } }
 
-  .gym-actions { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin: 10px 0 12px; }
+  .gym-actions { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 8px; margin: 10px 0 12px; }
+  .gym-actions .btn { font-size: .88rem; padding: 12px 6px; }
+  .btn.ai { background: #4a6fd6; color: #fff; }
+  #chat { position: fixed; inset: 0; z-index: 35; display: none; }
+  #chat.show { display: block; }
+  #chat .backdrop { position: absolute; inset: 0; background: rgba(40, 25, 15, .45); }
+  #chat .panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 82vh; display: flex; flex-direction: column; background: var(--bg); border-radius: 22px 22px 0 0; padding: 0 16px calc(14px + env(safe-area-inset-bottom)); animation: up .25s ease-out; }
+  #chat .panel-inner { max-width: 520px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .chat-log { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 120px; }
+  .msg { display: flex; gap: 8px; margin: 8px 0; align-items: flex-end; }
+  .msg .av { width: 40px; height: 40px; flex: none; display: flex; align-items: flex-end; justify-content: center; }
+  .msg .av img, .msg .av svg { max-width: 100%; max-height: 100%; }
+  .msg .txt { background: #fff; border: 2px solid var(--ink); border-radius: 14px 14px 14px 4px; padding: 8px 11px; font-size: .9rem; white-space: pre-wrap; max-width: 82%; }
+  .msg.me { justify-content: flex-end; }
+  .msg.me .txt { background: var(--primary-soft); border-color: var(--primary); border-radius: 14px 14px 4px 14px; }
+  .msg.wait .txt { color: var(--muted); }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button { flex: none; border: 1.5px solid var(--line); background: #fff; border-radius: 99px; padding: 6px 11px; font: inherit; font-size: .8rem; color: var(--ink); }
+  .chat-input { display: flex; gap: 8px; }
+  .chat-input textarea { min-height: 44px; height: 44px; flex: 1; }
+  .chat-input .btn { width: auto; padding: 0 16px; margin: 0; }
+  .sync-status { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+  .sync-status.ok { color: var(--ok); } .sync-status.err { color: var(--primary); }
 
   /* forms */
   label.f { display: block; font-size: .78rem; color: var(--muted); margin: 8px 0 3px; }
@@ -292,7 +315,8 @@
     </div>
 
     <div class="gym-actions">
-      <button class="btn" onclick="App.goRegister()">📋 走去找教練登記</button>
+      <button class="btn" onclick="App.goRegister()">📋 找教練登記</button>
+      <button class="btn ai" onclick="App.openChat()">💬 問教練</button>
       <button class="btn gold" onclick="App.pokeCoach()">💪 打氣</button>
     </div>
 
@@ -307,6 +331,10 @@
     <div class="card">
       <h2>📉 體重趨勢（近 30 天）</h2>
       <div class="chart" id="chart"></div>
+    </div>
+    <div class="card">
+      <h2>🏃 每週運動分鐘（近 8 週）</h2>
+      <div class="chart" id="chart-ex"></div>
     </div>
     <div class="card">
       <h2>📅 本週</h2>
@@ -372,6 +400,21 @@
         <li>重複建立 12:30、21:00 兩個時段</li>
       </ol>
       <div id="notify-lines"></div>
+    </div>
+
+    <div class="card">
+      <h2>☁️ 雲端存檔與 AI 教練</h2>
+      <p class="muted">連上你自己的 Google Apps Script 後端：紀錄會存進你的 Google 試算表，「💬 問教練」由 Gemini 回答。設定教學見 <a href="apps-script/README.md" target="_blank" rel="noopener">apps-script/README.md</a>。</p>
+      <label class="f">Apps Script 網頁應用程式網址（…/exec）</label>
+      <input type="text" id="cloud-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off">
+      <label class="f">暗號（APP_TOKEN，和指令碼屬性填的一樣）</label>
+      <input type="text" id="cloud-token" placeholder="例：yaha-2026" autocomplete="off" autocapitalize="off">
+      <button class="btn" onclick="App.cloudSaveSettings()">💾 儲存並測試連線</button>
+      <div class="sync-status" id="cloud-status"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn secondary" onclick="App.cloudPushAll()">⬆️ 上傳全部紀錄</button>
+        <button class="btn secondary" onclick="App.cloudPull(true)">⬇️ 從雲端下載</button>
+      </div>
     </div>
 
     <div class="card">
@@ -460,6 +503,30 @@
     </div>
 
     <button class="btn" onclick="App.saveDay()">📮 交給教練（儲存）</button>
+  </div></div>
+</div>
+
+<!-- ===== 問教練（Gemini） ===== -->
+<div id="chat">
+  <div class="backdrop" onclick="App.closeChat()"></div>
+  <div class="panel"><div class="panel-inner">
+    <div class="sheet-head">
+      <div class="mini" id="chat-coach"></div>
+      <div class="t"><span id="chat-title">問教練</span><small>教練會參考你近 7 天的紀錄回答（Gemini AI）</small></div>
+      <button onclick="App.closeChat()" aria-label="關閉">✕</button>
+    </div>
+    <div class="chat-log" id="chat-log"></div>
+    <div class="chips">
+      <button onclick="App.ask('幫我點評今天的紀錄')">點評今天</button>
+      <button onclick="App.ask('這週我做得怎麼樣？下週要調整什麼？')">本週檢討</button>
+      <button onclick="App.ask('今天晚餐吃什麼比較好？')">晚餐建議</button>
+      <button onclick="App.ask('幫我排一個 30 分鐘在家可以做的運動')">運動菜單</button>
+      <button onclick="App.ask('我好想吃宵夜，怎麼辦？')">嘴饞救命</button>
+    </div>
+    <div class="chat-input">
+      <textarea id="chat-input" placeholder="問教練任何減脂、飲食、運動問題…" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();App.ask()}"></textarea>
+      <button class="btn" onclick="App.ask()">送出</button>
+    </div>
   </div></div>
 </div>
 
@@ -1242,6 +1309,7 @@
       if (C.perDay[d]) wpts += C.perDay[d].pts;
       const w = num(r.weight); if (w !== null) weights.push(w);
     }
+    renderExChart(t);
     const g = S.settings.goals;
     const avgW = weights.length ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : '—';
     $('week-summary').innerHTML = `<div><span>有紀錄的天數</span><span>${logged} 天</span></div>
@@ -1401,12 +1469,105 @@
     $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
     $('g-startdate').value = S.settings.startDate;
     $('coach-name').value = S.settings.coachName;
+    $('cloud-url').value = S.settings.cloudUrl || '';
+    $('cloud-token').value = S.settings.cloudToken || '';
+    setCloudStatus(S.settings.lastSync ? '上次同步：' + new Date(S.settings.lastSync).toLocaleString() : '', '');
     renderSlots(); renderNotifyLines();
   }
 
   function sceneMood() {
     if (busy) return;
     setCoach(moodState());
+  }
+
+  // ---------- weekly exercise chart ----------
+  function renderExChart(t) {
+    const weeks = [];
+    const mon0 = mondayOf(t);
+    for (let k = 7; k >= 0; k--) {
+      const mon = addDays(mon0, -7 * k); let mins = 0;
+      for (let i = 0; i < 7; i++) { const r = rec(addDays(mon, i)); if (r.exType !== 'rest') mins += num(r.exMin) || 0; }
+      weeks.push([mon, mins]);
+    }
+    const goal = (S.settings.goals.exMin || 0) * (S.settings.goals.weeklyExDays || 0);
+    const W = 340, H = 160, pl = 30, pb = 22, pt = 12, bw = (W - pl - 8) / 8;
+    const max = Math.max(goal, ...weeks.map(w => w[1]), 60);
+    const y = v => pt + (1 - v / max) * (H - pt - pb);
+    const bars = weeks.map(([mon, m], i) => {
+      const x = pl + i * bw + 4, hh = H - pb - y(m), hit = goal && m >= goal;
+      return `<rect x="${x}" y="${y(m)}" width="${bw - 8}" height="${Math.max(0, hh)}" rx="4" fill="${hit ? '#3fa86b' : '#4a8fd6'}"><title>${nice(mon)} 起：${m} 分鐘</title></rect>
+        ${m ? `<text x="${x + (bw - 8) / 2}" y="${y(m) - 3}" text-anchor="middle" font-size="9" fill="#3b2f2a">${m}</text>` : ''}
+        <text x="${x + (bw - 8) / 2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#8a7a70">${parse(mon).getMonth() + 1}/${parse(mon).getDate()}</text>`;
+    }).join('');
+    const gl = goal ? `<line x1="${pl}" x2="${W - 4}" y1="${y(goal)}" y2="${y(goal)}" stroke="#3fa86b" stroke-dasharray="4 4"/><text x="${W - 4}" y="${y(goal) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">週目標 ${goal}</text>` : '';
+    $('chart-ex').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 8 週每週運動分鐘"><line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${bars}${gl}</svg>`;
+  }
+
+  // ---------- cloud (Google Apps Script) ----------
+  const cloudCfg = () => ({ url: (S.settings.cloudUrl || '').trim(), token: (S.settings.cloudToken || '').trim() });
+  const cloudOn = () => { const c = cloudCfg(); return /^https:\/\/script\.google(usercontent)?\.com\//.test(c.url) && !!c.token; };
+  async function cloudCall(action, payload = {}) {
+    const c = cloudCfg();
+    if (!cloudOn()) throw new Error('還沒設定雲端網址或暗號');
+    const res = await fetch(c.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action, token: c.token }, payload)) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '雲端回應錯誤');
+    return data;
+  }
+  function setCloudStatus(msg, cls) { const el = $('cloud-status'); if (el) { el.textContent = msg; el.className = 'sync-status ' + (cls || ''); } }
+  async function cloudPush(dates) {
+    if (!cloudOn()) return;
+    try {
+      C = compute();
+      const records = dates.filter(d => S.records[d]).map(d => ({ date: d, updatedAt: S.records[d].updatedAt || new Date().toISOString(), points: C.perDay[d] ? C.perDay[d].pts : '', record: S.records[d] }));
+      if (!records.length) return;
+      await cloudCall('save', { records });
+      S.settings.lastSync = new Date().toISOString(); persist();
+    } catch (e) { toast('☁️ 雲端存檔失敗：' + e.message); }
+  }
+  async function cloudPullMerge(manual) {
+    if (!cloudOn()) { if (manual) toast('請先設定雲端網址和暗號'); return; }
+    try {
+      const data = await cloudCall('list');
+      let n = 0;
+      (data.records || []).forEach(({ date, updatedAt, record }) => {
+        const local = S.records[date];
+        if (!record || (local && (local.updatedAt || '') >= (updatedAt || ''))) return;
+        S.records[date] = Object.assign({}, record, { updatedAt }); n++;
+      });
+      S.settings.lastSync = new Date().toISOString(); persist();
+      refreshStats(); renderPlayer();
+      if ($('view-history').classList.contains('active')) renderHistory();
+      if (manual) toast(n ? `從雲端更新了 ${n} 天的紀錄` : '雲端沒有更新的紀錄');
+    } catch (e) { if (manual) toast('☁️ 下載失敗：' + e.message); }
+  }
+
+  // ---------- ask coach (Gemini via Apps Script) ----------
+  let chatHistory = [];
+  let asking = false;
+  function coachContext() {
+    C = compute();
+    const g = S.settings.goals, t = today();
+    const lines = [
+      `學員：${S.avatar.name || '學員'}；目標：起始體重 ${g.startWeight || '未填'} kg → 目標體重 ${g.targetWeight || '未填'} kg；每日運動 ${g.exMin} 分鐘；每日喝水 ${g.water} 杯；每週運動 ${g.weeklyExDays} 天`,
+      `遊戲狀態：總分 ${C.score}，等級 Lv.${C.level}（${C.title}），連續紀錄 ${C.streak} 天，教練耐心值 ${C.patience}/100`,
+      '近 7 天紀錄：',
+    ];
+    for (let i = 6; i >= 0; i--) {
+      const d = addDays(t, -i), r = rec(d);
+      if (!loggedCount(r)) { lines.push(`- ${d}：沒有紀錄`); continue; }
+      const meals = ['b', 'l', 'd', 's'].map((k, j) => r.meals[k] ? ['早', '午', '晚', '點心'][j] + ':' + r.meals[k] : '').filter(Boolean).join('、');
+      lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${r.noSugar ? '，無含糖飲料' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.note ? '；心得：' + r.note : ''}`);
+    }
+    return lines.join('\n');
+  }
+  function chatMsg(role, text, cls = '') {
+    const el = document.createElement('div');
+    el.className = 'msg ' + (role === 'me' ? 'me' : '') + ' ' + cls;
+    el.innerHTML = role === 'me' ? `<div class="txt"></div>` : `<div class="av">${coachMarkup(cls === 'wait' ? 'inspect' : 'standby')}</div><div class="txt"></div>`;
+    el.querySelector('.txt').textContent = text;
+    $('chat-log').appendChild(el); $('chat-log').scrollTop = $('chat-log').scrollHeight;
+    return el;
   }
 
   // ---------- public API ----------
@@ -1451,7 +1612,9 @@
       const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       const prevBody = hasBody(rec(curDate));
       const r = readForm();
+      r.updatedAt = new Date().toISOString();
       if (loggedCount(r) === 0 && !r.note) delete S.records[curDate]; else S.records[curDate] = r;
+      const savedDate = curDate;
       if (!S.settings.goals.startWeight && num(r.weight) !== null) S.settings.goals.startWeight = r.weight;
       persist();
       refreshStats();
@@ -1460,6 +1623,7 @@
       App.closeSheet(true);
       renderPlayer();
       const n = loggedCount(r);
+      if (S.records[savedDate]) cloudPush([savedDate]);
       if (n === 0) { runAttack('什麼都沒填就交給我！？吃我一棒！'); return; }
       if (delta) fxAt('pts-pop', (delta > 0 ? '+' : '') + delta, pos.player);
       const pl = $('player'); pl.classList.remove('idle'); pl.classList.add('happy');
@@ -1509,6 +1673,61 @@
       g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('g-week').value, 10) || 0));
       const sd = $('g-startdate').value; if (sd) S.settings.startDate = sd > today() ? today() : sd;
       persist(); toast('目標已儲存！');
+    },
+    // ---- cloud ----
+    async cloudSaveSettings() {
+      S.settings.cloudUrl = $('cloud-url').value.trim();
+      S.settings.cloudToken = $('cloud-token').value.trim();
+      persist();
+      if (!cloudOn()) { setCloudStatus('網址要是 https://script.google.com/macros/s/…/exec，暗號不能空白', 'err'); return; }
+      setCloudStatus('連線中…');
+      try {
+        const d = await cloudCall('ping');
+        setCloudStatus(d.hasGemini ? '✅ 連線成功，Gemini 已設定' : '✅ 連線成功（但還沒設定 GEMINI_API_KEY，問教練功能無法使用）', 'ok');
+        cloudPullMerge(false);
+      } catch (e) { setCloudStatus('❌ ' + e.message, 'err'); }
+    },
+    async cloudPushAll() {
+      if (!cloudOn()) { toast('請先設定雲端網址和暗號'); return; }
+      const dates = Object.keys(S.records);
+      setCloudStatus(`上傳 ${dates.length} 天的紀錄中…`);
+      await cloudPush(dates);
+      setCloudStatus(`✅ 已上傳 ${dates.length} 天的紀錄`, 'ok');
+    },
+    cloudPull(manual) { return cloudPullMerge(manual); },
+    // ---- chat ----
+    openChat() {
+      $('chat-coach').innerHTML = coachMarkup('goforit');
+      $('chat-title').textContent = `問${S.settings.coachName || '教練'}`;
+      if (!$('chat-log').children.length) chatMsg('coach', cloudOn() ? `${S.avatar.name || '你'}！有什麼想問的？飲食、運動、減脂都可以問我！` : '要先到「設定 → 雲端存檔與 AI 教練」連上你的 Google Apps Script，我才能回答喔！');
+      $('chat').classList.add('show'); document.body.style.overflow = 'hidden';
+    },
+    closeChat() { $('chat').classList.remove('show'); document.body.style.overflow = ''; },
+    async ask(q) {
+      if (asking) return;
+      const input = $('chat-input');
+      const question = (q || input.value).trim();
+      if (!question) return;
+      if (!$('chat').classList.contains('show')) App.openChat();
+      input.value = '';
+      chatMsg('me', question);
+      if (!cloudOn()) { chatMsg('coach', '還沒連上雲端後端！到「設定 → 雲端存檔與 AI 教練」填好網址和暗號再來問我。'); return; }
+      asking = true;
+      const wait = chatMsg('coach', '嗯……讓我看看你的紀錄……', 'wait');
+      if (!busy) setCoach('inspect', '嗯……讓我想想……');
+      try {
+        const d = await cloudCall('ask', { question, context: coachContext(), history: chatHistory, coachName: S.settings.coachName || '教練' });
+        wait.remove();
+        chatMsg('coach', d.answer);
+        chatHistory.push({ role: 'user', text: question }, { role: 'coach', text: d.answer });
+        chatHistory = chatHistory.slice(-8);
+        if (!busy) setCoach('goforit', d.answer.length > 80 ? d.answer.slice(0, 78) + '…' : d.answer);
+        clearTimeout(App._p); App._p = setTimeout(sceneMood, 6000);
+      } catch (e) {
+        wait.remove();
+        chatMsg('coach', '嗚……連不上 AI：' + e.message);
+        if (!busy) setCoach('cry', '連不上 AI……');
+      } finally { asking = false; }
     },
     saveCoachName() {
       S.settings.coachName = $('coach-name').value.trim() || '教練';
@@ -1668,8 +1887,10 @@
     setTimeout(sceneMood, 1500);
   }
 
+  setTimeout(() => cloudPullMerge(false), 1200);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
+    cloudPullMerge(false);
     if (curDate > today()) curDate = today();
     refreshStats(); renderPlayer();
     if ($('view-today').classList.contains('active')) sceneMood();
