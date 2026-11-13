@@ -178,6 +178,22 @@
   .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .date-nav button { border: none; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; padding: 7px 12px; font: inherit; font-size: .85rem; color: var(--ink); }
   .date-nav b { font-size: .95rem; }
+
+  /* onboarding */
+  #onboard { position: fixed; inset: 0; background: var(--bg); z-index: 40; overflow-y: auto; display: none; }
+  #onboard.show { display: block; }
+  .ob-inner { max-width: 520px; margin: 0 auto; padding: 20px 16px calc(30px + env(safe-area-inset-bottom)); }
+  .ob-steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 14px; }
+  .ob-steps i { width: 28px; height: 6px; border-radius: 99px; background: var(--line); }
+  .ob-steps i.on { background: var(--primary); }
+  .ob-inner h2 { text-align: center; margin: 4px 0 4px; font-size: 1.25rem; }
+  .ob-inner p.sub { text-align: center; color: var(--muted); margin: 0 0 14px; font-size: .88rem; }
+  .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset { background: var(--card); border: 3px solid transparent; border-radius: 16px; padding: 6px 4px 8px; text-align: center; box-shadow: var(--shadow); font: inherit; font-size: .8rem; color: var(--ink); }
+  .preset svg { width: 100%; height: 110px; }
+  .preset.sel { border-color: var(--primary); background: var(--primary-soft); font-weight: 700; }
+  .ob-coach { background: var(--stage); border: 2px solid var(--line); border-radius: 18px; height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .ob-coach img, .ob-coach svg { max-height: 180px; max-width: 70%; mix-blend-mode: multiply; }
 </style>
 </head>
 <body>
@@ -361,6 +377,7 @@
       <input type="file" accept="application/json,.json" id="import-file" style="display:none" onchange="App.importData(this)">
       <button class="btn secondary" onclick="document.getElementById('import-file').click()">⬆️ 匯入備份檔</button>
       <button class="btn secondary" onclick="App.importCompass()">🧭 從「心智羅盤」匯入體重</button>
+      <button class="btn ghost" onclick="App.obStart()">🔄 重新選擇主角與教練</button>
       <button class="btn ghost" onclick="App.resetAll()">🗑️ 清除全部資料</button>
     </div>
   </section>
@@ -373,6 +390,55 @@
   <button data-tab="settings" onclick="App.switchTab('settings')"><span class="ic">⚙️</span>設定</button>
 </nav>
 <div class="toast" id="toast"></div>
+
+<div id="onboard">
+  <div class="ob-inner">
+    <div class="ob-steps"><i data-s="1"></i><i data-s="2"></i><i data-s="3"></i></div>
+
+    <div class="ob-step" data-step="1">
+      <h2>選擇你的主角</h2>
+      <p class="sub">先挑一個角色代表你，之後在「主角」頁可以再細捏</p>
+      <div class="preset-grid" id="preset-grid"></div>
+      <label class="f">主角名字</label>
+      <input type="text" id="ob-name" placeholder="例：自律的我">
+      <button class="btn" style="margin-top:12px" onclick="App.obNext(2)">下一步 ▶</button>
+    </div>
+
+    <div class="ob-step" data-step="2">
+      <h2>設定你的教練</h2>
+      <p class="sub">上傳你自己的教練動作表（5 欄 × 2 列，順序：待機、歡呼、跳舞、衝刺、生氣／暴打、哭哭、睡覺、檢查、加油）。圖片只存在這支手機裡。</p>
+      <div class="ob-coach" id="ob-coach"></div>
+      <label class="f">教練名字</label>
+      <input type="text" id="ob-coach-name" placeholder="例：呀哈教練">
+      <input type="file" accept="image/*" id="ob-sheet" style="display:none" onchange="App.obSheet(this)">
+      <button class="btn secondary" style="margin-top:12px" onclick="document.getElementById('ob-sheet').click()">🖼️ 上傳動作表</button>
+      <div class="slots" id="ob-slots" style="margin-top:10px"></div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn ghost" onclick="App.obNext(1)">◀ 上一步</button>
+        <button class="btn" onclick="App.obNext(3)">下一步 ▶</button>
+      </div>
+    </div>
+
+    <div class="ob-step" data-step="3">
+      <h2>設定目標</h2>
+      <p class="sub">之後在「設定」頁都可以改</p>
+      <div class="row">
+        <div><label class="f">目前體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="ob-start"></div>
+        <div><label class="f">目標體重 kg</label><input type="number" inputmode="decimal" step="0.1" id="ob-target"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每日運動（分鐘）</label><input type="number" inputmode="numeric" id="ob-ex" value="30"></div>
+        <div><label class="f">每日喝水（杯）</label><input type="number" inputmode="numeric" id="ob-water" value="8"></div>
+      </div>
+      <label class="f">每週運動天數</label>
+      <input type="number" inputmode="numeric" id="ob-week" value="4">
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn ghost" onclick="App.obNext(2)">◀ 上一步</button>
+        <button class="btn" onclick="App.obFinish()">🔥 開始！</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -881,9 +947,18 @@
   function toDataURL(src, sx, sy, sw, sh, max = 360) {
     const sc = Math.min(1, max / Math.max(sw, sh));
     const c = document.createElement('canvas'); c.width = Math.round(sw * sc); c.height = Math.round(sh * sc);
-    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    const ctx = c.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(src, sx, sy, sw, sh, 0, 0, c.width, c.height);
-    return c.toDataURL('image/jpeg', 0.86);
+    // make the paper-white background transparent (soft edge)
+    try {
+      const id = ctx.getImageData(0, 0, c.width, c.height), d = id.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const m = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (m >= 238) d[i + 3] = 0; else if (m >= 222) d[i + 3] = Math.round(255 * (238 - m) / 16);
+      }
+      ctx.putImageData(id, 0, 0);
+    } catch (e) {}
+    return c.toDataURL('image/png');
   }
   // find the main picture inside a grid cell (skip label text separated by whitespace)
   function findContent(ctx, x0, y0, w, h) {
@@ -905,6 +980,29 @@
     const p = 8;
     const nx = Math.max(0, minX - p), ny = Math.max(0, best[0] - p);
     return [x0 + nx, y0 + ny, Math.min(w - nx, maxX - minX + 2 * p), Math.min(h - ny, best[1] - best[0] + 2 * p)];
+  }
+
+  // ---------- onboarding presets ----------
+  const PRESETS = [
+    ['運動少年', { face: 'round', skin: 1, hair: 'spiky', hairColor: 0, eyes: 'sharp', mouth: 'open', blush: false, outfit: 'jersey', outfitColor: 3, acc: 'band' }],
+    ['元氣少女', { face: 'round', skin: 0, hair: 'pony', hairColor: 2, eyes: 'big', mouth: 'open', blush: true, outfit: 'tee', outfitColor: 0, acc: 'none' }],
+    ['上班族', { face: 'square', skin: 2, hair: 'short', hairColor: 1, eyes: 'dot', mouth: 'flat', blush: false, outfit: 'tee', outfitColor: 5, acc: 'glasses' }],
+    ['瑜伽系', { face: 'oval', skin: 1, hair: 'bun', hairColor: 0, eyes: 'happy', mouth: 'smile', blush: true, outfit: 'tank', outfitColor: 4, acc: 'none' }],
+    ['慢跑大叔', { face: 'round', skin: 3, hair: 'bald', hairColor: 4, eyes: 'dot', mouth: 'cat', blush: true, outfit: 'hoodie', outfitColor: 2, acc: 'towel' }],
+    ['棒球迷', { face: 'oval', skin: 4, hair: 'bob', hairColor: 3, eyes: 'big', mouth: 'smile', blush: true, outfit: 'jersey', outfitColor: 1, acc: 'cap' }],
+  ];
+  let obPreset = -1;
+  function renderPresets() {
+    $('preset-grid').innerHTML = PRESETS.map(([name, a], i) =>
+      `<button class="preset ${obPreset === i ? 'sel' : ''}" onclick="App.obPick(${i})">${avatarSVG(Object.assign({}, S.avatar, a))}<div>${name}</div></button>`).join('');
+  }
+  function renderObCoach() {
+    const img = coachImg('standby');
+    $('ob-coach').innerHTML = img ? `<img src="${img}" alt="教練">` : coachSVG('standby');
+    $('ob-slots').innerHTML = STATES.map(([k, label]) => {
+      const im = coachImg(k);
+      return `<div class="slot ${im ? 'has' : ''}"><div class="thumb">${im ? `<img src="${im}" alt="">` : coachSVG(k)}</div><div>${label}</div></div>`;
+    }).join('');
   }
 
   // ---------- notification lines ----------
@@ -1012,9 +1110,10 @@
       } catch (e) { toast('圖片讀取失敗'); }
       input.value = '';
     },
-    async uploadSheet(input) {
+    async uploadSheet(input, cols, rows) {
       const f = input.files && input.files[0]; if (!f) return;
-      const cols = Math.max(1, parseInt($('sheet-cols').value, 10) || 5), rows = Math.max(1, parseInt($('sheet-rows').value, 10) || 2);
+      cols = cols || Math.max(1, parseInt($('sheet-cols').value, 10) || 5);
+      rows = rows || Math.max(1, parseInt($('sheet-rows').value, 10) || 2);
       try {
         const im = await loadImage(f);
         const W = im.naturalWidth, H = im.naturalHeight;
@@ -1031,6 +1130,46 @@
         renderSlots(); toast(`已切出 ${saved} 個動作！不對的格子可以點它重新上傳`);
       } catch (e) { toast('動作表處理失敗'); }
       input.value = '';
+    },
+    // ---- onboarding ----
+    obStart() {
+      obPreset = -1;
+      $('ob-name').value = S.avatar.name || '';
+      $('ob-coach-name').value = S.settings.coachName || '';
+      const g = S.settings.goals;
+      $('ob-start').value = g.startWeight; $('ob-target').value = g.targetWeight;
+      $('ob-ex').value = g.exMin; $('ob-water').value = g.water; $('ob-week').value = g.weeklyExDays;
+      renderPresets(); renderObCoach();
+      $('onboard').classList.add('show');
+      App.obNext(1);
+    },
+    obPick(i) {
+      obPreset = i;
+      Object.assign(S.avatar, PRESETS[i][1]);
+      persist(); renderPresets();
+    },
+    obNext(step) {
+      if (step === 2) { S.avatar.name = $('ob-name').value.trim() || S.avatar.name || '我'; persist(); renderObCoach(); }
+      document.querySelectorAll('.ob-step').forEach(el => el.style.display = el.dataset.step == step ? 'block' : 'none');
+      document.querySelectorAll('.ob-steps i').forEach(el => el.classList.toggle('on', +el.dataset.s <= step));
+      $('onboard').scrollTop = 0;
+    },
+    async obSheet(input) {
+      await App.uploadSheet(input, 5, 2);
+      renderObCoach();
+    },
+    obFinish() {
+      S.settings.coachName = $('ob-coach-name').value.trim() || S.settings.coachName || '教練';
+      const g = S.settings.goals;
+      g.startWeight = $('ob-start').value; g.targetWeight = $('ob-target').value;
+      g.exMin = Math.max(0, parseInt($('ob-ex').value, 10) || 0);
+      g.water = Math.max(0, parseInt($('ob-water').value, 10) || 0);
+      g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('ob-week').value, 10) || 0));
+      S.onboarded = true; persist();
+      $('onboard').classList.remove('show');
+      App.switchTab('today'); fillForm(); refreshStats(); renderPlayer();
+      setCoach('sprint', `${S.avatar.name || '你'}！從今天開始由我來盯你！`);
+      setTimeout(() => { if (!busy) setCoach('goforit'); }, 1600);
     },
     clearSlot(k) { safeDel(IMG_KEY + k); renderSlots(); },
     clearSlots() { if (!confirm('清除所有教練圖片？')) return; STATES.forEach(([k]) => safeDel(IMG_KEY + k)); renderSlots(); toast('已清除'); },
@@ -1088,7 +1227,10 @@
   fillForm(); refreshStats(); renderPlayer();
 
   const t = today();
-  if (C.patience < 30 && S.lastAttack !== t && (C.perDay[t] ? C.perDay[t].n : 0) < 3) {
+  if (!S.onboarded) {
+    setCoach('standby');
+    App.obStart();
+  } else if (C.patience < 30 && S.lastAttack !== t && (C.perDay[t] ? C.perDay[t].n : 0) < 3) {
     $('bubble-text').textContent = '……';
     setTimeout(runAttack, 500);
   } else {
