@@ -186,6 +186,14 @@
   .switch span::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
   .switch input:checked + span { background: var(--ok); }
   .switch input:checked + span::before { transform: translateX(20px); }
+  #exp-gain { position: fixed; left: 50%; top: 34%; transform: translate(-50%, -50%); z-index: 55; pointer-events: none; text-align: center; display: none; }
+  #exp-gain.show { display: block; animation: expIn 2.6s ease-out forwards; }
+  #exp-gain .big { font-size: 3rem; font-weight: 900; color: #fff; background: linear-gradient(135deg, #8b5bd6, #f2b134); padding: 6px 22px; border-radius: 99px; box-shadow: 0 6px 24px rgba(139, 91, 214, .45); white-space: nowrap; }
+  #exp-gain .why { margin-top: 8px; font-size: .9rem; font-weight: 700; color: var(--ink); background: rgba(255, 255, 255, .95); border-radius: 12px; padding: 6px 12px; box-shadow: var(--shadow); }
+  #exp-gain .stars { font-size: 1.6rem; }
+  @keyframes expIn { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.5); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } 22% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1); } }
+  .exp-pulse { animation: expPulse .9s ease-out 2; }
+  @keyframes expPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242, 177, 52, 0); } 40% { box-shadow: 0 0 0 6px rgba(242, 177, 52, .55); } }
   #levelup { position: fixed; inset: 0; z-index: 45; display: none; align-items: center; justify-content: center; background: rgba(30, 20, 60, .6); padding: 16px; }
   #levelup.show { display: flex; }
   #levelup .box { background: radial-gradient(ellipse at 50% 0%, #4b5a8a, #2b2f4a 70%); color: #fff; border-radius: 22px; padding: 18px; max-width: 360px; width: 100%; text-align: center; border: 3px solid var(--gold); animation: pop .4s ease-out; }
@@ -759,6 +767,7 @@
   <button data-tab="settings" onclick="App.switchTab('settings')"><span class="ic">⚙️</span>設定</button>
 </nav>
 <div class="toast" id="toast"></div>
+<div id="exp-gain"><div class="stars">✨⭐✨</div><div class="big" id="eg-big">+0 EXP</div><div class="why" id="eg-why"></div></div>
 <div id="levelup" onclick="App.closeLevelUp()"><div class="box" onclick="event.stopPropagation()">
   <div style="font-size:2.4rem">🎉</div>
   <h2 id="lu-title">升級！</h2>
@@ -1448,6 +1457,7 @@
     $('exp-text').textContent = `${into} / ${LEVEL_PTS} EXP`;
     $('exp-bar').style.width = Math.min(100, into / LEVEL_PTS * 100) + '%';
     renderFood();
+    trackExpGain();
     checkLevelUp();
     $('coach-name-tag').textContent = S.settings.coachName || '教練';
     const n = td ? td.n : 0;
@@ -2145,6 +2155,29 @@
     const CAT = { top: '上衣', legs: '下身', feet: '鞋子', acc: '眼鏡', hat: '帽子', hair: '髮型' };
     $('rw-clothes').innerHTML = rows.sort((a, b) => a[0] - b[0]).map(([l, slot, label]) =>
       `<div class="unlock-row ${lv >= l ? '' : 'locked'}"><div class="ic">${{ top: '👕', legs: '👖', feet: '👟', acc: '👓', hat: '🎩', hair: '💇' }[slot]}</div><div class="nm">${CAT[slot]}：${label}<small>${lv >= l ? '已解鎖，可到「角色」頁換裝' : '🔒 Lv.' + l + ' 解鎖'}</small></div></div>`).join('');
+  }
+  function trackExpGain() {
+    if (!C || !S.onboarded) return;
+    const t = today();
+    const labels = (C.perDay[t] ? C.perDay[t].items : []).filter(([, p]) => p > 0).map(([l]) => l);
+    const prev = typeof S.lastScore === 'number' ? S.lastScore : null;
+    const prevLabels = S.lastItemsDate === t ? (S.lastItems || []) : [];
+    if (prev !== null && C.score > prev) {
+      const fresh = labels.filter(l => !prevLabels.includes(l));
+      showExpGain(C.score - prev, fresh);
+    }
+    if (prev !== C.score || S.lastItemsDate !== t || (S.lastItems || []).join() !== labels.join()) {
+      S.lastScore = C.score; S.lastItems = labels; S.lastItemsDate = t; persist();
+    }
+  }
+  function showExpGain(n, why) {
+    const el = $('exp-gain');
+    $('eg-big').textContent = `+${n} EXP`;
+    $('eg-why').textContent = why.length ? why.slice(0, 3).join('、') + (why.length > 3 ? '…' : '') : '經驗值提升！';
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    const bar = $('exp-bar').parentElement; bar.classList.remove('exp-pulse'); void bar.offsetWidth; bar.classList.add('exp-pulse');
+    try { navigator.vibrate && navigator.vibrate(60); } catch (e) {}
+    clearTimeout(showExpGain._t); showExpGain._t = setTimeout(() => el.classList.remove('show'), 2700);
   }
   function checkLevelUp() {
     if (!C || !S.onboarded) return;
