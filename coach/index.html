@@ -348,8 +348,9 @@
       </div>
       <div class="macro-grid" id="macro-grid"></div>
     </div>
-    <div class="card">
-      <h2>🍱 記錄飲食</h2>
+    <div id="food-home"></div>
+    <div class="card" id="food-card">
+      <h2>🍱 記錄飲食 <span class="done-chip" id="chip-diet">未記錄</span></h2>
       <input type="file" accept="image/*" capture="environment" id="food-cam" style="display:none" onchange="App.foodPick(this)">
       <input type="file" accept="image/*" multiple id="food-album" style="display:none" onchange="App.foodPick(this)">
       <div class="food-actions">
@@ -645,6 +646,8 @@
       <button onclick="App.shiftDay(1)" id="next-day-btn">後一天 ▶</button>
     </div>
 
+    <div id="sheet-food-slot"></div>
+
     <div class="card">
       <h2>⌚ 匯入 iPhone 健康／Garmin</h2>
       <div class="btn-row">
@@ -658,9 +661,7 @@
     </div>
 
     <div class="card">
-      <h2>🍱 飲食紀錄 <span class="done-chip" id="chip-diet">未記錄</span></h2>
-      <div class="breakdown" id="sheet-food-sum"></div>
-      <button type="button" class="btn secondary" style="margin-top:8px" onclick="App.closeSheet(); App.switchTab('food')">🍱 到飲食頁拍照記錄</button>
+      <h2>💧 喝水與簡易紀錄</h2>
       <details class="simple"><summary>✏️ 簡易文字紀錄（不用 AI）</summary>
       <div class="meal-grid">
         <div><label class="f">早餐</label><input type="text" id="m-b" placeholder="例：蛋餅＋無糖豆漿"></div>
@@ -1548,6 +1549,7 @@
   }
 
   function openSheet() {
+    $('sheet-food-slot').appendChild($('food-card'));
     curDate = today(); fillForm();
     $('sheet-coach').innerHTML = coachMarkup('inspect');
     const n = C.perDay[today()] ? C.perDay[today()].n : 0;
@@ -2378,6 +2380,7 @@
       openSheet();
     },
     closeSheet(silent) {
+      $('food-home').after($('food-card'));
       if (!$('sheet').classList.contains('show')) return;
       $('sheet').classList.remove('show');
       document.body.style.overflow = '';
