@@ -118,7 +118,68 @@
   @keyframes hop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10%); } }
   @media (prefers-reduced-motion: reduce) { .actor *, .actor { animation-duration: 0s !important; animation-iteration-count: 1 !important; } }
 
-  .gym-actions { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin: 10px 0 12px; }
+  .gym-actions { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 8px; margin: 10px 0 12px; }
+  .gym-actions .btn { font-size: .88rem; padding: 12px 6px; }
+  .btn.ai { background: #4a6fd6; color: #fff; }
+  #chat { position: fixed; inset: 0; z-index: 35; display: none; }
+  #chat.show { display: block; }
+  #chat .backdrop { position: absolute; inset: 0; background: rgba(40, 25, 15, .45); }
+  #chat .panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 82vh; display: flex; flex-direction: column; background: var(--bg); border-radius: 22px 22px 0 0; padding: 0 16px calc(14px + env(safe-area-inset-bottom)); animation: up .25s ease-out; }
+  #chat .panel-inner { max-width: 520px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .chat-log { flex: 1; overflow-y: auto; padding: 4px 0 8px; min-height: 120px; }
+  .msg { display: flex; gap: 8px; margin: 8px 0; align-items: flex-end; }
+  .msg .av { width: 40px; height: 40px; flex: none; display: flex; align-items: flex-end; justify-content: center; }
+  .msg .av img, .msg .av svg { max-width: 100%; max-height: 100%; }
+  .msg .txt { background: #fff; border: 2px solid var(--ink); border-radius: 14px 14px 14px 4px; padding: 8px 11px; font-size: .9rem; white-space: pre-wrap; max-width: 82%; }
+  .msg.me { justify-content: flex-end; }
+  .msg.me .txt { background: var(--primary-soft); border-color: var(--primary); border-radius: 14px 14px 4px 14px; }
+  .msg.wait .txt { color: var(--muted); }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button { flex: none; border: 1.5px solid var(--line); background: #fff; border-radius: 99px; padding: 6px 11px; font: inherit; font-size: .8rem; color: var(--ink); }
+  .chat-input { display: flex; gap: 8px; }
+  .chat-input textarea { min-height: 44px; height: 44px; flex: 1; }
+  .chat-input .btn { width: auto; padding: 0 16px; margin: 0; }
+  .food-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .food-actions .btn { margin: 0; font-size: .92rem; }
+  .food-text { display: flex; gap: 8px; margin-top: 8px; }
+  .food-text .btn { width: auto; margin: 0; padding: 0 12px; font-size: .85rem; white-space: nowrap; }
+  #food-draft { margin-top: 10px; background: #fffaf0; border: 2px solid var(--gold); border-radius: 14px; padding: 10px; display: none; }
+  #food-draft.show { display: block; }
+  .thumbs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 6px; }
+  .thumbs img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; flex: none; }
+  .food-status { font-size: .82rem; color: var(--warn); font-weight: 700; margin: 4px 0; }
+  .food-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: .86rem; }
+  .food-item .nm { flex: 1; min-width: 0; }
+  .food-item .nm small { display: block; color: var(--muted); font-size: .72rem; }
+  .food-item .kc { text-align: right; white-space: nowrap; font-weight: 700; }
+  .food-item .kc small { display: block; color: var(--muted); font-weight: 400; font-size: .72rem; }
+  .food-item button { border: none; background: none; color: var(--primary); font-size: 1rem; padding: 4px; }
+  .food-total { display: flex; justify-content: space-between; font-weight: 700; font-size: .88rem; padding-top: 6px; }
+  .snack-tag { color: #8b5bd6; }
+  details.simple { margin-top: 10px; }
+  details.simple summary { font-size: .82rem; color: var(--muted); cursor: pointer; }
+  .cc-opt.locked { opacity: .45; position: relative; }
+  .cc-opt.locked::after { content: attr(data-lock); position: absolute; top: 4px; right: 4px; font-size: .62rem; background: rgba(0,0,0,.7); color: var(--gold); padding: 1px 5px; border-radius: 6px; }
+  .unlock-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--line); }
+  .unlock-row .ic { width: 38px; height: 38px; border-radius: 10px; background: var(--stage); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex: none; }
+  .unlock-row .nm { flex: 1; font-size: .88rem; }
+  .unlock-row .nm small { display: block; color: var(--muted); font-size: .72rem; }
+  .unlock-row.locked { opacity: .5; }
+  .switch { position: relative; width: 46px; height: 26px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span { position: absolute; inset: 0; background: var(--line); border-radius: 99px; transition: .2s; }
+  .switch span::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  .switch input:checked + span { background: var(--ok); }
+  .switch input:checked + span::before { transform: translateX(20px); }
+  #levelup { position: fixed; inset: 0; z-index: 45; display: none; align-items: center; justify-content: center; background: rgba(30, 20, 60, .6); padding: 16px; }
+  #levelup.show { display: flex; }
+  #levelup .box { background: radial-gradient(ellipse at 50% 0%, #4b5a8a, #2b2f4a 70%); color: #fff; border-radius: 22px; padding: 18px; max-width: 360px; width: 100%; text-align: center; border: 3px solid var(--gold); animation: pop .4s ease-out; }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  #levelup h2 { color: var(--gold); margin: 0 0 4px; font-size: 1.5rem; }
+  #levelup ul { text-align: left; padding-left: 20px; margin: 10px 0; font-size: .9rem; }
+  .sync-status { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+  .sync-status.ok { color: var(--ok); } .sync-status.err { color: var(--primary); }
 
   /* forms */
   label.f { display: block; font-size: .78rem; color: var(--muted); margin: 8px 0 3px; }
@@ -266,9 +327,17 @@
   <!-- ===== 健身房 ===== -->
   <section class="view active" id="view-today">
     <div class="stats">
-      <div class="stat"><b id="st-score">0</b><span>總分</span></div>
+      <div class="stat"><b id="st-score">0</b><span>經驗值 EXP</span></div>
       <div class="stat"><b id="st-today">0</b><span>今日得分</span></div>
       <div class="stat"><b id="st-streak">0</b><span>連續天數 🔥</span></div>
+    </div>
+    <div class="patience">
+      <div class="patience-label"><span id="exp-label">Lv.1 → Lv.2</span><span id="exp-text">0 / 300 EXP</span></div>
+      <div class="bar"><i id="exp-bar" style="background:linear-gradient(90deg,#8b5bd6,#f2b134)"></i></div>
+    </div>
+    <div class="patience" id="food-hud">
+      <div class="patience-label"><span>🍱 今日熱量 <b id="food-kcal">0</b> / <span id="food-kmax">2100</span> kcal</span><span>💪 蛋白質 <b id="food-pro">0</b> / <span id="food-pgoal">90</span> g</span></div>
+      <div class="bar"><i id="food-bar"></i></div>
     </div>
     <div class="patience">
       <div class="patience-label"><span>教練耐心值</span><span id="pat-text">80 / 100</span></div>
@@ -292,7 +361,8 @@
     </div>
 
     <div class="gym-actions">
-      <button class="btn" onclick="App.goRegister()">📋 走去找教練登記</button>
+      <button class="btn" onclick="App.goRegister()">📋 找教練登記</button>
+      <button class="btn ai" onclick="App.openChat()">💬 問教練</button>
       <button class="btn gold" onclick="App.pokeCoach()">💪 打氣</button>
     </div>
 
@@ -307,6 +377,14 @@
     <div class="card">
       <h2>📉 體重趨勢（近 30 天）</h2>
       <div class="chart" id="chart"></div>
+    </div>
+    <div class="card">
+      <h2>🏃 每週運動分鐘（近 8 週）</h2>
+      <div class="chart" id="chart-ex"></div>
+    </div>
+    <div class="card" id="kcal-card">
+      <h2>🍱 每日熱量與蛋白質（近 14 天）</h2>
+      <div class="chart" id="chart-kcal"></div>
     </div>
     <div class="card">
       <h2>📅 本週</h2>
@@ -324,6 +402,22 @@
   </section>
 
   <!-- ===== 設定 ===== -->
+  <section class="view" id="view-rewards">
+    <div class="card">
+      <h2>🏆 等級與經驗值</h2>
+      <div id="rw-level"></div>
+      <p class="muted">每天回報教練就能獲得經驗值（EXP），每 300 EXP 升一級。升級會解鎖健身房裝飾和角色服裝。</p>
+    </div>
+    <div class="card">
+      <h2>🏋️ 健身房裝飾</h2>
+      <div id="rw-decor"></div>
+    </div>
+    <div class="card">
+      <h2>👕 服裝解鎖</h2>
+      <div id="rw-clothes"></div>
+    </div>
+  </section>
+
   <section class="view" id="view-settings">
     <div class="card">
       <h2>🎯 目標設定</h2>
@@ -337,6 +431,11 @@
       </div>
       <div class="row">
         <div><label class="f">每週運動天數目標</label><input type="number" inputmode="numeric" id="g-week"></div>
+        <div><label class="f">每日熱量下限（kcal）</label><input type="number" inputmode="numeric" id="g-kmin"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每日熱量上限（kcal）</label><input type="number" inputmode="numeric" id="g-kmax"></div>
+        <div><label class="f">每日蛋白質目標（g）</label><input type="number" inputmode="numeric" id="g-pro"></div>
         <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
       </div>
       <p class="muted">開始日期之後，整天沒有任何紀錄會扣 30 分。</p>
@@ -375,6 +474,30 @@
     </div>
 
     <div class="card">
+      <h2>🤖 Gemini AI 設定</h2>
+      <p class="muted">拍照辨識熱量、AI 查詢食物、問教練，都由 Gemini 回答。到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 免費申請 API key，貼在這裡。key 只存在這支手機裡，不會上傳到 GitHub。<b>請不要把 key 貼給任何人。</b></p>
+      <label class="f">Gemini API Key</label>
+      <input type="password" id="gm-key" placeholder="貼上你的 API key" autocomplete="off" autocapitalize="off">
+      <button class="btn" onclick="App.saveGeminiKey()">💾 儲存並測試</button>
+      <div class="sync-status" id="gm-status"></div>
+    </div>
+
+    <div class="card">
+      <h2>☁️ 雲端存檔（選用）</h2>
+      <p class="muted">連上你自己的 Google Apps Script 後端：紀錄會存進你的 Google 試算表，「💬 問教練」由 Gemini 回答。設定教學見 <a href="apps-script/README.md" target="_blank" rel="noopener">apps-script/README.md</a>。</p>
+      <label class="f">Apps Script 網頁應用程式網址（…/exec）</label>
+      <input type="text" id="cloud-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off">
+      <label class="f">暗號（APP_TOKEN，和指令碼屬性填的一樣）</label>
+      <input type="text" id="cloud-token" placeholder="例：yaha-2026" autocomplete="off" autocapitalize="off">
+      <button class="btn" onclick="App.cloudSaveSettings()">💾 儲存並測試連線</button>
+      <div class="sync-status" id="cloud-status"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn secondary" onclick="App.cloudPushAll()">⬆️ 上傳全部紀錄</button>
+        <button class="btn secondary" onclick="App.cloudPull(true)">⬇️ 從雲端下載</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>🎨 素材授權</h2>
       <p class="muted">角色紙娃娃零件來自開源的 <a href="https://github.com/liberatedpixelcup/Universal-LPC-Spritesheet-Character-Generator" target="_blank" rel="noopener">Liberated Pixel Cup (LPC) 角色產生器</a>（CC-BY-SA 3.0 / OGA-BY 3.0 / GPL 3.0），作者：<span id="lpc-authors"></span>。完整清單：<a href="lpc/CREDITS.md" target="_blank" rel="noopener">CREDITS.md</a>。健身房背景與預設教練為本遊戲原創。</p>
     </div>
@@ -409,12 +532,54 @@
 
     <div class="card">
       <h2>🍱 飲食紀錄 <span class="done-chip" id="chip-diet">未記錄</span></h2>
+      <input type="file" accept="image/*" capture="environment" id="food-cam" style="display:none" onchange="App.foodPick(this)">
+      <input type="file" accept="image/*" multiple id="food-album" style="display:none" onchange="App.foodPick(this)">
+      <div class="food-actions">
+        <button type="button" class="btn" onclick="document.getElementById('food-cam').click()">📸 拍照紀錄</button>
+        <button type="button" class="btn secondary" onclick="document.getElementById('food-album').click()">🖼️ 相簿（可多張）</button>
+      </div>
+      <div class="food-text">
+        <input type="text" id="food-text" placeholder="或輸入食物：西瓜五片、地瓜、無糖豆漿">
+        <button type="button" class="btn secondary" onclick="App.foodText()">🔍 AI 查詢</button>
+        <button type="button" class="btn ghost" onclick="App.foodManual()">✍️</button>
+      </div>
+      <div id="food-draft">
+        <div class="thumbs" id="food-thumbs"></div>
+        <div class="food-status" id="food-status"></div>
+        <label class="f">食物名稱</label>
+        <input type="text" id="fd-name">
+        <div class="row">
+          <div><label class="f">🔥 熱量 kcal</label><input type="number" inputmode="numeric" id="fd-kcal"></div>
+          <div><label class="f">💪 蛋白質 g</label><input type="number" inputmode="decimal" step="0.1" id="fd-pro"></div>
+        </div>
+        <div class="row">
+          <div><label class="f">🕒 用餐時間</label><input type="text" id="fd-time" placeholder="12:30" inputmode="numeric"></div>
+          <div><label class="f">📍 餐別</label>
+            <select id="fd-slot">
+              <option value="auto">✨ 自動（依時間）</option>
+              <option value="breakfast">早餐</option><option value="brunch">早午餐</option><option value="lunch">午餐</option>
+              <option value="afternoon">下午</option><option value="dinner">晚餐</option>
+              <option value="snack_afternoon">🟣 下午零食</option><option value="snack_evening">🟣 晚上零食／宵夜</option>
+            </select></div>
+        </div>
+        <label class="check"><input type="checkbox" id="fd-snack"> 🟣 這是零食／甜點／飲料</label>
+        <div class="muted" id="fd-details" style="margin-top:6px"></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button type="button" class="btn ghost" onclick="App.foodCancel()">取消</button>
+          <button type="button" class="btn" onclick="App.foodConfirm()">✅ 加入紀錄</button>
+        </div>
+      </div>
+      <div id="food-list" style="margin-top:8px"></div>
+      <details class="simple"><summary>✏️ 簡易文字紀錄（不用 AI）</summary>
       <div class="meal-grid">
         <div><label class="f">早餐</label><input type="text" id="m-b" placeholder="例：蛋餅＋無糖豆漿"></div>
         <div><label class="f">午餐</label><input type="text" id="m-l" placeholder="例：便當半飯"></div>
         <div><label class="f">晚餐</label><input type="text" id="m-d" placeholder="例：燙青菜＋雞胸"></div>
         <div><label class="f">點心／宵夜</label><input type="text" id="m-s" placeholder="例：無"></div>
       </div>
+      <label class="f">總熱量（大卡，選填）</label>
+      <input type="number" inputmode="numeric" id="kcal" placeholder="例：1600">
+      </details>
       <label class="f">喝水（杯，每杯約 250ml）</label>
       <div class="stepper">
         <button type="button" onclick="App.water(-1)">−</button>
@@ -423,8 +588,6 @@
       </div>
       <div class="goal-hint" id="hint-water"></div>
       <label class="check"><input type="checkbox" id="no-sugar"> 今天沒有喝含糖飲料 🥤❌</label>
-      <label class="f">總熱量（大卡，選填）</label>
-      <input type="number" inputmode="numeric" id="kcal" placeholder="例：1600">
     </div>
 
     <div class="card">
@@ -463,13 +626,45 @@
   </div></div>
 </div>
 
+<!-- ===== 問教練（Gemini） ===== -->
+<div id="chat">
+  <div class="backdrop" onclick="App.closeChat()"></div>
+  <div class="panel"><div class="panel-inner">
+    <div class="sheet-head">
+      <div class="mini" id="chat-coach"></div>
+      <div class="t"><span id="chat-title">問教練</span><small>教練會參考你近 7 天的紀錄回答（Gemini AI）</small></div>
+      <button onclick="App.closeChat()" aria-label="關閉">✕</button>
+    </div>
+    <div class="chat-log" id="chat-log"></div>
+    <div class="chips">
+      <button onclick="App.ask('幫我點評今天的紀錄')">點評今天</button>
+      <button onclick="App.ask('這週我做得怎麼樣？下週要調整什麼？')">本週檢討</button>
+      <button onclick="App.ask('今天晚餐吃什麼比較好？')">晚餐建議</button>
+      <button onclick="App.ask('幫我排一個 30 分鐘在家可以做的運動')">運動菜單</button>
+      <button onclick="App.ask('我好想吃宵夜，怎麼辦？')">嘴饞救命</button>
+    </div>
+    <div class="chat-input">
+      <textarea id="chat-input" placeholder="問教練任何減脂、飲食、運動問題…" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();App.ask()}"></textarea>
+      <button class="btn" onclick="App.ask()">送出</button>
+    </div>
+  </div></div>
+</div>
+
 <nav class="tabs">
   <button class="active" data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏋️</span>健身房</button>
   <button data-tab="history" onclick="App.switchTab('history')"><span class="ic">📈</span>紀錄</button>
   <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🧑</span>角色</button>
+  <button data-tab="rewards" onclick="App.switchTab('rewards')"><span class="ic">🏆</span>獎勵</button>
   <button data-tab="settings" onclick="App.switchTab('settings')"><span class="ic">⚙️</span>設定</button>
 </nav>
 <div class="toast" id="toast"></div>
+<div id="levelup" onclick="App.closeLevelUp()"><div class="box" onclick="event.stopPropagation()">
+  <div style="font-size:2.4rem">🎉</div>
+  <h2 id="lu-title">升級！</h2>
+  <div id="lu-sub"></div>
+  <ul id="lu-list"></ul>
+  <button class="btn gold" onclick="App.closeLevelUp()">太好了！</button>
+</div></div>
 
 <div id="onboard">
   <div class="ob-inner">
@@ -570,7 +765,7 @@
     settings: {
       coachName: '呀哈教練',
       startDate: today(),
-      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4 },
+      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, kcalMin: 1800, kcalMax: 2100, protein: 90 },
     },
     avatar: DEFAULT_AVATAR(),
     records: {},
@@ -590,6 +785,8 @@
         if (d.avatar && d.avatar.v === 3) S.avatar = Object.assign(DEFAULT_AVATAR(), d.avatar);
         else { S.avatar = Object.assign(DEFAULT_AVATAR(), { name: (d.avatar && d.avatar.name) || '我' }); S.onboarded = false; }
         S.records = d.records || {};
+        S.foods = d.foods || {};
+        S.decor = d.decor || {};
       } catch (e) {}
     }
   }
@@ -597,8 +794,17 @@
 
   // ---------- record logic ----------
   const emptyRec = () => ({ meals: { b: '', l: '', d: '', s: '' }, water: 0, noSugar: false, kcal: '', exType: '', exMin: '', steps: '', weight: '', fat: '', waist: '', note: '' });
-  const rec = d => S.records[d] ? Object.assign(emptyRec(), S.records[d], { meals: Object.assign(emptyRec().meals, S.records[d].meals || {}) }) : emptyRec();
-  const hasDiet = r => Object.values(r.meals).some(v => v && v.trim()) || r.water > 0 || r.noSugar || num(r.kcal) !== null;
+  const SLOT_LABEL = { breakfast: '早餐', brunch: '早午餐', lunch: '午餐', afternoon: '下午', dinner: '晚餐', snack_afternoon: '下午零食', snack_evening: '晚上零食' };
+  const foodOf = d => {
+    const arr = (S.foods || {})[d];
+    if (!arr || !arr.length) return null;
+    const kcal = arr.reduce((a, x) => a + (Number(x.kcal) || 0), 0);
+    const protein = Math.round(arr.reduce((a, x) => a + (Number(x.protein) || 0), 0) * 10) / 10;
+    const snackKcal = arr.filter(x => x.snack).reduce((a, x) => a + (Number(x.kcal) || 0), 0);
+    return { kcal, protein, snackKcal, items: arr.map(x => Object.assign({}, x, { slotKey: x.slot, slot: SLOT_LABEL[x.slot] || x.slot })) };
+  };
+  const rec = d => Object.assign(S.records[d] ? Object.assign(emptyRec(), S.records[d], { meals: Object.assign(emptyRec().meals, S.records[d].meals || {}) }) : emptyRec(), { _food: foodOf(d) });
+  const hasDiet = r => !!r._food || Object.values(r.meals).some(v => v && v.trim()) || r.water > 0 || r.noSugar || num(r.kcal) !== null;
   const hasEx = r => r.exType === 'rest' || (num(r.exMin) || 0) > 0 || (num(r.steps) || 0) > 0;
   const hasBody = r => num(r.weight) !== null || num(r.fat) !== null || num(r.waist) !== null;
   const loggedCount = r => (hasDiet(r) ? 1 : 0) + (hasEx(r) ? 1 : 0) + (hasBody(r) ? 1 : 0);
@@ -614,6 +820,14 @@
     if (g.exMin && (num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest') items.push([`達成運動 ${g.exMin} 分鐘`, 20]);
     if (g.water && r.water >= g.water) items.push([`達成喝水 ${g.water} 杯`, 20]);
     if (r.noSugar) items.push(['沒喝含糖飲料', 20]);
+    const f = r._food;
+    if (f) {
+      items.push([`拍照／AI 記了 ${f.items.length} 筆飲食`, Math.min(20, f.items.length * 5)]);
+      if (d < today() || new Date().getHours() >= 20) {
+        if (g.kcalMax && f.kcal >= (g.kcalMin || 0) * 0.8 && f.kcal <= g.kcalMax) items.push([`達成熱量 ${g.kcalMin || 0}～${g.kcalMax} kcal`, 20]);
+      }
+      if (g.protein && f.protein >= g.protein) items.push([`達成蛋白質 ${g.protein} g`, 20]);
+    }
     if (n > 0 && streakBefore >= 2) items.push([`連續 ${streakBefore + 1} 天加成`, 10]);
     return items;
   }
@@ -636,6 +850,8 @@
       const goalsHit = items.filter(([l]) => l.startsWith('達成') || l === '沒喝含糖飲料').length;
       if (n === 0) { if (d < t) { patience -= 35; missed++; streak = 0; } }
       else { patience += 5 * n + 3 * goalsHit; streak++; }
+      const ff = rec(d)._food, gk = S.settings.goals.kcalMax;
+      if (ff && gk && ff.kcal > gk * 1.2) patience -= 15;
       patience = Math.max(0, Math.min(100, patience));
       d = addDays(d, 1);
     }
@@ -941,13 +1157,13 @@
   ];
   const PRESETS = [
     ['熱血少年', { body: 'male', head: 'male', face: 'happy', brows: 'thick', hair: 'spiked', top: 'tshirt', legs: 'shorts', feet: 'shoes', acc: 'none', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'dark_brown', topColor: 'red', legsColor: 'navy', feetColor: 'white', height: 1 }],
-    ['酷炫哥', { body: 'male', head: 'gaunt', face: 'none', brows: 'thick', hair: 'messy1', top: 'longsleeve', legs: 'pants', feet: 'boots', acc: 'shades', hat: 'none', skin: 'taupe', eyes: 'gray', hairColor: 'black', topColor: 'black', legsColor: 'gray', feetColor: 'black', height: 1.1 }],
-    ['上班族', { body: 'male', head: 'male', face: 'none', brows: 'thin', hair: 'parted', top: 'polo', legs: 'pants', feet: 'revised', acc: 'glasses', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'black', topColor: 'sky', legsColor: 'navy', feetColor: 'brown', height: 1 }],
-    ['肌肉猛男', { body: 'muscular', head: 'plump', face: 'happy', brows: 'thick', hair: 'buzzcut', top: 'tank', legs: 'shorts', feet: 'shoes', acc: 'none', hat: 'none', skin: 'bronze', eyes: 'brown', hairColor: 'black', topColor: 'red', legsColor: 'black', feetColor: 'white', height: 1.1 }],
+    ['酷炫哥', { body: 'male', head: 'gaunt', face: 'none', brows: 'thick', hair: 'messy1', top: 'longsleeve', legs: 'pants', feet: 'shoes', acc: 'none', hat: 'none', skin: 'taupe', eyes: 'gray', hairColor: 'black', topColor: 'black', legsColor: 'gray', feetColor: 'black', height: 1.1 }],
+    ['上班族', { body: 'male', head: 'male', face: 'none', brows: 'thin', hair: 'parted', top: 'longsleeve', legs: 'pants', feet: 'shoes', acc: 'none', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'black', topColor: 'sky', legsColor: 'navy', feetColor: 'brown', height: 1 }],
+    ['肌肉猛男', { body: 'muscular', head: 'plump', face: 'happy', brows: 'thick', hair: 'buzzcut', top: 'tshirt', legs: 'shorts', feet: 'shoes', acc: 'none', hat: 'none', skin: 'bronze', eyes: 'brown', hairColor: 'black', topColor: 'red', legsColor: 'black', feetColor: 'white', height: 1.1 }],
     ['元氣少女', { body: 'female', head: 'female', face: 'happy', brows: 'thin', hair: 'bunches', top: 'tshirt', legs: 'skirt', feet: 'shoes', acc: 'none', hat: 'none', skin: 'light', eyes: 'blue', hairColor: 'chestnut', topColor: 'white', legsColor: 'red', feetColor: 'brown', height: .95 }],
-    ['馬尾跑者', { body: 'female', head: 'female', face: 'none', brows: 'thin', hair: 'high_ponytail', top: 'tank', legs: 'leggings', feet: 'shoes', acc: 'none', hat: 'none', skin: 'amber', eyes: 'green', hairColor: 'blonde', topColor: 'teal', legsColor: 'black', feetColor: 'pink', height: 1.05 }],
-    ['文青女孩', { body: 'female', head: 'female', face: 'blush', brows: 'thin', hair: 'bob', top: 'cardigan', legs: 'skirt', feet: 'slippers', acc: 'round', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'black', topColor: 'tan', legsColor: 'navy', feetColor: 'brown', height: .95 }],
-    ['小不點', { body: 'teen', head: 'small', face: 'happy', brows: 'none', hair: 'curly_short', top: 'vneck', legs: 'short_shorts', feet: 'sandals', acc: 'none', hat: 'leather_cap', skin: 'olive', eyes: 'orange', hairColor: 'redhead', topColor: 'yellow', legsColor: 'blue', feetColor: 'brown', height: .9 }],
+    ['馬尾跑者', { body: 'female', head: 'female', face: 'none', brows: 'thin', hair: 'ponytail', top: 'tshirt', legs: 'shorts', feet: 'shoes', acc: 'none', hat: 'none', skin: 'amber', eyes: 'green', hairColor: 'blonde', topColor: 'teal', legsColor: 'black', feetColor: 'pink', height: 1.05 }],
+    ['文青女孩', { body: 'female', head: 'female', face: 'blush', brows: 'thin', hair: 'bob', top: 'longsleeve', legs: 'skirt', feet: 'slippers', acc: 'none', hat: 'none', skin: 'light', eyes: 'brown', hairColor: 'black', topColor: 'tan', legsColor: 'navy', feetColor: 'brown', height: .95 }],
+    ['小不點', { body: 'teen', head: 'small', face: 'happy', brows: 'none', hair: 'curly_short', top: 'tshirt', legs: 'shorts', feet: 'slippers', acc: 'none', hat: 'none', skin: 'olive', eyes: 'orange', hairColor: 'redhead', topColor: 'yellow', legsColor: 'blue', feetColor: 'brown', height: .9 }],
   ];
   const DEFAULT_AVATAR = () => Object.assign({ v: 3, name: '我' }, PRESETS[0][1]);
 
@@ -1001,7 +1217,8 @@
          <rect x="26" y="180" width="20" height="18" rx="2" fill="#fff" stroke="${L}" stroke-width="2.5" transform="rotate(-8 36 189)"/>
          <rect x="86" y="178" width="10" height="20" rx="3" fill="#7fd3ff" stroke="${L}" stroke-width="2.5"/>
          <text x="62" y="254" text-anchor="middle" font-size="11" font-weight="700" fill="#fff6e8" font-family="-apple-system, 'PingFang TC', sans-serif">每日紀錄 ✔</text></g>
-      <ellipse cx="180" cy="0" rx="160" ry="120" fill="url(#lamp)"/>`;
+      <ellipse cx="180" cy="0" rx="160" ry="120" fill="url(#lamp)"/>
+      ${DECOR.filter(decorOn).map(d => `<g>${d.svg}</g>`).join('')}`;
   }
 
   // ---------- UI state ----------
@@ -1103,6 +1320,12 @@
     bar.style.width = C.patience + '%';
     bar.style.background = C.patience >= 60 ? 'var(--ok)' : C.patience >= 30 ? 'var(--warn)' : 'var(--primary)';
     $('lv-badge').textContent = `Lv.${C.level} ${C.title}`;
+    const into = Math.max(0, C.score - (C.level - 1) * LEVEL_PTS);
+    $('exp-label').textContent = `Lv.${C.level} → Lv.${C.level + 1}`;
+    $('exp-text').textContent = `${into} / ${LEVEL_PTS} EXP`;
+    $('exp-bar').style.width = Math.min(100, into / LEVEL_PTS * 100) + '%';
+    renderFood();
+    checkLevelUp();
     $('coach-name-tag').textContent = S.settings.coachName || '教練';
     const n = td ? td.n : 0;
     $('coach-marker').classList.toggle('on', n < 3);
@@ -1129,6 +1352,7 @@
     $('no-sugar').checked = !!r.noSugar; $('kcal').value = r.kcal;
     $('ex-type').value = r.exType; $('ex-min').value = r.exMin; $('steps').value = r.steps;
     $('weight').value = r.weight; $('fat').value = r.fat; $('waist').value = r.waist; $('note').value = r.note;
+    renderH26Box(curDate);
     updateHints();
   }
 
@@ -1145,7 +1369,7 @@
   function updateHints() {
     const r = readForm(), g = S.settings.goals;
     const chip = (id, on) => { const c = $(id); c.textContent = on ? '已記錄 ✓' : '未記錄'; c.classList.toggle('on', on); };
-    chip('chip-diet', hasDiet(r)); chip('chip-ex', hasEx(r)); chip('chip-body', hasBody(r));
+    chip('chip-diet', hasDiet(Object.assign(r, { _food: foodOf(curDate) }))); chip('chip-ex', hasEx(r)); chip('chip-body', hasBody(r));
     const hw = $('hint-water');
     hw.textContent = g.water ? (r.water >= g.water ? `✓ 達成喝水目標 ${g.water} 杯（+20）` : `目標 ${g.water} 杯，還差 ${g.water - r.water} 杯`) : '';
     hw.classList.toggle('hit', !!g.water && r.water >= g.water);
@@ -1242,6 +1466,8 @@
       if (C.perDay[d]) wpts += C.perDay[d].pts;
       const w = num(r.weight); if (w !== null) weights.push(w);
     }
+    renderExChart(t);
+    renderKcalChart(t);
     const g = S.settings.goals;
     const avgW = weights.length ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : '—';
     $('week-summary').innerHTML = `<div><span>有紀錄的天數</span><span>${logged} 天</span></div>
@@ -1326,7 +1552,7 @@
     const cat = CC_CATS.find(c => c.k === ccCat) || CC_CATS[0];
     const parts = LPC_CATALOG[cat.slot] || [];
     let grid = `<div class="cc-grid">` + parts.map(p =>
-      `<button class="cc-opt ${(cat.slot === 'body' ? a.body : a[cat.slot]) === p.id ? 'sel' : ''}" onclick="App.setAvatar('${cat.slot}','${p.id}')"><canvas data-thumb="${cat.slot}:${p.id}" data-crop="${cat.crop}"></canvas><div>${p.label}</div></button>`).join('') + `</div>`;
+      `<button class="cc-opt ${(cat.slot === 'body' ? a.body : a[cat.slot]) === p.id ? 'sel' : ''} ${curLevel() < lockLv(cat.slot, p.id) ? 'locked' : ''}" data-lock="🔒 Lv.${lockLv(cat.slot, p.id)}" onclick="App.setAvatar('${cat.slot}','${p.id}')"><canvas data-thumb="${cat.slot}:${p.id}" data-crop="${cat.crop}"></canvas><div>${p.label}</div></button>`).join('') + `</div>`;
     (cat.swatches || []).forEach(([key, label, mat]) => {
       grid += `<div class="cc-sub">${label}</div><div class="swatches">` + SWATCH(mat).map(([k, c, name]) =>
         `<button class="${a[key] === k ? 'sel' : ''}" style="background:${c}" title="${esc(name)}" aria-label="${label} ${esc(name)}" onclick="App.setAvatar('${key}','${k}')"></button>`).join('') + `</div>`;
@@ -1399,14 +1625,312 @@
     const g = S.settings.goals;
     $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
     $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
+    $('g-kmin').value = g.kcalMin ?? ''; $('g-kmax').value = g.kcalMax ?? ''; $('g-pro').value = g.protein ?? '';
     $('g-startdate').value = S.settings.startDate;
     $('coach-name').value = S.settings.coachName;
+    $('gm-key').value = S.settings.geminiKey || '';
+    $('cloud-url').value = S.settings.cloudUrl || '';
+    $('cloud-token').value = S.settings.cloudToken || '';
+    setCloudStatus(S.settings.lastSync ? '上次同步：' + new Date(S.settings.lastSync).toLocaleString() : '', '');
     renderSlots(); renderNotifyLines();
   }
 
   function sceneMood() {
     if (busy) return;
     setCoach(moodState());
+  }
+
+  // ---------- 健康26 food ----------
+  function renderFood() {
+    const f = foodOf(today()), g = S.settings.goals;
+    const hud = $('food-hud'); if (!hud) return;
+    const kcal = f ? f.kcal : 0, pro = f ? f.protein : 0;
+    $('food-kcal').textContent = kcal; $('food-kmax').textContent = g.kcalMax || '—';
+    $('food-pro').textContent = pro; $('food-pgoal').textContent = g.protein || '—';
+    const ratio = g.kcalMax ? kcal / g.kcalMax : 0;
+    const bar = $('food-bar'); bar.style.width = Math.min(100, ratio * 100) + '%';
+    bar.style.background = ratio > 1 ? 'var(--primary)' : ratio > .85 ? 'var(--warn)' : 'var(--ok)';
+  }
+  function renderH26Box(d) {
+    const el = $('food-list'); if (!el) return;
+    const f = foodOf(d), g = S.settings.goals;
+    if (!f) { el.innerHTML = '<p class="muted" style="margin:4px 0 0">這天還沒有飲食紀錄。拍照或輸入食物，AI 幫你算熱量和蛋白質。</p>'; return; }
+    const order = ['breakfast', 'brunch', 'lunch', 'afternoon', 'snack_afternoon', 'dinner', 'snack_evening'];
+    const items = f.items.slice().sort((a, b) => (order.indexOf(a.slotKey) - order.indexOf(b.slotKey)) || String(a.time).localeCompare(String(b.time)));
+    el.innerHTML = items.map(x => `<div class="food-item"><div class="nm">${x.snack ? '🟣' : '🍽️'} ${esc(x.name)}<small>${esc(x.slot)} · ${esc(x.time || '')}${x.details ? ' · ' + esc(x.details) : ''}</small></div>
+      <div class="kc">${x.kcal} kcal<small>蛋白質 ${x.protein} g</small></div><button onclick="App.foodDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
+      + `<div class="food-total"><span>今日合計</span><span>${f.kcal} / ${g.kcalMax || '—'} kcal · ${f.protein} / ${g.protein || '—'} g</span></div>`;
+  }
+  function renderKcalChart(t) {
+    const card = $('kcal-card'); if (!card) return;
+    const g = S.settings.goals, days = [];
+    for (let i = 13; i >= 0; i--) { const d = addDays(t, -i); const f = foodOf(d); days.push([d, f ? f.kcal : 0, f ? f.protein : 0]); }
+    const W = 340, H = 170, pl = 34, pb = 22, pt = 12, bw = (W - pl - 6) / 14;
+    const max = Math.max(g.kcalMax || 0, ...days.map(x => x[1]), 500) * 1.08;
+    const y = v => pt + (1 - v / max) * (H - pt - pb);
+    const band = g.kcalMax ? `<rect x="${pl}" y="${y(g.kcalMax)}" width="${W - pl - 4}" height="${Math.max(0, y(g.kcalMin || 0) - y(g.kcalMax))}" fill="#3fa86b" opacity=".12"/><text x="${W - 4}" y="${y(g.kcalMax) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">目標 ${g.kcalMin || 0}～${g.kcalMax}</text>` : '';
+    const bars = days.map(([d, k, p], i) => {
+      const x = pl + i * bw + 2, over = g.kcalMax && k > g.kcalMax;
+      return `<rect x="${x}" y="${y(k)}" width="${bw - 4}" height="${Math.max(0, H - pb - y(k))}" rx="3" fill="${over ? '#e8505b' : '#f0a32b'}"><title>${nice(d)}：${k} kcal，蛋白質 ${p} g</title></rect>
+        ${i % 2 === 1 ? `<text x="${x + (bw - 4) / 2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#8a7a70">${parse(d).getMonth() + 1}/${parse(d).getDate()}</text>` : ''}`;
+    }).join('');
+    const ticks = [0, Math.round(max / 2 / 100) * 100].map(v => `<text x="${pl - 4}" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="#8a7a70">${v}</text>`).join('');
+    const proHit = days.filter(x => x[1] > 0 && g.protein && x[2] >= g.protein).length, logged = days.filter(x => x[1] > 0).length;
+    $('chart-kcal').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 14 天每日熱量">${band}<line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${ticks}${bars}</svg>
+      <p class="muted" style="margin:6px 0 0">橘色＝目標內或以下，紅色＝超過上限。蛋白質達標 ${proHit} / ${logged} 天。</p>`;
+  }
+
+  // ---------- Gemini (direct from browser, key stays on this phone) ----------
+  const GM_FALLBACK = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest'];
+  let gmModels = null;
+  const gmKey = () => (S.settings.geminiKey || '').trim();
+  async function geminiModels() {
+    if (gmModels) return gmModels;
+    let found = [];
+    try {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(gmKey()));
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      found = (data.models || [])
+        .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+        .map(m => m.name.replace('models/', ''))
+        .filter(n => n.includes('flash') && !/(image|tts|audio|live|embed|8b|1\.5|2\.0)/.test(n));
+      const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]);
+      found.sort((a, b) => (ver(b) - ver(a)) || (a.includes('lite') - b.includes('lite')) || (a.includes('preview') - b.includes('preview')));
+    } catch (e) { if (/API key|API_KEY|permission/i.test(e.message)) throw e; }
+    gmModels = [...new Set([...found.slice(0, 4), ...GM_FALLBACK])];
+    return gmModels;
+  }
+  async function geminiCall(payload, json) {
+    if (!gmKey()) throw new Error('還沒設定 Gemini API key（設定 → 🤖 Gemini AI 設定）');
+    const models = await geminiModels();
+    let last = '';
+    for (const model of models) {
+      const body = JSON.parse(JSON.stringify(payload));
+      body.generationConfig = Object.assign({ temperature: json ? 0.2 : 0.8 }, body.generationConfig || {});
+      if (json) body.generationConfig.responseMimeType = 'application/json';
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(gmKey())}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        const parts = (((data.candidates || [])[0] || {}).content || {}).parts;
+        if (!data.error && parts) return parts.map(p => p.text || '').join('').trim();
+        last = `[${model}] ${(data.error && data.error.message) || res.status}`;
+        if (data.error && /API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(data.error.message + data.error.status)) throw new Error('API key 無效，請到設定重新貼上');
+        if (data.error && (data.error.code === 503 || data.error.code === 429 || /overloaded|high demand/i.test(data.error.message)) && attempt === 0) { await new Promise(r => setTimeout(r, 900)); continue; }
+        break;
+      }
+    }
+    throw new Error('AI 呼叫失敗：' + last);
+  }
+  const parseJSON = t => JSON.parse(String(t).replace(/```json/gi, '').replace(/```/g, '').trim());
+  function compressImage(file, max = 1024) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file); const im = new Image();
+      im.onload = () => {
+        const sc = Math.min(1, max / Math.max(im.width, im.height));
+        const c = document.createElement('canvas'); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        const dataUrl = c.toDataURL('image/jpeg', 0.82);
+        res({ dataUrl, base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+      };
+      im.onerror = rej; im.src = url;
+    });
+  }
+  const FOOD_JSON_SPEC = `只回傳 JSON：
+{
+  "foodName": "所有食物名稱（多項用空格連接）",
+  "calories": 總熱量整數,
+  "protein": 總蛋白質數值（小數一位）,
+  "isSnack": 布林值（點心、零食、甜點、含糖飲料、酒類為 true；一般正餐或原型食物為 false）,
+  "details": "一行簡短估算依據（40 字內）"
+}`;
+  async function analyzeFoodImages(images) {
+    const prompt = `請仔細觀察這 ${images.length} 張食物照片，辨識裡面所有食物與飲品（含包裝文字），以台灣常見份量合併估算總熱量（kcal）與總蛋白質（g）。\n` + FOOD_JSON_SPEC;
+    const parts = [{ text: prompt }].concat(images.map(im => ({ inlineData: { mimeType: im.mimeType, data: im.base64 } })));
+    return parseJSON(await geminiCall({ contents: [{ parts }] }, true));
+  }
+  async function estimateFoodByText(text) {
+    const prompt = `使用者輸入了食物：「${text}」。請以台灣常見份量（有寫份量或克數就依描述）估算總熱量（kcal）與總蛋白質（g）。foodName 請沿用使用者輸入。\n` + FOOD_JSON_SPEC;
+    return parseJSON(await geminiCall({ contents: [{ parts: [{ text: prompt }] }] }, true));
+  }
+  function autoSlot(time, snack) {
+    const [h, m] = String(time || '12:00').split(':').map(Number); const hour = (h || 0) + (m || 0) / 60;
+    if (snack) return hour < 17.5 ? 'snack_afternoon' : 'snack_evening';
+    if (hour >= 5 && hour < 9.5) return 'breakfast';
+    if (hour < 11.5 && hour >= 9.5) return 'brunch';
+    if (hour >= 11.5 && hour < 13.5) return 'lunch';
+    if (hour >= 13.5 && hour < 17.5) return 'afternoon';
+    return 'dinner';
+  }
+  const nowTime = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  function showDraft(r, thumbs) {
+    $('food-draft').classList.add('show');
+    if (thumbs !== undefined) $('food-thumbs').innerHTML = (thumbs || []).map(u => `<img src="${u}" alt="">`).join('');
+    $('fd-name').value = r.foodName || ''; $('fd-kcal').value = r.calories ?? ''; $('fd-pro').value = r.protein ?? '';
+    $('fd-snack').checked = !!r.isSnack; $('fd-details').textContent = r.details || '';
+    if (!$('fd-time').value) $('fd-time').value = curDate === today() ? nowTime() : '12:00';
+    $('fd-slot').value = 'auto';
+  }
+  function setFoodStatus(t) { $('food-status').textContent = t || ''; }
+  let foodBusy = false;
+
+  // ---------- rewards: level unlocks ----------
+  const LOCKS = {
+    top: { vneck: 2, tank: 2, polo: 3, cardigan: 4, leather: 5, plate: 7 },
+    legs: { cuffed: 2, leggings: 3, short_shorts: 3, armour: 6 },
+    feet: { revised: 2, sandals: 2, boots: 3, fold: 4 },
+    acc: { glasses: 2, round: 3, nerd: 3, sunglasses: 4, shades: 5 },
+    hat: { leather_cap: 3, bowler: 4, christmas: 5, wizard: 6, crown: 8 },
+    hair: { high_ponytail: 2, afro: 3, porcupine: 4, xlong: 5, curly_long: 6 },
+  };
+  const lockLv = (slot, id) => (LOCKS[slot] && LOCKS[slot][id]) || 1;
+  const curLevel = () => (C ? C.level : 1);
+  const L_ = '#4a2f1f';
+  const trophy = (x, c) => `<path d="M${x - 8} 124 h16 q0 13 -8 13 q-8 0 -8 -13z" fill="${c}" stroke="#7a5a10" stroke-width="1.5"/><rect x="${x - 2}" y="137" width="4" height="5" fill="${c}"/><rect x="${x - 6}" y="142" width="12" height="4" fill="#7a4a26"/>`;
+  const DECOR = [
+    { id: 'plant', lv: 2, icon: '🪴', label: '綠色盆栽', svg: `<path d="M118 214 l4 -22 h18 l4 22 z" fill="#c9774a" stroke="${L_}" stroke-width="2.5"/><path d="M131 192 q-14 -20 -6 -40 q6 16 6 40 M131 192 q2 -26 16 -38 q-2 22 -16 38 M131 192 q-20 -8 -24 -24 q14 4 24 24" fill="#3fa86b" stroke="#2c6e48" stroke-width="2"/>` },
+    { id: 'mats', lv: 3, icon: '🧘', label: '彩色瑜伽墊', svg: `<rect x="236" y="296" width="76" height="16" rx="4" fill="#f08fb0" opacity=".9" transform="rotate(-8 274 304)"/><rect x="250" y="318" width="76" height="16" rx="4" fill="#7fd3ff" opacity=".9" transform="rotate(-8 288 326)"/>` },
+    { id: 'trophies', lv: 4, icon: '🏆', label: '獎盃櫃', svg: `<rect x="244" y="146" width="76" height="6" rx="2" fill="#7a4a26" stroke="${L_}" stroke-width="1.5"/>${trophy(258, '#f2c14e')}${trophy(282, '#c9d0d8')}${trophy(306, '#d08a4a')}` },
+    { id: 'barbell', lv: 5, icon: '🏋️', label: '槓鈴臥推架', svg: `<rect x="306" y="262" width="40" height="8" rx="3" fill="#3b3f4a"/><rect x="312" y="270" width="5" height="14" fill="#555"/><rect x="336" y="270" width="5" height="14" fill="#555"/><path d="M294 252 h62" stroke="#888" stroke-width="4"/><rect x="290" y="241" width="8" height="22" rx="2" fill="#e8505b" stroke="${L_}" stroke-width="1.5"/><rect x="352" y="241" width="8" height="22" rx="2" fill="#e8505b" stroke="${L_}" stroke-width="1.5"/>` },
+    { id: 'neon', lv: 6, icon: '💡', label: '霓虹燈招牌', svg: `<text x="186" y="19" text-anchor="middle" font-size="15" font-weight="900" fill="#ff7ad9" stroke="#fff" stroke-width=".6" style="filter:drop-shadow(0 0 4px #ff3fbf)" font-family="Arial Black, sans-serif">DISCIPLINE</text>` },
+    { id: 'cooler', lv: 7, icon: '🚰', label: '飲水機', svg: `<rect x="148" y="166" width="20" height="40" rx="3" fill="#e9eef5" stroke="${L_}" stroke-width="2"/><rect x="150" y="146" width="16" height="22" rx="6" fill="#7fd3ff" stroke="${L_}" stroke-width="2" opacity=".85"/><rect x="155" y="182" width="6" height="4" fill="#4a8fd6"/>` },
+    { id: 'statue', lv: 8, icon: '🥇', label: '黃金啞鈴雕像', svg: `<rect x="16" y="364" width="44" height="26" rx="3" fill="#8e5a35" stroke="${L_}" stroke-width="2"/><path d="M22 352 h32" stroke="#e8b931" stroke-width="5"/><rect x="16" y="340" width="9" height="24" rx="2" fill="#f2c14e" stroke="#7a5a10" stroke-width="1.5"/><rect x="51" y="340" width="9" height="24" rx="2" fill="#f2c14e" stroke="#7a5a10" stroke-width="1.5"/>` },
+    { id: 'bunting', lv: 10, icon: '🎏', label: '冠軍彩旗', svg: `<path d="M0 6 Q180 30 360 6" stroke="#7a4a26" stroke-width="1.5" fill="none"/>${Array.from({ length: 12 }, (_, i) => { const x = 10 + i * 30, y = 6 + Math.sin(Math.PI * (x / 360)) * 12; return `<path d="M${x} ${y} l12 0 l-6 12z" fill="${['#e8505b', '#f2b134', '#3fa86b', '#4a8fd6', '#8b5bd6'][i % 5]}"/>`; }).join('')}` },
+  ];
+  function decorOn(d) { return curLevel() >= d.lv && S.decor[d.id] !== false; }
+  function renderGymBG() { const el = $('gym-bg'); if (el) el.innerHTML = gymBG(); }
+  function unlocksAt(lv) {
+    const out = DECOR.filter(d => d.lv === lv).map(d => `${d.icon} 健身房裝飾：${d.label}`);
+    const CAT = { top: '上衣', legs: '下身', feet: '鞋子', acc: '眼鏡', hat: '帽子', hair: '髮型' };
+    Object.entries(LOCKS).forEach(([slot, m]) => Object.entries(m).forEach(([id, l]) => {
+      if (l !== lv) return; const p = findPart(slot, id); if (p) out.push(`👕 ${CAT[slot]}：${p.label}`);
+    }));
+    return out;
+  }
+  function renderRewards() {
+    C = compute();
+    const lv = C.level, into = C.score - (lv - 1) * LEVEL_PTS;
+    $('rw-level').innerHTML = `<div style="font-size:1.4rem;font-weight:900">Lv.${lv} ${C.title}</div>
+      <div class="patience-label" style="margin-top:6px"><span>距離 Lv.${lv + 1}</span><span>${Math.max(0, into)} / ${LEVEL_PTS} EXP</span></div>
+      <div class="bar"><i style="width:${Math.max(0, Math.min(100, into / LEVEL_PTS * 100))}%;background:linear-gradient(90deg,#8b5bd6,#f2b134)"></i></div>
+      <p class="muted" style="margin:8px 0 0">下一級解鎖：${unlocksAt(lv + 1).join('、') || '更多稱號'}</p>`;
+    $('rw-decor').innerHTML = DECOR.map(d => {
+      const open = lv >= d.lv;
+      return `<div class="unlock-row ${open ? '' : 'locked'}"><div class="ic">${d.icon}</div><div class="nm">${d.label}<small>${open ? '已解鎖' : '🔒 Lv.' + d.lv + ' 解鎖'}</small></div>
+        ${open ? `<label class="switch"><input type="checkbox" ${S.decor[d.id] !== false ? 'checked' : ''} onchange="App.toggleDecor('${d.id}', this.checked)"><span></span></label>` : ''}</div>`;
+    }).join('');
+    const rows = [];
+    Object.entries(LOCKS).forEach(([slot, m]) => Object.entries(m).forEach(([id, l]) => { const p = findPart(slot, id); if (p) rows.push([l, slot, p.label]); }));
+    const CAT = { top: '上衣', legs: '下身', feet: '鞋子', acc: '眼鏡', hat: '帽子', hair: '髮型' };
+    $('rw-clothes').innerHTML = rows.sort((a, b) => a[0] - b[0]).map(([l, slot, label]) =>
+      `<div class="unlock-row ${lv >= l ? '' : 'locked'}"><div class="ic">${{ top: '👕', legs: '👖', feet: '👟', acc: '👓', hat: '🎩', hair: '💇' }[slot]}</div><div class="nm">${CAT[slot]}：${label}<small>${lv >= l ? '已解鎖，可到「角色」頁換裝' : '🔒 Lv.' + l + ' 解鎖'}</small></div></div>`).join('');
+  }
+  function checkLevelUp() {
+    if (!C || !S.onboarded) return;
+    if (!S.seenLevel) { S.seenLevel = C.level; persist(); return; }
+    if (C.level <= S.seenLevel) return;
+    const gained = [];
+    for (let l = S.seenLevel + 1; l <= C.level; l++) gained.push(...unlocksAt(l));
+    S.seenLevel = C.level; persist();
+    $('lu-title').textContent = `升級！Lv.${C.level}`;
+    $('lu-sub').textContent = `稱號：${C.title}`;
+    $('lu-list').innerHTML = (gained.length ? gained : ['新的稱號！繼續保持紀律！']).map(x => `<li>${esc(x)}</li>`).join('');
+    $('levelup').classList.add('show');
+    renderGymBG();
+    if (!busy) setCoach('dance', `呀哈！升到 Lv.${C.level} 了！快去看看解鎖了什麼！`);
+  }
+
+  // ---------- weekly exercise chart ----------
+  function renderExChart(t) {
+    const weeks = [];
+    const mon0 = mondayOf(t);
+    for (let k = 7; k >= 0; k--) {
+      const mon = addDays(mon0, -7 * k); let mins = 0;
+      for (let i = 0; i < 7; i++) { const r = rec(addDays(mon, i)); if (r.exType !== 'rest') mins += num(r.exMin) || 0; }
+      weeks.push([mon, mins]);
+    }
+    const goal = (S.settings.goals.exMin || 0) * (S.settings.goals.weeklyExDays || 0);
+    const W = 340, H = 160, pl = 30, pb = 22, pt = 12, bw = (W - pl - 8) / 8;
+    const max = Math.max(goal, ...weeks.map(w => w[1]), 60);
+    const y = v => pt + (1 - v / max) * (H - pt - pb);
+    const bars = weeks.map(([mon, m], i) => {
+      const x = pl + i * bw + 4, hh = H - pb - y(m), hit = goal && m >= goal;
+      return `<rect x="${x}" y="${y(m)}" width="${bw - 8}" height="${Math.max(0, hh)}" rx="4" fill="${hit ? '#3fa86b' : '#4a8fd6'}"><title>${nice(mon)} 起：${m} 分鐘</title></rect>
+        ${m ? `<text x="${x + (bw - 8) / 2}" y="${y(m) - 3}" text-anchor="middle" font-size="9" fill="#3b2f2a">${m}</text>` : ''}
+        <text x="${x + (bw - 8) / 2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#8a7a70">${parse(mon).getMonth() + 1}/${parse(mon).getDate()}</text>`;
+    }).join('');
+    const gl = goal ? `<line x1="${pl}" x2="${W - 4}" y1="${y(goal)}" y2="${y(goal)}" stroke="#3fa86b" stroke-dasharray="4 4"/><text x="${W - 4}" y="${y(goal) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">週目標 ${goal}</text>` : '';
+    $('chart-ex').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 8 週每週運動分鐘"><line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${bars}${gl}</svg>`;
+  }
+
+  // ---------- cloud (Google Apps Script) ----------
+  const cloudCfg = () => ({ url: (S.settings.cloudUrl || '').trim(), token: (S.settings.cloudToken || '').trim() });
+  const cloudOn = () => { const c = cloudCfg(); return /^https:\/\/script\.google(usercontent)?\.com\//.test(c.url) && !!c.token; };
+  async function cloudCall(action, payload = {}) {
+    const c = cloudCfg();
+    if (!cloudOn()) throw new Error('還沒設定雲端網址或暗號');
+    const res = await fetch(c.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action, token: c.token }, payload)) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '雲端回應錯誤');
+    return data;
+  }
+  function setCloudStatus(msg, cls) { const el = $('cloud-status'); if (el) { el.textContent = msg; el.className = 'sync-status ' + (cls || ''); } }
+  async function cloudPush(dates) {
+    if (!cloudOn()) return;
+    try {
+      C = compute();
+      const records = dates.filter(d => S.records[d]).map(d => ({ date: d, updatedAt: S.records[d].updatedAt || new Date().toISOString(), points: C.perDay[d] ? C.perDay[d].pts : '', record: S.records[d] }));
+      if (!records.length) return;
+      await cloudCall('save', { records });
+      S.settings.lastSync = new Date().toISOString(); persist();
+    } catch (e) { toast('☁️ 雲端存檔失敗：' + e.message); }
+  }
+  async function cloudPullMerge(manual) {
+    if (!cloudOn()) { if (manual) toast('請先設定雲端網址和暗號'); return; }
+    try {
+      const data = await cloudCall('list');
+      let n = 0;
+      (data.records || []).forEach(({ date, updatedAt, record }) => {
+        const local = S.records[date];
+        if (!record || (local && (local.updatedAt || '') >= (updatedAt || ''))) return;
+        S.records[date] = Object.assign({}, record, { updatedAt }); n++;
+      });
+      S.settings.lastSync = new Date().toISOString(); persist();
+      refreshStats(); renderPlayer();
+      if ($('view-history').classList.contains('active')) renderHistory();
+      if (manual) toast(n ? `從雲端更新了 ${n} 天的紀錄` : '雲端沒有更新的紀錄');
+    } catch (e) { if (manual) toast('☁️ 下載失敗：' + e.message); }
+  }
+
+  // ---------- ask coach (Gemini via Apps Script) ----------
+  let chatHistory = [];
+  let asking = false;
+  function coachContext() {
+    C = compute();
+    const g = S.settings.goals, t = today();
+    const lines = [
+      `學員：${S.avatar.name || '學員'}；目標：起始體重 ${g.startWeight || '未填'} kg → 目標體重 ${g.targetWeight || '未填'} kg；每日運動 ${g.exMin} 分鐘；每日喝水 ${g.water} 杯；每週運動 ${g.weeklyExDays} 天`,
+      `飲食目標：每日 ${g.kcalMin}～${g.kcalMax} kcal，蛋白質 ${g.protein} g`,
+      `遊戲狀態：總分 ${C.score}，等級 Lv.${C.level}（${C.title}），連續紀錄 ${C.streak} 天，教練耐心值 ${C.patience}/100`,
+      '近 7 天紀錄：',
+    ];
+    for (let i = 6; i >= 0; i--) {
+      const d = addDays(t, -i), r = rec(d);
+      if (!loggedCount(r)) { lines.push(`- ${d}：沒有紀錄`); continue; }
+      let meals = ['b', 'l', 'd', 's'].map((k, j) => r.meals[k] ? ['早', '午', '晚', '點心'][j] + ':' + r.meals[k] : '').filter(Boolean).join('、');
+      if (r._food) meals = `共 ${r._food.kcal} kcal、蛋白質 ${r._food.protein} g：` + r._food.items.map(x => `${x.slot || x.col}${x.snack ? '(零食)' : ''} ${x.name} ${x.kcal}kcal/${x.protein}g`).join('；') + (meals ? '；另記：' + meals : '');
+      lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${r.noSugar ? '，無含糖飲料' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.note ? '；心得：' + r.note : ''}`);
+    }
+    return lines.join('\n');
+  }
+  function chatMsg(role, text, cls = '') {
+    const el = document.createElement('div');
+    el.className = 'msg ' + (role === 'me' ? 'me' : '') + ' ' + cls;
+    el.innerHTML = role === 'me' ? `<div class="txt"></div>` : `<div class="av">${coachMarkup(cls === 'wait' ? 'inspect' : 'standby')}</div><div class="txt"></div>`;
+    el.querySelector('.txt').textContent = text;
+    $('chat-log').appendChild(el); $('chat-log').scrollTop = $('chat-log').scrollHeight;
+    return el;
   }
 
   // ---------- public API ----------
@@ -1419,6 +1943,7 @@
       if (tab === 'history') renderHistory();
       if (tab === 'avatar') renderCreators();
       if (tab === 'settings') fillSettings();
+      if (tab === 'rewards') renderRewards();
       if (tab === 'today') { refreshStats(); renderPlayer(); sceneMood(); }
     },
     async goRegister() {
@@ -1451,7 +1976,9 @@
       const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       const prevBody = hasBody(rec(curDate));
       const r = readForm();
+      r.updatedAt = new Date().toISOString();
       if (loggedCount(r) === 0 && !r.note) delete S.records[curDate]; else S.records[curDate] = r;
+      const savedDate = curDate;
       if (!S.settings.goals.startWeight && num(r.weight) !== null) S.settings.goals.startWeight = r.weight;
       persist();
       refreshStats();
@@ -1460,6 +1987,7 @@
       App.closeSheet(true);
       renderPlayer();
       const n = loggedCount(r);
+      if (S.records[savedDate]) cloudPush([savedDate]);
       if (n === 0) { runAttack('什麼都沒填就交給我！？吃我一棒！'); return; }
       if (delta) fxAt('pts-pop', (delta > 0 ? '+' : '') + delta, pos.player);
       const pl = $('player'); pl.classList.remove('idle'); pl.classList.add('happy');
@@ -1483,6 +2011,7 @@
     ccTurn(n) { ccDir = [DIR.down, DIR.left, DIR.up, DIR.right][([DIR.down, DIR.left, DIR.up, DIR.right].indexOf(ccDir) + n + 4) % 4]; [$('creator'), $('ob-creator')].forEach(r => r && r._doll && r._doll.play(ccWalk ? 'walk' : 'idle', ccDir)); },
     ccToggleWalk() { ccWalk = !ccWalk; renderCreators(); },
     setAvatar(k, v, light) {
+      if (curLevel() < lockLv(k, v)) { toast(`🔒 這件要 Lv.${lockLv(k, v)} 才能解鎖，繼續回報教練賺經驗值！`); return; }
       S.avatar[k] = v; persist();
       if (light) { refreshCreatorDoll(); return; }
       obPreset = -1;
@@ -1491,7 +2020,7 @@
     setName(v) { S.avatar.name = v; persist(); },
     randomAvatar() {
       CC_CATS.forEach(c => {
-        const list = LPC_CATALOG[c.slot]; S.avatar[c.slot] = pick(list).id;
+        const list = LPC_CATALOG[c.slot].filter(p => curLevel() >= lockLv(c.slot, p.id)); S.avatar[c.slot] = pick(list).id;
         (c.swatches || []).forEach(([k, , mat]) => { S.avatar[k] = pick(Object.keys(LPC_PAL[mat].pal)); });
       });
       if (Math.random() < .6) S.avatar.hat = 'none';
@@ -1507,8 +2036,150 @@
       g.exMin = Math.max(0, parseInt($('g-ex').value, 10) || 0);
       g.water = Math.max(0, parseInt($('g-water').value, 10) || 0);
       g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('g-week').value, 10) || 0));
+      g.kcalMin = Math.max(0, parseInt($('g-kmin').value, 10) || 0); g.kcalMax = Math.max(0, parseInt($('g-kmax').value, 10) || 0); g.protein = Math.max(0, parseInt($('g-pro').value, 10) || 0);
       const sd = $('g-startdate').value; if (sd) S.settings.startDate = sd > today() ? today() : sd;
       persist(); toast('目標已儲存！');
+    },
+    // ---- cloud ----
+    async cloudSaveSettings() {
+      S.settings.cloudUrl = $('cloud-url').value.trim();
+      S.settings.cloudToken = $('cloud-token').value.trim();
+      persist();
+      if (!cloudOn()) { setCloudStatus('網址要是 https://script.google.com/macros/s/…/exec，暗號不能空白', 'err'); return; }
+      setCloudStatus('連線中…');
+      try {
+        const d = await cloudCall('ping');
+        setCloudStatus((d.hasGemini ? '✅ 連線成功，Gemini 已設定' : '✅ 連線成功（但還沒設定 GEMINI_API_KEY，問教練功能無法使用）') + (d.food ? '；已連上健康26 飲食紀錄' : ''), 'ok');
+        cloudPullMerge(false);
+      } catch (e) { setCloudStatus('❌ ' + e.message, 'err'); }
+    },
+    async cloudPushAll() {
+      if (!cloudOn()) { toast('請先設定雲端網址和暗號'); return; }
+      const dates = Object.keys(S.records);
+      setCloudStatus(`上傳 ${dates.length} 天的紀錄中…`);
+      await cloudPush(dates);
+      setCloudStatus(`✅ 已上傳 ${dates.length} 天的紀錄`, 'ok');
+    },
+    cloudPull(manual) { return cloudPullMerge(manual); },
+    // ---- food (photo / text / manual) ----
+    async foodPick(input) {
+      const files = Array.from(input.files || []).slice(0, 6); input.value = '';
+      if (!files.length || foodBusy) return;
+      if (!gmKey()) { toast('請先到「設定 → 🤖 Gemini AI 設定」貼上 API key'); return; }
+      foodBusy = true;
+      try {
+        const imgs = await Promise.all(files.map(f => compressImage(f)));
+        $('fd-time').value = '';
+        showDraft({}, imgs.map(i => i.dataUrl));
+        setFoodStatus(`🤖 Gemini 辨識 ${imgs.length} 張照片中……`);
+        if (!busy) setCoach('inspect', '讓我看看你吃了什麼……');
+        const r = await analyzeFoodImages(imgs);
+        showDraft(r); setFoodStatus('✅ 辨識完成，可以修改數字後按「加入紀錄」');
+      } catch (e) { setFoodStatus('❌ ' + e.message); }
+      finally { foodBusy = false; }
+    },
+    async foodText() {
+      const t = $('food-text').value.trim();
+      if (!t) { toast('先輸入食物名稱'); return; }
+      if (!gmKey()) { toast('沒有 Gemini key：可以按 ✍️ 自己填熱量'); return; }
+      if (foodBusy) return; foodBusy = true;
+      try {
+        $('fd-time').value = '';
+        showDraft({ foodName: t }, []); setFoodStatus('🤖 AI 查詢熱量與蛋白質中……');
+        const r = await estimateFoodByText(t);
+        showDraft(Object.assign({ foodName: t }, r)); setFoodStatus('✅ 查詢完成，可以修改數字後按「加入紀錄」');
+      } catch (e) { setFoodStatus('❌ ' + e.message); }
+      finally { foodBusy = false; }
+    },
+    foodManual() { $('fd-time').value = ''; showDraft({ foodName: $('food-text').value.trim() }, []); setFoodStatus('自己填寫熱量與蛋白質'); },
+    foodCancel() { $('food-draft').classList.remove('show'); setFoodStatus(''); },
+    foodConfirm() {
+      const name = $('fd-name').value.trim();
+      if (!name) { toast('請填食物名稱'); return; }
+      const time = /^\d{1,2}:\d{2}$/.test($('fd-time').value.trim()) ? $('fd-time').value.trim() : (curDate === today() ? nowTime() : '12:00');
+      const snack = $('fd-snack').checked;
+      let slot = $('fd-slot').value; if (slot === 'auto') slot = autoSlot(time, snack);
+      if (slot.startsWith('snack')) { /* 選了零食時段就算零食 */ }
+      const item = { id: 'f' + Date.now().toString(36), time, slot, name, kcal: Math.round(Number($('fd-kcal').value) || 0), protein: Math.round((Number($('fd-pro').value) || 0) * 10) / 10, snack: snack || slot.startsWith('snack'), details: $('fd-details').textContent || '' };
+      const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
+      (S.foods[curDate] = S.foods[curDate] || []).push(item);
+      persist(); App.foodCancel(); $('food-text').value = '';
+      refreshStats(); renderH26Box(curDate); updateHints();
+      const after = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
+      const f = foodOf(curDate), g = S.settings.goals, left = (g.kcalMax || 0) - f.kcal;
+      if (after > before) fxAt('pts-pop', '+' + (after - before), pos.player);
+      if (!busy) {
+        if (g.kcalMax && left < 0) setCoach('angry', `${item.name} ${item.kcal} 大卡！今天已經超過 ${-left} 大卡了！噗嚕嚕！`);
+        else if (item.snack) setCoach('inspect', `零食 ${item.kcal} 大卡……記下來了！今天還能吃 ${left} 大卡。`);
+        else setCoach('cheer', `${item.name} ${item.kcal} 大卡、蛋白質 ${item.protein} g！今天還能吃 ${left} 大卡！`);
+      }
+    },
+    foodDel(id) {
+      const arr = S.foods[curDate] || [];
+      const i = arr.findIndex(x => x.id === id); if (i < 0) return;
+      if (!confirm(`刪除「${arr[i].name}」？`)) return;
+      arr.splice(i, 1); if (!arr.length) delete S.foods[curDate];
+      persist(); refreshStats(); renderH26Box(curDate); updateHints();
+    },
+    // ---- gemini key ----
+    async saveGeminiKey() {
+      S.settings.geminiKey = $('gm-key').value.trim(); gmModels = null; persist();
+      const st = $('gm-status');
+      if (!S.settings.geminiKey) { st.textContent = '已清除 key'; st.className = 'sync-status'; return; }
+      st.textContent = '測試中…'; st.className = 'sync-status';
+      try {
+        const ms = await geminiModels();
+        const t = await geminiCall({ contents: [{ parts: [{ text: '用一句繁體中文、15 字內替減脂學員加油' }] }] }, false);
+        st.textContent = `✅ 可以使用（模型：${ms[0]}）教練說：「${t}」`; st.className = 'sync-status ok';
+      } catch (e) { st.textContent = '❌ ' + e.message; st.className = 'sync-status err'; }
+    },
+    // ---- rewards ----
+    toggleDecor(id, on) { S.decor[id] = on; persist(); renderGymBG(); },
+    closeLevelUp() { $('levelup').classList.remove('show'); },
+    // ---- chat ----
+    openChat() {
+      $('chat-coach').innerHTML = coachMarkup('goforit');
+      $('chat-title').textContent = `問${S.settings.coachName || '教練'}`;
+      if (!$('chat-log').children.length) chatMsg('coach', (gmKey() || cloudOn()) ? `${S.avatar.name || '你'}！有什麼想問的？飲食、運動、減脂都可以問我！` : '要先到「設定 → 🤖 Gemini AI 設定」貼上 API key，我才能回答喔！');
+      $('chat').classList.add('show'); document.body.style.overflow = 'hidden';
+    },
+    closeChat() { $('chat').classList.remove('show'); document.body.style.overflow = ''; },
+    async ask(q) {
+      if (asking) return;
+      const input = $('chat-input');
+      const question = (q || input.value).trim();
+      if (!question) return;
+      if (!$('chat').classList.contains('show')) App.openChat();
+      input.value = '';
+      chatMsg('me', question);
+      if (!gmKey() && !cloudOn()) { chatMsg('coach', '還沒設定 Gemini！到「設定 → 🤖 Gemini AI 設定」貼上 API key 再來問我。'); return; }
+      asking = true;
+      const wait = chatMsg('coach', '嗯……讓我看看你的紀錄……', 'wait');
+      if (!busy) setCoach('inspect', '嗯……讓我想想……');
+      try {
+        let d;
+        if (gmKey()) {
+          const coach = S.settings.coachName || '教練';
+          const system = [`你是「${coach}」，紀律健身房的減脂教練兼營養師，正在跟學員對話。`,
+            '說話風格：元氣、熱血、有點嚴格但很關心學員，偶爾用「呀哈！」「嗶嗶！」之類的口頭禪。',
+            '一律使用繁體中文，用自然段落、不要畫表格，回答精簡（150 字以內），給今日飲食點評與後續幾餐、運動的具體建議。',
+            '依據學員的目標、飲食（熱量／蛋白質／零食）與運動紀錄回答；資料不足時直接說需要哪些資料。',
+            '涉及疾病、藥物、極端節食或身體不適時，提醒學員諮詢醫師或營養師。'].join('\n');
+          const contents = chatHistory.map(h => ({ role: h.role === 'coach' ? 'model' : 'user', parts: [{ text: h.text }] }));
+          contents.push({ role: 'user', parts: [{ text: `【學員資料】\n${coachContext()}\n\n【學員的問題】\n${question}` }] });
+          d = { answer: await geminiCall({ systemInstruction: { parts: [{ text: system }] }, contents }, false) };
+        } else d = await cloudCall('ask', { question, context: coachContext(), history: chatHistory, coachName: S.settings.coachName || '教練' });
+        wait.remove();
+        chatMsg('coach', d.answer);
+        chatHistory.push({ role: 'user', text: question }, { role: 'coach', text: d.answer });
+        chatHistory = chatHistory.slice(-8);
+        if (!busy) setCoach('goforit', d.answer.length > 80 ? d.answer.slice(0, 78) + '…' : d.answer);
+        clearTimeout(App._p); App._p = setTimeout(sceneMood, 6000);
+      } catch (e) {
+        wait.remove();
+        chatMsg('coach', '嗚……連不上 AI：' + e.message);
+        if (!busy) setCoach('cry', '連不上 AI……');
+      } finally { asking = false; }
     },
     saveCoachName() {
       S.settings.coachName = $('coach-name').value.trim() || '教練';
@@ -1635,7 +2306,7 @@
 
   // ---------- boot ----------
   load();
-  $('gym-bg').innerHTML = gymBG();
+  renderGymBG();
   $('lpc-authors').textContent = LPC_AUTHORS.join(', ');
   ['m-b', 'm-l', 'm-d', 'm-s', 'kcal', 'ex-type', 'ex-min', 'steps', 'weight', 'fat', 'waist'].forEach(id => $(id).addEventListener('input', updateHints));
   $('no-sugar').addEventListener('change', updateHints);
@@ -1656,20 +2327,29 @@
     walkPlayer({ x, y });
   });
 
-  const t0 = today();
+  function startScene() {
+    const t0 = today();
+    C = compute();
+    if (C.patience < 30 && S.lastAttack !== t0 && (C.perDay[t0] ? C.perDay[t0].n : 0) < 3) {
+      setCoach('angry', '……');
+      setTimeout(() => runAttack('耐心值見底了！給我過來！！'), 700);
+    } else {
+      setCoach('standby', pick(LINES.standby));
+      setTimeout(sceneMood, 1500);
+    }
+  }
   if (!S.onboarded) {
     setCoach('standby');
     App.obStart();
-  } else if (C.patience < 30 && S.lastAttack !== t0 && (C.perDay[t0] ? C.perDay[t0].n : 0) < 3) {
-    setCoach('angry', '……');
-    setTimeout(() => runAttack('耐心值見底了！給我過來！！'), 700);
-  } else {
-    setCoach('standby', pick(LINES.standby));
-    setTimeout(sceneMood, 1500);
-  }
-
+    setTimeout(() => cloudPullMerge(false), 1200);
+  } else if (cloudOn()) {
+    // 先同步雲端（含健康26 飲食），再決定教練要不要衝過來
+    setCoach('inspect', '同步紀錄中……');
+    Promise.race([cloudPullMerge(false), new Promise(r => setTimeout(r, 6000))]).then(startScene);
+  } else startScene();
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
+    cloudPullMerge(false);
     if (curDate > today()) curDate = today();
     refreshStats(); renderPlayer();
     if ($('view-today').classList.contains('active')) sceneMood();
