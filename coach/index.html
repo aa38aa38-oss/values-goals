@@ -948,7 +948,7 @@
     while (d <= t && guard++ < 4000) {
       const r = rec(d), n = loggedCount(r);
       const items = dayItems(d, streak);
-      if (n === 0 && d < t) items.push(['整天沒紀錄', -30]);
+      if (n === 0 && d < t) items.push(['整天沒紀錄（不扣經驗，教練耐心 −35）', 0]);
       const pts = items.reduce((a, [, p]) => a + p, 0);
       perDay[d] = { items, pts, n };
       score += pts;
@@ -977,6 +977,7 @@
     const hour = new Date().getHours();
     const todayN = perDay[t] ? perDay[t].n : 0;
     if (todayN === 0 && hour >= 21) patience = Math.max(0, patience - 15);
+    score = Math.max(0, score);
     const level = Math.max(1, Math.floor(Math.max(0, score) / LEVEL_PTS) + 1);
     return { score, patience, streak, missed, perDay, weekBonus, reached, level, title: TITLES[Math.min(level - 1, TITLES.length - 1)] };
   }
