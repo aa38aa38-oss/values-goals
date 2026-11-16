@@ -54,7 +54,7 @@
   .actor .inner { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
   .actor .flip { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; transition: transform .15s; }
   .actor .flip.left { transform: scaleX(-1); }
-  #coach { width: 30%; aspect-ratio: 1 / 1.05; cursor: pointer; }
+  #coach { width: 44%; aspect-ratio: 1 / 1.05; cursor: pointer; }
   #coach img, #coach svg { max-width: 100%; max-height: 100%; }
   #player { width: 38%; aspect-ratio: 1 / 1; }
   #player .inner { position: relative; }
@@ -1371,9 +1371,10 @@
   const pos = { player: { x: 74, y: 9 }, coach: { ...COACH_HOME } };
   function place(id, p, ms = 0) {
     const el = $(id);
-    const wPct = id === 'coach' ? 30 : 38;
+    const wPct = id === 'coach' ? 44 : 38;
     el.style.transitionDuration = ms + 'ms';
-    el.style.left = (p.x - wPct / 2) + '%';
+    const cx = id === 'coach' ? Math.max(wPct / 2 - 2, Math.min(102 - wPct / 2, p.x)) : p.x;
+    el.style.left = (cx - wPct / 2) + '%';
     el.style.bottom = p.y + '%';
     const s = 1 - (p.y - 3) / 37 * 0.22;
     el.style.transform = `scale(${s.toFixed(3)})`;
