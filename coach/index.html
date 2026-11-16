@@ -436,6 +436,10 @@
       <div class="row">
         <div><label class="f">每日熱量上限（kcal）</label><input type="number" inputmode="numeric" id="g-kmax"></div>
         <div><label class="f">每日蛋白質目標（g）</label><input type="number" inputmode="numeric" id="g-pro"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每日步數目標</label><input type="number" inputmode="numeric" id="g-steps"></div>
+        <div><label class="f">每晚睡眠目標（小時）</label><input type="number" inputmode="decimal" step="0.5" id="g-sleep"></div>
         <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
       </div>
       <p class="muted">開始日期之後，整天沒有任何紀錄會扣 30 分。</p>
@@ -457,6 +461,25 @@
       <button class="btn secondary" onclick="document.getElementById('sheet-file').click()">🖼️ 上傳動作表</button>
       <button class="btn ghost" onclick="App.clearSlots()">清除所有教練圖片</button>
       <button class="btn" onclick="App.saveCoachName()">儲存教練名字</button>
+    </div>
+
+    <div class="card">
+      <h2>⌚ 連動 iPhone 健康／Garmin</h2>
+      <p class="muted">網頁不能直接讀「健康」App，所以用 iPhone 內建的「捷徑」：捷徑讀出今天的數字，接在網址後面打開遊戲，遊戲就會自動填好。</p>
+      <ol class="steps">
+        <li><b>Garmin 先同步到 iPhone 健康</b>：Garmin Connect → 右下「更多」→ 設定 → <b>已連接的應用程式 → Apple 健康</b> → 全部打開（步數、睡眠、體重、卡路里、運動）</li>
+        <li>打開「<b>捷徑</b>」App → 右上 ＋ 新增捷徑，命名「回報教練」</li>
+        <li>加入動作「<b>尋找健康樣本</b>」：類型選<b>步數</b>，加條件「開始日期 是 今天」</li>
+        <li>加入動作「<b>計算統計資料</b>」：選<b>總和</b>（得到今天總步數）</li>
+        <li>同樣方式再做：<b>活動能量</b>（總和）、<b>運動時間</b>（總和，可省略）</li>
+        <li>體重：「尋找健康樣本」類型<b>體重</b>，排序「開始日期 最新的優先」，<b>限制 1 個</b>；體脂率同樣做法</li>
+        <li>加入動作「<b>URL</b>」，貼上下面的網址樣板，把每個「＿＿」換成對應的變數（點一下會出現變數選單）</li>
+        <li>加入動作「<b>打開 URL</b>」，完成！之後點這個捷徑，或在「自動化」設每天 21:00 執行</li>
+      </ol>
+      <div class="copy-line"><code id="hk-url"></code><button onclick="App.copy('hk-url')">複製</button></div>
+      <p class="muted">可用的欄位：steps 步數、active 活動消耗、exmin 運動分鐘、weight 體重、fat 體脂、waist 腰圍、sleep 睡眠小時、hr 靜止心率、floors 爬樓層、date 日期（不填就是今天）。不需要的欄位整段刪掉即可。</p>
+      <p class="muted">⚠️ 捷徑會用 <b>Safari</b> 打開遊戲。iPhone 上「加入主畫面」的 App 和 Safari 資料是分開的，用捷徑匯入的話，請固定用 Safari 玩（或開啟雲端存檔讓兩邊同步）。</p>
+      <button class="btn secondary" onclick="App.testHealthLink()">🧪 用範例數字測試匯入</button>
     </div>
 
     <div class="card">
@@ -528,6 +551,14 @@
       <button onclick="App.shiftDay(-1)">◀ 前一天</button>
       <b id="date-label"></b>
       <button onclick="App.shiftDay(1)" id="next-day-btn">後一天 ▶</button>
+    </div>
+
+    <div class="card">
+      <h2>⌚ 匯入 iPhone 健康／Garmin</h2>
+      <input type="file" accept="image/*" multiple id="health-shot" style="display:none" onchange="App.healthShot(this)">
+      <button type="button" class="btn secondary" onclick="document.getElementById('health-shot').click()">📷 上傳健康／Garmin 截圖，AI 自動讀數字</button>
+      <div class="food-status" id="health-status"></div>
+      <p class="muted" style="margin:6px 0 0">可以一次選多張（睡眠、步數、體重……）。讀完會自動填進下面欄位，確認後按「交給教練」。想全自動，請到「設定 → ⌚ 連動 iPhone 健康／Garmin」設定捷徑。</p>
     </div>
 
     <div class="card">
@@ -605,9 +636,13 @@
         </div>
         <div><label class="f">時間（分鐘）</label><input type="number" inputmode="numeric" id="ex-min" placeholder="例：30"></div>
       </div>
-      <label class="f">步數（選填）</label>
-      <input type="number" inputmode="numeric" id="steps" placeholder="例：8000">
+      <div class="row3">
+        <div><label class="f">步數</label><input type="number" inputmode="numeric" id="steps" placeholder="8000"></div>
+        <div><label class="f">活動消耗 kcal</label><input type="number" inputmode="numeric" id="active-kcal" placeholder="選填"></div>
+        <div><label class="f">爬樓層</label><input type="number" inputmode="numeric" id="floors" placeholder="選填"></div>
+      </div>
       <div class="goal-hint" id="hint-ex"></div>
+      <div class="goal-hint" id="hint-steps"></div>
     </div>
 
     <div class="card">
@@ -618,6 +653,10 @@
         <div><label class="f">腰圍 cm</label><input type="number" inputmode="decimal" step="0.1" id="waist" placeholder="選填"></div>
       </div>
       <div class="goal-hint" id="hint-weight"></div>
+      <div class="row">
+        <div><label class="f">😴 昨晚睡眠（小時）</label><input type="number" inputmode="decimal" step="0.1" id="sleep" placeholder="例：7.2"></div>
+        <div><label class="f">❤️ 靜止心率</label><input type="number" inputmode="numeric" id="rest-hr" placeholder="選填"></div>
+      </div>
       <label class="f">今日心得（選填）</label>
       <textarea id="note" placeholder="今天的感覺、嘴饞的時刻、做得好的地方…"></textarea>
     </div>
@@ -765,7 +804,7 @@
     settings: {
       coachName: '呀哈教練',
       startDate: today(),
-      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, kcalMin: 1800, kcalMax: 2100, protein: 90 },
+      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, steps: 8000, sleep: 7, kcalMin: 1800, kcalMax: 2100, protein: 90 },
     },
     avatar: DEFAULT_AVATAR(),
     records: {},
@@ -793,7 +832,7 @@
   function persist() { if (!safeSet(KEY, JSON.stringify(S))) toast('⚠️ 無法儲存（瀏覽器空間不足或私密模式）'); }
 
   // ---------- record logic ----------
-  const emptyRec = () => ({ meals: { b: '', l: '', d: '', s: '' }, water: 0, noSugar: false, kcal: '', exType: '', exMin: '', steps: '', weight: '', fat: '', waist: '', note: '' });
+  const emptyRec = () => ({ meals: { b: '', l: '', d: '', s: '' }, water: 0, noSugar: false, kcal: '', exType: '', exMin: '', steps: '', weight: '', fat: '', waist: '', note: '', activeKcal: '', floors: '', sleep: '', restHR: '' });
   const SLOT_LABEL = { breakfast: '早餐', brunch: '早午餐', lunch: '午餐', afternoon: '下午', dinner: '晚餐', snack_afternoon: '下午零食', snack_evening: '晚上零食' };
   const foodOf = d => {
     const arr = (S.foods || {})[d];
@@ -819,6 +858,8 @@
     if (n === 3) items.push(['三項全記獎勵', 15]);
     if (g.exMin && (num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest') items.push([`達成運動 ${g.exMin} 分鐘`, 20]);
     if (g.water && r.water >= g.water) items.push([`達成喝水 ${g.water} 杯`, 20]);
+    if (g.steps && (num(r.steps) || 0) >= g.steps) items.push([`達成步數 ${g.steps} 步`, 20]);
+    if (g.sleep && (num(r.sleep) || 0) >= g.sleep) items.push([`達成睡眠 ${g.sleep} 小時`, 10]);
     if (r.noSugar) items.push(['沒喝含糖飲料', 20]);
     const f = r._food;
     if (f) {
@@ -1352,6 +1393,7 @@
     $('no-sugar').checked = !!r.noSugar; $('kcal').value = r.kcal;
     $('ex-type').value = r.exType; $('ex-min').value = r.exMin; $('steps').value = r.steps;
     $('weight').value = r.weight; $('fat').value = r.fat; $('waist').value = r.waist; $('note').value = r.note;
+    $('active-kcal').value = r.activeKcal; $('floors').value = r.floors; $('sleep').value = r.sleep; $('rest-hr').value = r.restHR;
     renderH26Box(curDate);
     updateHints();
   }
@@ -1363,11 +1405,13 @@
       noSugar: $('no-sugar').checked, kcal: $('kcal').value,
       exType: $('ex-type').value, exMin: $('ex-min').value, steps: $('steps').value,
       weight: $('weight').value, fat: $('fat').value, waist: $('waist').value, note: $('note').value.trim(),
+      activeKcal: $('active-kcal').value, floors: $('floors').value, sleep: $('sleep').value, restHR: $('rest-hr').value,
     };
   }
 
   function updateHints() {
     const r = readForm(), g = S.settings.goals;
+    { const st = num(r.steps) || 0, el = $('hint-steps'); el.textContent = g.steps ? (st >= g.steps ? `✓ 達成步數 ${g.steps} 步（+20）` : `步數目標 ${g.steps}，還差 ${g.steps - st} 步`) : ''; el.classList.toggle('hit', !!g.steps && st >= g.steps); }
     const chip = (id, on) => { const c = $(id); c.textContent = on ? '已記錄 ✓' : '未記錄'; c.classList.toggle('on', on); };
     chip('chip-diet', hasDiet(Object.assign(r, { _food: foodOf(curDate) }))); chip('chip-ex', hasEx(r)); chip('chip-body', hasBody(r));
     const hw = $('hint-water');
@@ -1626,6 +1670,7 @@
     $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
     $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
     $('g-kmin').value = g.kcalMin ?? ''; $('g-kmax').value = g.kcalMax ?? ''; $('g-pro').value = g.protein ?? '';
+    $('g-steps').value = g.steps ?? ''; $('g-sleep').value = g.sleep ?? '';
     $('g-startdate').value = S.settings.startDate;
     $('coach-name').value = S.settings.coachName;
     $('gm-key').value = S.settings.geminiKey || '';
@@ -1633,6 +1678,7 @@
     $('cloud-token').value = S.settings.cloudToken || '';
     setCloudStatus(S.settings.lastSync ? '上次同步：' + new Date(S.settings.lastSync).toLocaleString() : '', '');
     renderSlots(); renderNotifyLines();
+    $('hk-url').textContent = location.origin + location.pathname + '?steps=＿＿&active=＿＿&exmin=＿＿&weight=＿＿&fat=＿＿';
   }
 
   function sceneMood() {
@@ -1774,6 +1820,50 @@
   }
   function setFoodStatus(t) { $('food-status').textContent = t || ''; }
   let foodBusy = false;
+
+  // ---------- health import (iPhone Health / Garmin) ----------
+  const HK_FIELDS = { steps: 'steps', active: 'activeKcal', exmin: 'exMin', weight: 'weight', fat: 'fat', waist: 'waist', sleep: 'sleep', hr: 'restHR', floors: 'floors' };
+  const HK_LABEL = { steps: '步數', activeKcal: '活動消耗', exMin: '運動分鐘', weight: '體重', fat: '體脂', waist: '腰圍', sleep: '睡眠', restHR: '靜止心率', floors: '爬樓層' };
+  function hkNum(key, v) {
+    const m = String(v ?? '').replace(/,/g, '').match(/-?\d+(\.\d+)?/); if (!m) return null;
+    let n = parseFloat(m[0]); if (!isFinite(n) || n < 0) return null;
+    if (key === 'fat' && n > 0 && n <= 1) n = n * 100;
+    if (key === 'sleep' && n > 24) n = n / 60;
+    if (['steps', 'activeKcal', 'exMin', 'restHR', 'floors'].includes(key)) n = Math.round(n);
+    else n = Math.round(n * 10) / 10;
+    return n;
+  }
+  function applyHealth(date, vals, source) {
+    const r = Object.assign(emptyRec(), S.records[date] || {});
+    const got = [];
+    Object.entries(vals).forEach(([key, v]) => { if (v === null || v === undefined || v === '') return; r[key] = String(v); got.push(`${HK_LABEL[key]} ${v}`); });
+    if (!got.length) return [];
+    if ((num(r.exMin) || 0) > 0 && !r.exType) r.exType = '其他';
+    r.updatedAt = new Date().toISOString(); r.source = source;
+    S.records[date] = r; persist();
+    return got;
+  }
+  function importFromURL() {
+    const q = new URLSearchParams(location.search);
+    if (![...q.keys()].some(k => HK_FIELDS[k])) return false;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date') : today();
+    const vals = {};
+    Object.entries(HK_FIELDS).forEach(([p, key]) => { if (q.has(p)) vals[key] = hkNum(key, q.get(p)); });
+    const got = applyHealth(date, vals, 'shortcut');
+    history.replaceState(null, '', location.pathname);
+    if (got.length) {
+      cloudPush([date]);
+      setTimeout(() => { toast('⌚ 已匯入：' + got.join('、')); if (!busy) setCoach('cheer', `手錶數據收到了！${got.slice(0, 3).join('、')}！`); }, 900);
+    }
+    return got.length > 0;
+  }
+  async function readHealthShots(images) {
+    const prompt = `這些是 iPhone「健康」App 或 Garmin Connect 的截圖。請讀出畫面上「最近一天」的數值，看不到的欄位填 null，不要猜。
+只回傳 JSON：
+{"date": "YYYY-MM-DD 或 null", "steps": 步數, "activeKcal": 活動消耗大卡（Garmin 的「活躍」）, "exerciseMinutes": 運動分鐘, "weight": 體重公斤, "fat": 體脂率百分比數字, "sleepHours": 睡眠時數（7時13分＝7.2）, "restingHR": 靜止心率, "floors": 爬樓層數, "note": "其他值得注意的數據（例如睡眠分數、最大攝氧量），30 字內"}`;
+    const parts = [{ text: prompt }].concat(images.map(im => ({ inlineData: { mimeType: im.mimeType, data: im.base64 } })));
+    return parseJSON(await geminiCall({ contents: [{ parts }] }, true));
+  }
 
   // ---------- rewards: level unlocks ----------
   const LOCKS = {
@@ -1920,7 +2010,7 @@
       if (!loggedCount(r)) { lines.push(`- ${d}：沒有紀錄`); continue; }
       let meals = ['b', 'l', 'd', 's'].map((k, j) => r.meals[k] ? ['早', '午', '晚', '點心'][j] + ':' + r.meals[k] : '').filter(Boolean).join('、');
       if (r._food) meals = `共 ${r._food.kcal} kcal、蛋白質 ${r._food.protein} g：` + r._food.items.map(x => `${x.slot || x.col}${x.snack ? '(零食)' : ''} ${x.name} ${x.kcal}kcal/${x.protein}g`).join('；') + (meals ? '；另記：' + meals : '');
-      lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${r.noSugar ? '，無含糖飲料' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.note ? '；心得：' + r.note : ''}`);
+      lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${r.noSugar ? '，無含糖飲料' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.activeKcal ? '；活動消耗 ' + r.activeKcal + ' kcal' : ''}${r.sleep ? '；睡眠 ' + r.sleep + ' 小時' : ''}${r.restHR ? '；靜止心率 ' + r.restHR : ''}${r.floors ? '；爬 ' + r.floors + ' 樓' : ''}${r.note ? '；心得：' + r.note : ''}`);
     }
     return lines.join('\n');
   }
@@ -2037,6 +2127,7 @@
       g.water = Math.max(0, parseInt($('g-water').value, 10) || 0);
       g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('g-week').value, 10) || 0));
       g.kcalMin = Math.max(0, parseInt($('g-kmin').value, 10) || 0); g.kcalMax = Math.max(0, parseInt($('g-kmax').value, 10) || 0); g.protein = Math.max(0, parseInt($('g-pro').value, 10) || 0);
+      g.steps = Math.max(0, parseInt($('g-steps').value, 10) || 0); g.sleep = Math.max(0, parseFloat($('g-sleep').value) || 0);
       const sd = $('g-startdate').value; if (sd) S.settings.startDate = sd > today() ? today() : sd;
       persist(); toast('目標已儲存！');
     },
@@ -2121,6 +2212,26 @@
       arr.splice(i, 1); if (!arr.length) delete S.foods[curDate];
       persist(); refreshStats(); renderH26Box(curDate); updateHints();
     },
+    // ---- health import ----
+    async healthShot(input) {
+      const files = Array.from(input.files || []).slice(0, 6); input.value = '';
+      if (!files.length) return;
+      if (!gmKey()) { toast('請先到「設定 → 🤖 Gemini AI 設定」貼上 API key'); return; }
+      const st = $('health-status');
+      try {
+        st.textContent = `🤖 讀取 ${files.length} 張截圖中……`;
+        const imgs = await Promise.all(files.map(f => compressImage(f, 1400)));
+        const r = await readHealthShots(imgs);
+        const map = { steps: ['steps', r.steps], 'active-kcal': ['activeKcal', r.activeKcal], 'ex-min': ['exMin', r.exerciseMinutes], weight: ['weight', r.weight], fat: ['fat', r.fat], sleep: ['sleep', r.sleepHours], 'rest-hr': ['restHR', r.restingHR], floors: ['floors', r.floors] };
+        const got = [];
+        Object.entries(map).forEach(([id, [key, v]]) => { const n = hkNum(key, v); if (n !== null && v !== null) { $(id).value = n; got.push(`${HK_LABEL[key]} ${n}`); } });
+        if ((num($('ex-min').value) || 0) > 0 && !$('ex-type').value) $('ex-type').value = '其他';
+        if (r.note) $('note').value = ($('note').value ? $('note').value + '\n' : '') + '⌚ ' + r.note;
+        updateHints();
+        st.textContent = got.length ? `✅ 讀到：${got.join('、')}${r.date && r.date !== curDate ? `（截圖日期 ${r.date}，目前填在 ${curDate}）` : ''}。確認後按最下面「交給教練」` : '😵 沒讀到數字，換一張清楚一點的截圖試試';
+      } catch (e) { st.textContent = '❌ ' + e.message; }
+    },
+    testHealthLink() { location.href = location.pathname + '?steps=6872&active=416&weight=100.4&fat=30&sleep=7.2&hr=62&floors=8'; },
     // ---- gemini key ----
     async saveGeminiKey() {
       S.settings.geminiKey = $('gm-key').value.trim(); gmModels = null; persist();
@@ -2308,9 +2419,10 @@
   load();
   renderGymBG();
   $('lpc-authors').textContent = LPC_AUTHORS.join(', ');
-  ['m-b', 'm-l', 'm-d', 'm-s', 'kcal', 'ex-type', 'ex-min', 'steps', 'weight', 'fat', 'waist'].forEach(id => $(id).addEventListener('input', updateHints));
+  ['m-b', 'm-l', 'm-d', 'm-s', 'kcal', 'ex-type', 'ex-min', 'steps', 'weight', 'fat', 'waist', 'sleep'].forEach(id => $(id).addEventListener('input', updateHints));
   $('no-sugar').addEventListener('change', updateHints);
   place('player', pos.player); place('coach', pos.coach);
+  importFromURL();
   refreshStats(); renderPlayer(); fillForm();
 
   // tap to walk / tap coach to register
