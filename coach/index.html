@@ -1795,47 +1795,84 @@
   }
 
   // ---------- Gemini (direct from browser, key stays on this phone) ----------
-  const GM_FALLBACK = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest'];
+  const GM_FALLBACK = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
+  const GM_CACHE = 'coachGame.gmModels';
   let gmModels = null;
   const gmKey = () => (S.settings.geminiKey || '').trim();
   async function geminiModels() {
     if (gmModels) return gmModels;
+    // 跟健康26 一樣：模型清單快取 6 小時，不用每次都查
+    try {
+      const c = JSON.parse(safeGet(GM_CACHE) || 'null');
+      if (c && c.key === gmKey().slice(-6) && Date.now() - c.t < 6 * 3600e3 && c.list.length) { gmModels = c.list; return gmModels; }
+    } catch (e) {}
     let found = [];
     try {
-      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(gmKey()));
+      const res = await fetchT('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key=' + encodeURIComponent(gmKey()), {}, 8000);
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
       found = (data.models || [])
         .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
         .map(m => m.name.replace('models/', ''))
-        .filter(n => n.includes('flash') && !/(image|tts|audio|live|embed|8b|1\.5|2\.0)/.test(n));
+        .filter(n => n.includes('flash') && !/(image|tts|audio|live|embed|8b|1\.5|2\.0|thinking)/.test(n));
       const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]);
       found.sort((a, b) => (ver(b) - ver(a)) || (a.includes('lite') - b.includes('lite')) || (a.includes('preview') - b.includes('preview')));
     } catch (e) { if (/API key|API_KEY|permission/i.test(e.message)) throw e; }
     gmModels = [...new Set([...found.slice(0, 4), ...GM_FALLBACK])];
+    safeSet(GM_CACHE, JSON.stringify({ key: gmKey().slice(-6), t: Date.now(), list: gmModels }));
     return gmModels;
+  }
+  function fetchT(url, opt, ms) {
+    const ac = new AbortController(); const t = setTimeout(() => ac.abort(), ms);
+    return fetch(url, Object.assign({}, opt, { signal: ac.signal })).finally(() => clearTimeout(t));
+  }
+  // 關掉／降低「思考」：Gemini 2.5／3 預設會先思考，簡單的估熱量不需要，關掉快很多
+  function thinkingFor(model) {
+    if (/gemini-3/.test(model)) return { thinkingLevel: 'low' };
+    if (/2\.5-flash/.test(model)) return { thinkingBudget: 0 };
+    return null;
   }
   async function geminiCall(payload, json) {
     if (!gmKey()) throw new Error('還沒設定 Gemini API key（設定 → 🤖 Gemini AI 設定）');
-    const models = await geminiModels();
+    const all = await geminiModels();
+    // 上次成功的模型排第一，不用每次從頭試
+    const good = S.settings.gmGood;
+    const models = good && all.includes(good) ? [good, ...all.filter(m => m !== good)] : all;
     let last = '';
     for (const model of models) {
-      const body = JSON.parse(JSON.stringify(payload));
-      body.generationConfig = Object.assign({ temperature: json ? 0.2 : 0.8 }, body.generationConfig || {});
-      if (json) body.generationConfig.responseMimeType = 'application/json';
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(gmKey())}`,
-          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        const data = await res.json().catch(() => ({}));
+      let useThinking = (S.settings.gmNoThink || []).includes(model) ? null : thinkingFor(model);
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const body = JSON.parse(JSON.stringify(payload));
+        body.generationConfig = Object.assign({ temperature: json ? 0.2 : 0.8 }, body.generationConfig || {});
+        if (json) { body.generationConfig.responseMimeType = 'application/json'; body.generationConfig.maxOutputTokens = 400; }
+        if (useThinking) body.generationConfig.thinkingConfig = useThinking;
+        let res, data;
+        try {
+          res = await fetchT(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(gmKey())}`,
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, json ? 20000 : 30000);
+          data = await res.json().catch(() => ({}));
+        } catch (e) { last = `[${model}] 逾時`; break; }
         const parts = (((data.candidates || [])[0] || {}).content || {}).parts;
-        if (!data.error && parts) return parts.map(p => p.text || '').join('').trim();
-        last = `[${model}] ${(data.error && data.error.message) || res.status}`;
-        if (data.error && /API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(data.error.message + data.error.status)) throw new Error('API key 無效，請到設定重新貼上');
-        if (data.error && (data.error.code === 503 || data.error.code === 429 || /overloaded|high demand/i.test(data.error.message)) && attempt === 0) { await new Promise(r => setTimeout(r, 900)); continue; }
+        if (!data.error && parts) {
+          if (S.settings.gmGood !== model) { S.settings.gmGood = model; persist(); }
+          return parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
+        }
+        const msg = (data.error && data.error.message) || String(res.status);
+        last = `[${model}] ${msg}`;
+        if (data.error && /API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(msg + data.error.status)) throw new Error('API key 無效，請到設定重新貼上');
+        if (useThinking && /thinking/i.test(msg)) { useThinking = null; S.settings.gmNoThink = [...new Set([...(S.settings.gmNoThink || []), model])]; persist(); continue; } // 這個模型不支援思考設定，拿掉重送
+        if (data.error && (data.error.code === 503 || data.error.code === 429 || /overloaded|high demand/i.test(msg)) && attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
         break;
       }
+      if (S.settings.gmGood === model) { S.settings.gmGood = ''; persist(); }
     }
     throw new Error('AI 呼叫失敗：' + last);
+  }
+  // 等待時顯示秒數
+  function ticker(set, label) {
+    const t0 = Date.now(); set(`${label}（0 秒）`);
+    const id = setInterval(() => set(`${label}（${Math.round((Date.now() - t0) / 1000)} 秒）`), 1000);
+    return () => { clearInterval(id); return ((Date.now() - t0) / 1000).toFixed(1); };
   }
   const parseJSON = t => JSON.parse(String(t).replace(/```json/gi, '').replace(/```/g, '').trim());
   function compressImage(file, max = 1024) {
@@ -2245,10 +2282,10 @@
         const imgs = await Promise.all(files.map(f => compressImage(f)));
         $('fd-time').value = '';
         showDraft({}, imgs.map(i => i.dataUrl));
-        setFoodStatus(`🤖 Gemini 辨識 ${imgs.length} 張照片中……`);
+        const stop = ticker(setFoodStatus, `🤖 Gemini 辨識 ${imgs.length} 張照片中……`);
         if (!busy) setCoach('inspect', '讓我看看你吃了什麼……');
-        const r = await analyzeFoodImages(imgs);
-        showDraft(r); setFoodStatus('✅ 辨識完成，可以修改數字後按「加入紀錄」');
+        let r; try { r = await analyzeFoodImages(imgs); } finally { var sec = stop(); }
+        showDraft(r); setFoodStatus(`✅ 辨識完成（${sec} 秒），可以修改數字後按「加入紀錄」`);
       } catch (e) { setFoodStatus('❌ ' + e.message); }
       finally { foodBusy = false; }
     },
@@ -2259,9 +2296,10 @@
       if (foodBusy) return; foodBusy = true;
       try {
         $('fd-time').value = '';
-        showDraft({ foodName: t }, []); setFoodStatus('🤖 AI 查詢熱量與蛋白質中……');
-        const r = await estimateFoodByText(t);
-        showDraft(Object.assign({ foodName: t }, r)); setFoodStatus('✅ 查詢完成，可以修改數字後按「加入紀錄」');
+        showDraft({ foodName: t }, []);
+        const stop = ticker(setFoodStatus, '🤖 AI 查詢營養成分中……');
+        let r; try { r = await estimateFoodByText(t); } finally { var sec = stop(); }
+        showDraft(Object.assign({ foodName: t }, r)); setFoodStatus(`✅ 查詢完成（${sec} 秒），可以修改數字後按「加入紀錄」`);
       } catch (e) { setFoodStatus('❌ ' + e.message); }
       finally { foodBusy = false; }
     },
@@ -2334,7 +2372,7 @@
     testHealthLink() { location.href = location.pathname + '?steps=6872&active=416&weight=100.4&fat=30&sleep=7.2&hr=62&floors=8'; },
     // ---- gemini key ----
     async saveGeminiKey() {
-      S.settings.geminiKey = $('gm-key').value.trim(); gmModels = null; persist();
+      S.settings.geminiKey = $('gm-key').value.trim(); gmModels = null; S.settings.gmGood = ''; safeDel(GM_CACHE); persist();
       const st = $('gm-status');
       if (!S.settings.geminiKey) { st.textContent = '已清除 key'; st.className = 'sync-status'; return; }
       st.textContent = '測試中…'; st.className = 'sync-status';
