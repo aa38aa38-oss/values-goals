@@ -709,6 +709,8 @@
         </div>
         <div><label class="f">時間（分鐘）</label><input type="number" inputmode="numeric" id="ex-min" placeholder="例：30"></div>
       </div>
+      <button type="button" class="btn secondary" style="margin-top:8px" onclick="App.exAdd()">➕ 加入這筆運動</button>
+      <div id="ex-list" style="margin-top:6px"></div>
       <div class="row3">
         <div><label class="f">步數</label><input type="number" inputmode="numeric" id="steps" placeholder="8000"></div>
         <div><label class="f">活動消耗 kcal</label><input type="number" inputmode="numeric" id="active-kcal" placeholder="選填"></div>
@@ -884,6 +886,7 @@
     },
     avatar: DEFAULT_AVATAR(),
     records: {},
+    exercises: {},
     lastAttack: '',
   });
 
@@ -902,6 +905,7 @@
         S.records = d.records || {};
         S.foods = d.foods || {};
         S.decor = d.decor || {};
+        S.exercises = d.exercises || {};
       } catch (e) {}
     }
   }
@@ -1480,6 +1484,34 @@
       + `<div><span>合計</span><span>${total >= 0 ? '+' : ''}${total}</span></div>`;
   }
 
+  function exList(d) {
+    const arr = (S.exercises || {})[d];
+    if (arr && arr.length) return arr;
+    const r = S.records[d];
+    if (r && r.exType !== 'rest' && (num(r.exMin) || 0) > 0) return [{ id: 'legacy', type: r.exType || '運動', min: num(r.exMin), time: '' }];
+    return [];
+  }
+  function exPending() {
+    const t = $('ex-type').value, m = num($('ex-min').value) || 0;
+    return t && t !== 'rest' && m > 0 ? { type: t, min: m } : null;
+  }
+  function renderExList(d) {
+    const el = $('ex-list'); if (!el) return;
+    const list = exList(d);
+    if (!list.length) { el.innerHTML = rec(d).exType === 'rest' ? '<p class="muted" style="margin:4px 0">今天是休息日 😴</p>' : '<p class="muted" style="margin:4px 0">今天還沒有運動紀錄。選項目、填分鐘，按「➕ 加入這筆運動」。</p>'; return; }
+    const total = list.reduce((a, x) => a + (num(x.min) || 0), 0);
+    el.innerHTML = list.map(x => `<div class="food-item"><div class="nm">🏃 ${esc(x.type)}<small>${x.time ? esc(x.time) : '已記錄'}</small></div>
+      <div class="kc">${x.min} 分鐘</div>${x.id === 'legacy' ? '' : `<button onclick="App.exDel('${x.id}')" aria-label="刪除">✕</button>`}</div>`).join('')
+      + `<div class="food-total"><span>今日運動合計</span><span>${total} 分鐘${S.settings.goals.exMin ? ' / 目標 ' + S.settings.goals.exMin : ''}</span></div>`;
+  }
+  function syncExToRecord(d) {
+    const list = (S.exercises || {})[d] || [];
+    const r = Object.assign(emptyRec(), S.records[d] || {});
+    if (list.length) { r.exType = [...new Set(list.map(x => x.type))].join('、'); r.exMin = String(list.reduce((a, x) => a + (num(x.min) || 0), 0)); }
+    else if (r.exType !== 'rest') { r.exType = ''; r.exMin = ''; }
+    r.updatedAt = new Date().toISOString();
+    S.records[d] = r;
+  }
   function fillForm() {
     const r = rec(curDate);
     $('date-label').textContent = (curDate === today() ? '今天 ' : '') + nice(curDate);
@@ -1488,7 +1520,7 @@
     $('m-b').value = r.meals.b; $('m-l').value = r.meals.l; $('m-d').value = r.meals.d; $('m-s').value = r.meals.s;
     $('water-val').dataset.v = r.water; $('water-val').textContent = r.water + ' 杯';
     $('no-sugar').checked = !!r.noSugar; $('kcal').value = r.kcal;
-    $('ex-type').value = r.exType; $('ex-min').value = r.exMin; $('steps').value = r.steps;
+    $('ex-type').value = r.exType === 'rest' ? 'rest' : ''; $('ex-min').value = ''; renderExList(curDate); $('steps').value = r.steps;
     $('weight').value = r.weight; $('fat').value = r.fat; $('waist').value = r.waist; $('note').value = r.note;
     $('active-kcal').value = r.activeKcal; $('floors').value = r.floors; $('sleep').value = r.sleep; $('rest-hr').value = r.restHR;
     renderH26Box(curDate);
@@ -1500,7 +1532,10 @@
       meals: { b: $('m-b').value.trim(), l: $('m-l').value.trim(), d: $('m-d').value.trim(), s: $('m-s').value.trim() },
       water: parseInt($('water-val').dataset.v || '0', 10) || 0,
       noSugar: $('no-sugar').checked, kcal: $('kcal').value,
-      exType: $('ex-type').value, exMin: $('ex-min').value, steps: $('steps').value,
+      ...(() => { const list = exList(curDate), pend = exPending(); const all = pend ? [...list, pend] : list;
+        if (!all.length) return { exType: $('ex-type').value === 'rest' ? 'rest' : '', exMin: '' };
+        return { exType: [...new Set(all.map(x => x.type))].join('、'), exMin: String(all.reduce((a, x) => a + (num(x.min) || 0), 0)) }; })(),
+      steps: $('steps').value,
       weight: $('weight').value, fat: $('fat').value, waist: $('waist').value, note: $('note').value.trim(),
       activeKcal: $('active-kcal').value, floors: $('floors').value, sleep: $('sleep').value, restHR: $('rest-hr').value,
     };
@@ -2437,6 +2472,7 @@
     },
     saveDay() {
       if (busy) return;
+      { const pend = exPending(); if (pend) { (S.exercises[curDate] = S.exercises[curDate] || []).push({ id: 'e' + Date.now().toString(36), type: pend.type, min: pend.min, time: curDate === today() ? nowTime() : '' }); $('ex-type').value = ''; $('ex-min').value = ''; } }
       const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       const prevBody = hasBody(rec(curDate));
       const r = readForm();
@@ -2466,6 +2502,27 @@
       if (!prevBody && hasBody(r) && C.reached) toast('🎉 達成目標體重！+200 分！');
     },
     pokeCoach() { pokeCoach(); },
+    exAdd() {
+      const pend = exPending();
+      if (!pend) { toast($('ex-type').value === 'rest' ? '休息日不用加，直接按「交給教練」' : '請選運動項目並填分鐘數'); return; }
+      S.exercises = S.exercises || {};
+      const arr = S.exercises[curDate] = S.exercises[curDate] || [];
+      const leg = S.records[curDate];
+      if (!arr.length && leg && leg.exType !== 'rest' && (num(leg.exMin) || 0) > 0) arr.push({ id: 'e0' + Date.now().toString(36), type: leg.exType || '運動', min: num(leg.exMin), time: '' });
+      arr.push({ id: 'e' + Date.now().toString(36), type: pend.type, min: pend.min, time: curDate === today() ? nowTime() : '' });
+      syncExToRecord(curDate); persist();
+      $('ex-type').value = ''; $('ex-min').value = '';
+      refreshStats(); renderExList(curDate); updateHints(); cloudPush([curDate]);
+      const total = exList(curDate).reduce((a, x) => a + (num(x.min) || 0), 0), g = S.settings.goals.exMin || 0;
+      toast(g && total >= g ? `💪 教練：${pend.type} ${pend.min} 分鐘！今天共 ${total} 分鐘，達標！` : `🏃 教練：記下來了！今天共 ${total} 分鐘${g ? '，還差 ' + (g - total) + ' 分鐘' : ''}`);
+    },
+    exDel(id) {
+      const arr = (S.exercises || {})[curDate] || [];
+      const i = arr.findIndex(x => x.id === id); if (i < 0) return;
+      if (!confirm(`刪除「${arr[i].type} ${arr[i].min} 分鐘」？`)) return;
+      arr.splice(i, 1); if (!arr.length) delete S.exercises[curDate];
+      syncExToRecord(curDate); persist(); refreshStats(); renderExList(curDate); updateHints();
+    },
     // ---- creator ----
     ccTab(k) { ccCat = k; renderCreators(); },
     ccTurn(n) { ccDir = [DIR.down, DIR.left, DIR.up, DIR.right][([DIR.down, DIR.left, DIR.up, DIR.right].indexOf(ccDir) + n + 4) % 4]; [$('creator'), $('ob-creator')].forEach(r => r && r._doll && r._doll.play(ccWalk ? 'walk' : 'idle', ccDir)); },
