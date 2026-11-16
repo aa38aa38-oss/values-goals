@@ -242,6 +242,9 @@
   #sheet .panel { position: absolute; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto; background: var(--bg); border-radius: 22px 22px 0 0; padding: 0 16px calc(20px + env(safe-area-inset-bottom)); animation: up .25s ease-out; }
   @keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
   #sheet .panel-inner { max-width: 520px; margin: 0 auto; }
+  .card-save { margin-top: 12px; padding: 11px; font-size: .95rem; }
+  .sheet-foot { position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(255,244,227,0), var(--bg) 30%); padding: 14px 0 4px; z-index: 2; }
+  .sheet-foot .btn { margin: 0; box-shadow: 0 4px 14px rgba(232, 80, 91, .35); }
   .sheet-head { position: sticky; top: 0; background: var(--bg); padding: 12px 0 8px; display: flex; align-items: center; gap: 10px; z-index: 2; }
   .sheet-head .mini { width: 48px; height: 48px; flex: none; display: flex; align-items: flex-end; justify-content: center; }
   .sheet-head .mini img, .sheet-head .mini svg { max-width: 100%; max-height: 100%; }
@@ -688,6 +691,7 @@
       </div>
       <div class="goal-hint" id="hint-water"></div>
       <label class="check"><input type="checkbox" id="no-sugar"> 今天沒有喝含糖飲料 🥤❌</label>
+      <button type="button" class="btn card-save" onclick="App.saveDay()">📮 交給教練</button>
     </div>
 
     <div class="card">
@@ -712,6 +716,7 @@
       </div>
       <div class="goal-hint" id="hint-ex"></div>
       <div class="goal-hint" id="hint-steps"></div>
+      <button type="button" class="btn card-save" onclick="App.saveDay()">📮 交給教練</button>
     </div>
 
     <div class="card">
@@ -728,9 +733,9 @@
       </div>
       <label class="f">今日心得（選填）</label>
       <textarea id="note" placeholder="今天的感覺、嘴饞的時刻、做得好的地方…"></textarea>
+      <button type="button" class="btn card-save" onclick="App.saveDay()">📮 交給教練</button>
     </div>
-
-    <button class="btn" onclick="App.saveDay()">📮 交給教練（儲存）</button>
+    <div class="sheet-foot"><button class="btn" onclick="App.saveDay()">📮 交給教練（儲存全部）</button></div>
   </div></div>
 </div>
 
