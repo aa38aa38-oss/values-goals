@@ -579,6 +579,8 @@
       <input type="password" id="gm-key" placeholder="貼上你的 API key" autocomplete="off" autocapitalize="off">
       <button class="btn" onclick="App.saveGeminiKey()">💾 儲存並測試</button>
       <div class="sync-status" id="gm-status"></div>
+      <button class="btn secondary" style="margin-top:8px" onclick="App.gmSpeed()">⚡ 測速，自動選最快的模型</button>
+      <div class="breakdown" id="gm-speed" style="margin-top:6px"></div>
     </div>
 
     <div class="card">
@@ -1822,6 +1824,7 @@
     safeSet(GM_CACHE, JSON.stringify({ key: gmKey().slice(-6), t: Date.now(), list: gmModels }));
     return gmModels;
   }
+  let gmLast = null, gmTries = [];
   function fetchT(url, opt, ms) {
     const ac = new AbortController(); const t = setTimeout(() => ac.abort(), ms);
     return fetch(url, Object.assign({}, opt, { signal: ac.signal })).finally(() => clearTimeout(t));
@@ -1838,8 +1841,9 @@
     // 上次成功的模型排第一，不用每次從頭試
     const good = S.settings.gmGood;
     const models = good && all.includes(good) ? [good, ...all.filter(m => m !== good)] : all;
-    let last = '';
+    let last = ''; gmTries = [];
     for (const model of models) {
+      const tm0 = Date.now();
       let useThinking = (S.settings.gmNoThink || []).includes(model) ? null : thinkingFor(model);
       for (let attempt = 0; attempt < 3; attempt++) {
         const body = JSON.parse(JSON.stringify(payload));
@@ -1851,14 +1855,15 @@
           res = await fetchT(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(gmKey())}`,
             { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, json ? 20000 : 30000);
           data = await res.json().catch(() => ({}));
-        } catch (e) { last = `[${model}] 逾時`; break; }
+        } catch (e) { last = `[${model}] 逾時`; gmTries.push(`${model} 逾時`); break; }
         const parts = (((data.candidates || [])[0] || {}).content || {}).parts;
         if (!data.error && parts) {
           if (S.settings.gmGood !== model) { S.settings.gmGood = model; persist(); }
+          gmLast = { model, tries: gmTries };
           return parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
         }
         const msg = (data.error && data.error.message) || String(res.status);
-        last = `[${model}] ${msg}`;
+        last = `[${model}] ${msg}`; gmTries.push(`${model} 失敗 ${((Date.now() - tm0) / 1000).toFixed(1)} 秒`);
         if (data.error && /API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(msg + data.error.status)) throw new Error('API key 無效，請到設定重新貼上');
         if (useThinking && /thinking/i.test(msg)) { useThinking = null; S.settings.gmNoThink = [...new Set([...(S.settings.gmNoThink || []), model])]; persist(); continue; } // 這個模型不支援思考設定，拿掉重送
         if (data.error && (data.error.code === 503 || data.error.code === 429 || /overloaded|high demand/i.test(msg)) && attempt === 0) { await new Promise(r => setTimeout(r, 800)); continue; }
@@ -1867,6 +1872,40 @@
       if (S.settings.gmGood === model) { S.settings.gmGood = ''; persist(); }
     }
     throw new Error('AI 呼叫失敗：' + last);
+  }
+  // 測速：同時問每個候選模型，選最快且能正確回 JSON 的
+  async function geminiSpeedTest(onRow) {
+    const all = await geminiModels();
+    const cand = [...new Set([...all, 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'])].slice(0, 7);
+    const prompt = '估算「蔥抓餅一片」的營養。只回傳 JSON：{"calories":整數,"protein":數字,"fat":數字,"carbs":數字}';
+    const results = await Promise.all(cand.map(async model => {
+      const t0 = Date.now();
+      const tryOnce = async (thinking) => {
+        const gc = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 200 };
+        if (thinking) gc.thinkingConfig = thinking;
+        const res = await fetchT(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(gmKey())}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: gc }) }, 25000);
+        return res.json();
+      };
+      try {
+        let th = (S.settings.gmNoThink || []).includes(model) ? null : thinkingFor(model);
+        let d = await tryOnce(th);
+        if (d.error && th && /thinking/i.test(d.error.message)) { S.settings.gmNoThink = [...new Set([...(S.settings.gmNoThink || []), model])]; d = await tryOnce(null); }
+        if (d.error) throw new Error(d.error.message.slice(0, 40));
+        const txt = (((d.candidates || [])[0] || {}).content || {}).parts.filter(p => !p.thought).map(p => p.text).join('');
+        const j = parseJSON(txt); if (!j.calories) throw new Error('回傳格式不對');
+        const r = { model, sec: (Date.now() - t0) / 1000, ok: true, kcal: j.calories };
+        onRow && onRow(r); return r;
+      } catch (e) { const r = { model, sec: (Date.now() - t0) / 1000, ok: false, err: e.name === 'AbortError' ? '逾時' : e.message }; onRow && onRow(r); return r; }
+    }));
+    const ok = results.filter(r => r.ok).sort((a, b) => a.sec - b.sec);
+    if (ok.length) {
+      S.settings.gmGood = ok[0].model;
+      gmModels = [...ok.map(r => r.model), ...all.filter(m => !ok.some(r => r.model === m))];
+      safeSet(GM_CACHE, JSON.stringify({ key: gmKey().slice(-6), t: Date.now(), list: gmModels }));
+      persist();
+    }
+    return { results, best: ok[0] };
   }
   // 等待時顯示秒數
   function ticker(set, label) {
@@ -2285,7 +2324,7 @@
         const stop = ticker(setFoodStatus, `🤖 Gemini 辨識 ${imgs.length} 張照片中……`);
         if (!busy) setCoach('inspect', '讓我看看你吃了什麼……');
         let r; try { r = await analyzeFoodImages(imgs); } finally { var sec = stop(); }
-        showDraft(r); setFoodStatus(`✅ 辨識完成（${sec} 秒），可以修改數字後按「加入紀錄」`);
+        showDraft(r); setFoodStatus(`✅ 辨識完成（${sec} 秒・${gmLast ? gmLast.model : ''}${gmLast && gmLast.tries.length ? '・先失敗：' + gmLast.tries.join('、') : ''}），可以修改數字後按「加入紀錄」`);
       } catch (e) { setFoodStatus('❌ ' + e.message); }
       finally { foodBusy = false; }
     },
@@ -2299,7 +2338,7 @@
         showDraft({ foodName: t }, []);
         const stop = ticker(setFoodStatus, '🤖 AI 查詢營養成分中……');
         let r; try { r = await estimateFoodByText(t); } finally { var sec = stop(); }
-        showDraft(Object.assign({ foodName: t }, r)); setFoodStatus(`✅ 查詢完成（${sec} 秒），可以修改數字後按「加入紀錄」`);
+        showDraft(Object.assign({ foodName: t }, r)); setFoodStatus(`✅ 查詢完成（${sec} 秒・${gmLast ? gmLast.model : ''}${gmLast && gmLast.tries.length ? '・先失敗：' + gmLast.tries.join('、') : ''}），可以修改數字後按「加入紀錄」`);
       } catch (e) { setFoodStatus('❌ ' + e.message); }
       finally { foodBusy = false; }
     },
@@ -2381,6 +2420,16 @@
         const t = await geminiCall({ contents: [{ parts: [{ text: '用一句繁體中文、15 字內替減脂學員加油' }] }] }, false);
         st.textContent = `✅ 可以使用（模型：${ms[0]}）教練說：「${t}」`; st.className = 'sync-status ok';
       } catch (e) { st.textContent = '❌ ' + e.message; st.className = 'sync-status err'; }
+    },
+    async gmSpeed() {
+      if (!gmKey()) { toast('請先貼上 API key'); return; }
+      const box = $('gm-speed'); box.innerHTML = '<p class="muted" style="margin:0">同時測試各模型中，最多 25 秒……</p>';
+      const rows = [];
+      const draw = () => { box.innerHTML = rows.sort((a, b) => (b.ok - a.ok) || a.sec - b.sec).map(r => `<div><span>${r.ok ? '✅' : '❌'} ${esc(r.model)}</span><span>${r.ok ? r.sec.toFixed(1) + ' 秒' : esc(r.err)}</span></div>`).join(''); };
+      try {
+        const { best } = await geminiSpeedTest(r => { rows.push(r); draw(); });
+        box.insertAdjacentHTML('beforeend', best ? `<p class="muted" style="margin:6px 0 0">👉 之後優先使用最快的 <b>${esc(best.model)}</b>（${best.sec.toFixed(1)} 秒）</p>` : '<p class="muted" style="margin:6px 0 0">😵 全部失敗，請檢查 API key</p>');
+      } catch (e) { box.innerHTML = '❌ ' + esc(e.message); }
     },
     // ---- rewards ----
     toggleDecor(id, on) { S.decor[id] = on; persist(); renderGymBG(); },
