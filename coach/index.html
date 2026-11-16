@@ -535,6 +535,14 @@
         <div><label class="f">欄數</label><input type="number" id="sheet-cols" value="5" min="1" max="10"></div>
         <div><label class="f">列數</label><input type="number" id="sheet-rows" value="2" min="1" max="10"></div>
       </div>
+      <input type="file" accept="image/*" multiple id="auto-crop-file" style="display:none" onchange="App.autoCrop(this)">
+      <button class="btn" style="margin-top:10px" onclick="document.getElementById('auto-crop-file').click()">✂️ 自動裁切（一張圖裡有很多貼圖）</button>
+      <p class="muted" style="margin:4px 0 0">選一張或多張圖片，自動找出每個獨立的圖案，再點選要放到哪個動作。只在這支手機處理，不會上傳。</p>
+      <div id="crop-box" style="display:none;margin-top:10px">
+        <div class="slots" id="crop-list"></div>
+        <button class="btn" style="margin-top:8px" onclick="App.cropSave()">💾 套用選好的動作</button>
+        <button class="btn ghost" onclick="App.cropClose()">關閉</button>
+      </div>
       <input type="file" accept="image/*" id="sheet-file" style="display:none" onchange="App.uploadSheet(this)">
       <button class="btn secondary" onclick="document.getElementById('sheet-file').click()">🖼️ 上傳動作表</button>
       <button class="btn ghost" onclick="App.clearSlots()">清除所有教練圖片</button>
@@ -1597,6 +1605,43 @@
       im.onload = () => { res(im); URL.revokeObjectURL(url); }; im.onerror = rej; im.src = url;
     });
   }
+  // 自動找出圖片裡每個獨立的圖案（非白色區塊），回傳外框
+  function findBlobs(canvas) {
+    const W = canvas.width, H = canvas.height, ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const d = ctx.getImageData(0, 0, W, H).data;
+    const CELL = Math.max(3, Math.round(Math.max(W, H) / 220));
+    const gw = Math.ceil(W / CELL), gh = Math.ceil(H / CELL);
+    const ink = new Uint8Array(gw * gh);
+    for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) {
+      const i = (y * W + x) * 4;
+      if (d[i + 3] > 40 && Math.min(d[i], d[i + 1], d[i + 2]) < 225) ink[Math.floor(y / CELL) * gw + Math.floor(x / CELL)]++;
+    }
+    const on = new Uint8Array(gw * gh); for (let i = 0; i < on.length; i++) on[i] = ink[i] >= 2 ? 1 : 0;
+    // 擴張，讓同一個圖案的字和身體連在一起
+    const R = 2, grown = new Uint8Array(gw * gh);
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) if (on[y * gw + x])
+      for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const yy = y + dy, xx = x + dx; if (yy >= 0 && yy < gh && xx >= 0 && xx < gw) grown[yy * gw + xx] = 1; }
+    const seen = new Uint8Array(gw * gh), boxes = [];
+    for (let i = 0; i < grown.length; i++) {
+      if (!grown[i] || seen[i]) continue;
+      let x0 = gw, y0 = gh, x1 = 0, y1 = 0, n = 0; const st = [i]; seen[i] = 1;
+      while (st.length) {
+        const k = st.pop(), x = k % gw, y = (k / gw) | 0; n++;
+        if (on[k]) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy, kk = yy * gw + xx; if (xx >= 0 && xx < gw && yy >= 0 && yy < gh && grown[kk] && !seen[kk]) { seen[kk] = 1; st.push(kk); } }
+      }
+      if (x1 < x0) continue;
+      const bx = x0 * CELL, by = y0 * CELL, bw = (x1 - x0 + 1) * CELL, bh = (y1 - y0 + 1) * CELL;
+      if (bw * bh < W * H * 0.01 || bw < W * 0.06 || bh < H * 0.06) continue; // 太小的是雜點
+      const pad = CELL * 2;
+      boxes.push([Math.max(0, bx - pad), Math.max(0, by - pad), Math.min(W, bx + bw + pad) - Math.max(0, bx - pad), Math.min(H, by + bh + pad) - Math.max(0, by - pad)]);
+    }
+    // 由上到下、由左到右排序
+    const rowH = H / 12;
+    return boxes.sort((a, b) => (Math.round(a[1] / rowH) - Math.round(b[1] / rowH)) || (a[0] - b[0]));
+  }
+  let cropItems = [];
+
   function toDataURL(src, sx, sy, sw, sh, max = 360) {
     const sc = Math.min(1, max / Math.max(sw, sh));
     const c = document.createElement('canvas'); c.width = Math.round(sw * sc); c.height = Math.round(sh * sc);
@@ -2515,6 +2560,36 @@
       } catch (e) { toast('動作表處理失敗'); }
       input.value = '';
     },
+    async autoCrop(input) {
+      const files = Array.from(input.files || []); input.value = '';
+      if (!files.length) return;
+      toast('✂️ 找圖案中……');
+      cropItems = [];
+      for (const f of files) {
+        try {
+          const im = await loadImage(f);
+          const sc = Math.min(1, 1400 / Math.max(im.naturalWidth, im.naturalHeight));
+          const c = document.createElement('canvas'); c.width = Math.round(im.naturalWidth * sc); c.height = Math.round(im.naturalHeight * sc);
+          const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(im, 0, 0, c.width, c.height);
+          findBlobs(c).forEach(([x, y, w, h]) => cropItems.push({ url: toDataURL(c, x, y, w, h), slot: '' }));
+        } catch (e) {}
+      }
+      if (!cropItems.length) { toast('😵 找不到圖案，換一張背景是白色的圖試試'); return; }
+      const opts = '<option value="">— 不使用 —</option>' + STATES.map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+      $('crop-list').innerHTML = cropItems.map((it, i) => `<div class="slot"><div class="thumb"><img src="${it.url}" alt=""></div>
+        <select style="font-size:13px;padding:4px;margin-top:4px" onchange="App.cropPick(${i}, this.value)">${opts}</select></div>`).join('');
+      $('crop-box').style.display = 'block';
+      toast(`找到 ${cropItems.length} 個圖案，選擇要放到哪個動作`);
+    },
+    cropPick(i, v) { cropItems[i].slot = v; },
+    cropSave() {
+      let n = 0;
+      cropItems.forEach(it => { if (it.slot && safeSet(IMG_KEY + it.slot, it.url)) n++; });
+      if (!n) { toast('還沒選任何動作'); return; }
+      renderSlots(); setCoach(coachState, false);
+      toast(`已套用 ${n} 個動作！`);
+    },
+    cropClose() { $('crop-box').style.display = 'none'; cropItems = []; },
     clearSlot(k) { safeDel(IMG_KEY + k); renderSlots(); setCoach(coachState, false); },
     clearSlots() { if (!confirm('清除所有教練圖片？')) return; STATES.forEach(([k]) => safeDel(IMG_KEY + k)); renderSlots(); setCoach(coachState, false); toast('已清除'); },
     copy(id) {
