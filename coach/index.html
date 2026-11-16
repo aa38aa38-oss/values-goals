@@ -80,6 +80,12 @@
   @keyframes ptsUp { from { margin-top: 0; opacity: 1; } to { margin-top: -80px; opacity: 0; } }
 
   /* coach animations */
+  #coach.walking .inner { animation: waddle .42s ease-in-out infinite; transform-origin: 50% 100%; }
+  @keyframes waddle { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-7%) rotate(6deg); } }
+  .emo { font-size: 1.7rem; animation: emoUp 1.5s ease-out forwards; transform: translateX(-50%); }
+  @keyframes emoUp { 0% { margin-top: 0; opacity: 0; } 15% { opacity: 1; } 100% { margin-top: -110px; opacity: 0; } }
+  .dust { font-size: .9rem; opacity: .6; animation: emoUp .9s ease-out forwards; transform: translateX(-50%); }
+  .slot .cnt { position: absolute; left: 4px; top: 2px; font-size: .68rem; font-weight: 700; background: var(--ok); color: #fff; border-radius: 99px; padding: 0 6px; }
   .a-standby { animation: bob 1.4s ease-in-out infinite; }
   @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   .a-cheer { animation: jump .6s ease-in-out infinite; }
@@ -975,7 +981,23 @@
   }
 
   // ---------- coach rendering ----------
-  function coachImg(state) { return safeGet(IMG_KEY + state); }
+  const MAX_VARIANTS = 6;
+  const variantKeys = state => [IMG_KEY + state, ...Array.from({ length: MAX_VARIANTS - 1 }, (_, i) => IMG_KEY + state + '#' + (i + 1))];
+  function coachImgs(state) { return variantKeys(state).map(safeGet).filter(Boolean); }
+  const lastPick = {};
+  function coachImg(state) {
+    const list = coachImgs(state); if (!list.length) return null;
+    if (list.length === 1) return list[0];
+    let i; do { i = Math.floor(Math.random() * list.length); } while (i === lastPick[state]);
+    lastPick[state] = i; return list[i];
+  }
+  function addCoachImg(state, url) {
+    const free = variantKeys(state).find(k => !safeGet(k));
+    if (!free) return 'full';
+    return safeSet(free, url) ? 'ok' : 'space';
+  }
+  function clearCoachImgs(state) { variantKeys(state).forEach(safeDel); }
+  function allCoachImgKeys() { const out = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(IMG_KEY)) out.push(k); } } catch (e) {} return out; }
 
   function coachSVG(state) {
     // Original default coach: a round hamster with headband & whistle.
@@ -1493,7 +1515,7 @@
   // ----- attack: coach runs over and smashes the player -----
   async function runAttack(reason) {
     if (busy) return;
-    busy = true;
+    busy = true; stopWander();
     App.closeSheet(true);
     walkToken++;
     const pl = $('player'); pl.classList.remove('walking', 'happy'); pl.classList.add('idle');
@@ -1521,7 +1543,7 @@
     await moveTo('coach', COACH_HOME, 36);
     $('coach-flip').classList.remove('left');
     setCoach('angry', false);
-    busy = false;
+    busy = false; scheduleWander(5000);
   }
 
   function openSheet() {
@@ -1589,8 +1611,9 @@
   // ---------- coach slots ----------
   function renderSlots() {
     $('slots').innerHTML = STATES.map(([k, label]) => {
-      const img = coachImg(k);
+      const list = coachImgs(k), img = list[0];
       return `<label class="slot ${img ? 'has' : ''}">
+        ${list.length > 1 ? `<span class="cnt">×${list.length}</span>` : ''}
         ${img ? `<button class="x" onclick="event.preventDefault(); App.clearSlot('${k}')" aria-label="移除">×</button>` : ''}
         <div class="thumb">${img ? `<img src="${img}" alt="">` : coachSVG(k)}</div>
         <div>${label}</div>
@@ -2226,6 +2249,107 @@
     return el;
   }
 
+  // ---------- coach life: wandering + interactions ----------
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function emoBurst(list, p, n = 4, cls = 'emo') {
+    for (let i = 0; i < n; i++) setTimeout(() => fxAt(cls, pick(list), { x: p.x + (Math.random() * 16 - 8), y: p.y }, 6 + Math.random() * 8), i * 140);
+  }
+  function sceneFree() {
+    return S.onboarded && !busy && document.visibilityState === 'visible' && $('view-today').classList.contains('active')
+      && !$('sheet').classList.contains('show') && !$('chat').classList.contains('show') && !$('levelup').classList.contains('show');
+  }
+  async function coachWalk(target, speed = 14) {
+    const el = $('coach'); el.classList.add('walking');
+    const t0 = Date.now();
+    const dust = setInterval(() => fxAt('dust', '💨', { x: pos.coach.x, y: pos.coach.y - 4 }, -12), 450);
+    await moveTo('coach', clampPos(target), speed);
+    clearInterval(dust); el.classList.remove('walking');
+    return Date.now() - t0;
+  }
+  let wanderTimer = null, wanderToken = 0;
+  function stopWander() { wanderToken++; clearTimeout(wanderTimer); $('coach').classList.remove('walking'); }
+  function scheduleWander(ms) { clearTimeout(wanderTimer); wanderTimer = setTimeout(wanderStep, ms ?? (5000 + Math.random() * 6000)); }
+  async function wanderStep() {
+    if (!sceneFree()) { scheduleWander(4000); return; }
+    const tok = ++wanderToken;
+    const r = Math.random();
+    if (r < 0.62) {
+      // 走到地板上隨機一點，避開玩家
+      let tgt, tries = 0;
+      do { tgt = { x: 14 + Math.random() * 72, y: 6 + Math.random() * 30 }; } while (Math.hypot(tgt.x - pos.player.x, (tgt.y - pos.player.y) * 1.4) < 18 && ++tries < 10);
+      if (Math.random() < 0.25) tgt = { ...COACH_HOME };
+      setCoach(moodState(), false);
+      await coachWalk(tgt);
+      if (tok !== wanderToken || !sceneFree()) return;
+      $('coach-flip').classList.toggle('left', pos.player.x < pos.coach.x);
+      if (Math.random() < 0.5) setCoach(moodState());
+    } else if (r < 0.85) {
+      // 換個姿勢／換張圖
+      const st = pick(['standby', 'inspect', 'goforit', 'cheer', moodState(), moodState()]);
+      setCoach(st, Math.random() < 0.6 ? undefined : false);
+      clearTimeout(App._p); App._p = setTimeout(() => { if (sceneFree()) setCoach(moodState(), false); }, 2600);
+    } else {
+      // 看向玩家、跳一下
+      $('coach-flip').classList.toggle('left', pos.player.x < pos.coach.x);
+      setCoach('cheer', pick([`${S.avatar.name || '你'}～有在認真嗎？`, '嗶嗶！今天也要動起來！', '我在看著你喔！']));
+      emoBurst(['❗', '✨'], pos.coach, 2);
+    }
+    if (tok === wanderToken) scheduleWander();
+  }
+
+  let pokeTimes = [];
+  const POKES = [
+    async () => { setCoach('cheer', pick(['呀哈！收到你的打氣了！', '嘿嘿～被誇獎了！', '我們一起變強吧！'])); emoBurst(['🎉', '✨', '⭐', '🎊'], pos.coach, 6); },
+    async () => { setCoach('dance', pick(['跳舞時間到！♪', '跟著我扭一扭！燃燒卡路里！'])); emoBurst(['🎵', '🎶', '💃'], pos.coach, 6); },
+    async () => {
+      setCoach('sprint', '擊掌！！');
+      const side = pos.player.x > pos.coach.x ? -1 : 1;
+      await coachWalk({ x: pos.player.x + side * 14, y: pos.player.y + 1 }, 40);
+      $('coach-flip').classList.toggle('left', side > 0);
+      setCoach('cheer', '耶～！👏 好樣的！');
+      fxAt('boom', '👏', { x: (pos.player.x + pos.coach.x) / 2, y: pos.player.y }, 10);
+      const pl = $('player'); pl.classList.remove('idle'); pl.classList.add('happy');
+      setTimeout(() => { pl.classList.remove('happy'); pl.classList.add('idle'); }, 1500);
+    },
+    async () => { setCoach('goforit', pick(['燃燒吧！脂肪！！🔥', '嗶嗶——！再來十個深蹲！', '你可以的！衝啊！'])); emoBurst(['🔥', '💪', '🔥'], pos.coach, 6); },
+    async () => { setCoach('inspect', '讓我看看你的肌肉……'); await sleep(1400); setCoach('cheer', pick(['嗯！有進步喔！', '……好像有一點點了！繼續！'])); emoBurst(['💪', '✨'], pos.player, 3); },
+    async () => { setCoach('sleep', '呼……呼……'); emoBurst(['💤', 'Z'], pos.coach, 3); await sleep(1500); setCoach('angry', '幹嘛吵醒我！快去運動！'); emoBurst(['💢'], pos.coach, 2); },
+    async () => { setCoach('cry', pick(['嗚嗚……你終於來找我了……', '我好感動……你居然幫我打氣……'])); emoBurst(['💧', '😭', '💗'], pos.coach, 4); },
+    async () => {
+      setCoach('sprint', '跟我一起跑一圈！');
+      for (const p of [{ x: 20, y: 34 }, { x: 80, y: 32 }, { x: 78, y: 8 }, { x: 22, y: 10 }]) await coachWalk(p, 48);
+      setCoach('goforit', '呼……好喘！你也要動起來！');
+    },
+    async () => {
+      const n = C.perDay[today()] ? C.perDay[today()].n : 0;
+      if (n < 3) { setCoach('angry', `打氣？先把今天還差的 ${3 - n} 項記錄完再說！`); emoBurst(['💢', '📋'], pos.coach, 3); }
+      else { setCoach('dance', '今天全部記完了！我超開心的！'); emoBurst(['💗', '🎉', '✨'], pos.coach, 6); }
+    },
+  ];
+  let pokeBusy = false, lastPoke = -1;
+  async function pokeCoach() {
+    if (busy || pokeBusy) return;
+    stopWander();
+    const now = Date.now(); pokeTimes = pokeTimes.filter(t => now - t < 4000); pokeTimes.push(now);
+    pokeBusy = true;
+    try {
+      emoBurst(['💗', '💖'], pos.coach, 2);
+      if (pokeTimes.length >= 5) {
+        pokeTimes = [];
+        setCoach('angry', '不要一直戳我啦！！噗嚕嚕！');
+        $('coach').classList.add('shake'); setTimeout(() => $('coach').classList.remove('shake'), 900);
+        emoBurst(['💢', '💢', '😤'], pos.coach, 4);
+      } else {
+        let i; do { i = Math.floor(Math.random() * POKES.length); } while (i === lastPoke);
+        lastPoke = i; await POKES[i]();
+      }
+    } finally {
+      pokeBusy = false;
+      clearTimeout(App._p); App._p = setTimeout(() => { if (sceneFree()) setCoach(moodState(), false); }, 3200);
+      scheduleWander(6000);
+    }
+  }
+
   // ---------- public API ----------
   const App = {
     toast,
@@ -2242,11 +2366,14 @@
     },
     async goRegister() {
       if (busy) return;
-      const target = { x: COACH_HOME.x + 17, y: COACH_HOME.y - 4 };
+      stopWander();
+      const side = pos.coach.x > 62 ? -1 : 1;
+      const target = clampPos({ x: pos.coach.x + side * 17, y: pos.coach.y - 4 });
       setCoach('inspect', `${S.avatar.name || '你'}，過來登記！`);
       const arrived = await walkPlayer(target);
       if (!arrived) return;
-      if (playerDoll) playerDoll.play('idle', DIR.left);
+      if (playerDoll) playerDoll.play('idle', side > 0 ? DIR.left : DIR.right);
+      $('coach-flip').classList.toggle('left', side < 0);
       openSheet();
     },
     closeSheet(silent) {
@@ -2295,11 +2422,7 @@
       }
       if (!prevBody && hasBody(r) && C.reached) toast('🎉 達成目標體重！+200 分！');
     },
-    pokeCoach() {
-      if (busy) return;
-      setCoach('goforit');
-      clearTimeout(App._p); App._p = setTimeout(sceneMood, 2600);
-    },
+    pokeCoach() { pokeCoach(); },
     // ---- creator ----
     ccTab(k) { ccCat = k; renderCreators(); },
     ccTurn(n) { ccDir = [DIR.down, DIR.left, DIR.up, DIR.right][([DIR.down, DIR.left, DIR.up, DIR.right].indexOf(ccDir) + n + 4) % 4]; [$('creator'), $('ob-creator')].forEach(r => r && r._doll && r._doll.play(ccWalk ? 'walk' : 'idle', ccDir)); },
@@ -2533,7 +2656,10 @@
       try {
         const im = await loadImage(f);
         const url = toDataURL(im, 0, 0, im.naturalWidth, im.naturalHeight);
-        if (!safeSet(IMG_KEY + k, url)) toast('⚠️ 空間不足，存不下這張圖');
+        const r = addCoachImg(k, url);
+        if (r === 'full') toast(`這個動作已經有 ${MAX_VARIANTS} 張了，先按 × 清除再加`);
+        else if (r === 'space') toast('⚠️ 空間不足，存不下這張圖');
+        else toast(`已加入！這個動作現在有 ${coachImgs(k).length} 張，會輪流出現`);
         renderSlots(); setCoach(coachState, false);
       } catch (e) { toast('圖片讀取失敗'); }
       input.value = '';
@@ -2584,21 +2710,21 @@
     cropPick(i, v) { cropItems[i].slot = v; },
     cropSave() {
       let n = 0;
-      cropItems.forEach(it => { if (it.slot && safeSet(IMG_KEY + it.slot, it.url)) n++; });
+      cropItems.forEach(it => { if (it.slot && addCoachImg(it.slot, it.url) === 'ok') n++; });
       if (!n) { toast('還沒選任何動作'); return; }
       renderSlots(); setCoach(coachState, false);
       toast(`已套用 ${n} 個動作！`);
     },
     cropClose() { $('crop-box').style.display = 'none'; cropItems = []; },
-    clearSlot(k) { safeDel(IMG_KEY + k); renderSlots(); setCoach(coachState, false); },
-    clearSlots() { if (!confirm('清除所有教練圖片？')) return; STATES.forEach(([k]) => safeDel(IMG_KEY + k)); renderSlots(); setCoach(coachState, false); toast('已清除'); },
+    clearSlot(k) { if (!confirm('清除這個動作的所有圖片？')) return; clearCoachImgs(k); renderSlots(); setCoach(coachState, false); },
+    clearSlots() { if (!confirm('清除所有教練圖片？')) return; allCoachImgKeys().forEach(safeDel); renderSlots(); setCoach(coachState, false); toast('已清除'); },
     copy(id) {
       const text = $(id).textContent;
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('已複製！'), () => toast('請長按文字手動複製'));
       else toast('請長按文字手動複製');
     },
     exportData() {
-      const imgs = {}; STATES.forEach(([k]) => { const v = coachImg(k); if (v) imgs[k] = v; });
+      const imgs = {}; allCoachImgKeys().forEach(k => { imgs[k.slice(IMG_KEY.length)] = safeGet(k); });
       const blob = new Blob([JSON.stringify({ app: 'coach-game', exportedAt: new Date().toISOString(), state: S, images: imgs })], { type: 'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `紀律教練備份-${today()}.json`;
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
@@ -2632,7 +2758,7 @@
     resetAll() {
       if (!confirm('確定清除全部資料？（建議先匯出備份）')) return;
       if (!confirm('真的確定？這無法復原！')) return;
-      safeDel(KEY); STATES.forEach(([k]) => safeDel(IMG_KEY + k));
+      safeDel(KEY); allCoachImgKeys().forEach(safeDel);
       load(); App.obStart();
     },
     // ---- onboarding ----
@@ -2702,6 +2828,7 @@
     walkPlayer({ x, y });
   });
 
+  scheduleWander(4000);
   function startScene() {
     const t0 = today();
     C = compute();
