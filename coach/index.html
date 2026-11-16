@@ -140,6 +140,14 @@
   .chat-input { display: flex; gap: 8px; }
   .chat-input textarea { min-height: 44px; height: 44px; flex: 1; }
   .chat-input .btn { width: auto; padding: 0 16px; margin: 0; }
+  .macro-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .macro { background: var(--stage); border-radius: 12px; padding: 8px 4px; text-align: center; }
+  .macro b { display: block; font-size: 1.15rem; }
+  .macro span { font-size: .68rem; color: var(--muted); display: block; }
+  .macro .mbar { height: 5px; background: var(--line); border-radius: 99px; margin-top: 5px; overflow: hidden; }
+  .macro .mbar i { display: block; height: 100%; border-radius: 99px; }
+  #view-food .food-actions .btn { padding: 16px 6px; font-size: 1rem; }
+  nav.tabs button { max-width: 110px; }
   .food-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .food-actions .btn { margin: 0; font-size: .92rem; }
   .food-text { display: flex; gap: 8px; margin-top: 8px; }
@@ -325,7 +333,73 @@
   </header>
 
   <!-- ===== 健身房 ===== -->
-  <section class="view active" id="view-today">
+  <section class="view active" id="view-food">
+    <div class="card macro-card">
+      <div class="date-nav" style="margin-bottom:6px">
+        <button onclick="App.shiftDay(-1)">◀</button>
+        <b id="food-date-label"></b>
+        <button onclick="App.shiftDay(1)" id="food-next-btn">▶</button>
+      </div>
+      <div class="macro-grid" id="macro-grid"></div>
+    </div>
+    <div class="card">
+      <h2>🍱 記錄飲食</h2>
+      <input type="file" accept="image/*" capture="environment" id="food-cam" style="display:none" onchange="App.foodPick(this)">
+      <input type="file" accept="image/*" multiple id="food-album" style="display:none" onchange="App.foodPick(this)">
+      <div class="food-actions">
+        <button type="button" class="btn" onclick="document.getElementById('food-cam').click()">📸 拍照紀錄</button>
+        <button type="button" class="btn secondary" onclick="document.getElementById('food-album').click()">🖼️ 相簿（可多張）</button>
+      </div>
+      <div class="food-text">
+        <input type="text" id="food-text" placeholder="或輸入食物：西瓜五片、地瓜、無糖豆漿">
+        <button type="button" class="btn secondary" onclick="App.foodText()">🔍 AI 查詢</button>
+        <button type="button" class="btn ghost" onclick="App.foodManual()">✍️</button>
+      </div>
+      <div id="food-draft">
+        <div class="thumbs" id="food-thumbs"></div>
+        <div class="food-status" id="food-status"></div>
+        <label class="f">食物名稱</label>
+        <input type="text" id="fd-name">
+        <div class="row">
+          <div><label class="f">🔥 熱量 kcal</label><input type="number" inputmode="numeric" id="fd-kcal"></div>
+          <div><label class="f">💪 蛋白質 g</label><input type="number" inputmode="decimal" step="0.1" id="fd-pro"></div>
+        </div>
+        <div class="row">
+          <div><label class="f">🧈 脂肪 g</label><input type="number" inputmode="decimal" step="0.1" id="fd-fat"></div>
+          <div><label class="f">🍚 碳水化合物 g</label><input type="number" inputmode="decimal" step="0.1" id="fd-carb"></div>
+        </div>
+        <div class="row">
+          <div><label class="f">🕒 用餐時間</label><input type="text" id="fd-time" placeholder="12:30" inputmode="numeric"></div>
+          <div><label class="f">📍 餐別</label>
+            <select id="fd-slot">
+              <option value="auto">✨ 自動（依時間）</option>
+              <option value="breakfast">早餐</option><option value="brunch">早午餐</option><option value="lunch">午餐</option>
+              <option value="afternoon">下午</option><option value="dinner">晚餐</option>
+              <option value="snack_afternoon">🟣 下午零食</option><option value="snack_evening">🟣 晚上零食／宵夜</option>
+            </select></div>
+        </div>
+        <label class="check"><input type="checkbox" id="fd-snack"> 🟣 這是零食／甜點／飲料</label>
+        <div class="muted" id="fd-details" style="margin-top:6px"></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button type="button" class="btn ghost" onclick="App.foodCancel()">取消</button>
+          <button type="button" class="btn" onclick="App.foodConfirm()">✅ 加入紀錄</button>
+        </div>
+      </div>
+      <div id="food-list" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>⌚ 今天的手錶／健康數據</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" onclick="App.runShortcut()">⌚ 執行捷徑</button>
+        <button type="button" class="btn gold" onclick="App.pasteHealth()">📋 貼上匯入</button>
+      </div>
+      <div class="food-status" id="health-status2"></div>
+      <div class="breakdown" id="health-sum" style="margin-top:6px"></div>
+    </div>
+    <button class="btn secondary" onclick="App.switchTab('today')">🏋️ 去健身房找教練（運動、體重回報）</button>
+  </section>
+
+  <section class="view" id="view-today">
     <div class="stats">
       <div class="stat"><b id="st-score">0</b><span>經驗值 EXP</span></div>
       <div class="stat"><b id="st-today">0</b><span>今日得分</span></div>
@@ -438,6 +512,10 @@
         <div><label class="f">每日蛋白質目標（g）</label><input type="number" inputmode="numeric" id="g-pro"></div>
       </div>
       <div class="row">
+        <div><label class="f">每日脂肪上限（g）</label><input type="number" inputmode="numeric" id="g-fat"></div>
+        <div><label class="f">每日碳水上限（g）</label><input type="number" inputmode="numeric" id="g-carb"></div>
+      </div>
+      <div class="row">
         <div><label class="f">每日步數目標</label><input type="number" inputmode="numeric" id="g-steps"></div>
         <div><label class="f">每晚睡眠目標（小時）</label><input type="number" inputmode="decimal" step="0.5" id="g-sleep"></div>
         <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
@@ -465,21 +543,19 @@
 
     <div class="card">
       <h2>⌚ 連動 iPhone 健康／Garmin</h2>
-      <p class="muted">網頁不能直接讀「健康」App，所以用 iPhone 內建的「捷徑」：捷徑讀出今天的數字，接在網址後面打開遊戲，遊戲就會自動填好。</p>
+      <p class="muted">網頁不能直接讀「健康」App，所以用 iPhone 內建的「捷徑」把今天的數字複製起來，回到遊戲按「📋 貼上匯入」。主畫面 App 和 Safari 都能用。</p>
       <ol class="steps">
-        <li><b>Garmin 先同步到 iPhone 健康</b>：Garmin Connect → 右下「更多」→ 設定 → <b>已連接的應用程式 → Apple 健康</b> → 全部打開（步數、睡眠、體重、卡路里、運動）</li>
-        <li>打開「<b>捷徑</b>」App → 右上 ＋ 新增捷徑，命名「回報教練」</li>
-        <li>加入動作「<b>尋找健康樣本</b>」：類型選<b>步數</b>，加條件「開始日期 是 今天」</li>
-        <li>加入動作「<b>計算統計資料</b>」：選<b>總和</b>（得到今天總步數）</li>
-        <li>同樣方式再做：<b>活動能量</b>（總和）、<b>運動時間</b>（總和，可省略）</li>
-        <li>體重：「尋找健康樣本」類型<b>體重</b>，排序「開始日期 最新的優先」，<b>限制 1 個</b>；體脂率同樣做法</li>
-        <li>加入動作「<b>URL</b>」，貼上下面的網址樣板，把每個「＿＿」換成對應的變數（點一下會出現變數選單）</li>
-        <li>加入動作「<b>打開 URL</b>」，完成！之後點這個捷徑，或在「自動化」設每天 21:00 執行</li>
+        <li><b>Garmin → 健康</b>：Garmin Connect 已連結 Apple 健康，並在 健康 App → 頭像 → App → Connect 打開步行、動態能量、體重等項目</li>
+        <li>捷徑 App → ＋ 新增捷徑，名稱改成「<b>回報教練</b>」（要跟下面一樣）</li>
+        <li>依照教學加入「尋找健康樣本」「計算統計資料」「設定變數」等動作</li>
+        <li>最後加入「<b>文字</b>」動作，貼上下面這行，把「＿＿」換成變數</li>
+        <li>再加入「<b>拷貝到剪貼板</b>」，完成</li>
       </ol>
-      <div class="copy-line"><code id="hk-url"></code><button onclick="App.copy('hk-url')">複製</button></div>
-      <p class="muted">可用的欄位：steps 步數、active 活動消耗、exmin 運動分鐘、weight 體重、fat 體脂、waist 腰圍、sleep 睡眠小時、hr 靜止心率、floors 爬樓層、date 日期（不填就是今天）。不需要的欄位整段刪掉即可。</p>
-      <p class="muted">⚠️ 捷徑會用 <b>Safari</b> 打開遊戲。iPhone 上「加入主畫面」的 App 和 Safari 資料是分開的，用捷徑匯入的話，請固定用 Safari 玩（或開啟雲端存檔讓兩邊同步）。</p>
-      <button class="btn secondary" onclick="App.testHealthLink()">🧪 用範例數字測試匯入</button>
+      <div class="copy-line"><code id="hk-url">steps=＿＿&active=＿＿&weight=＿＿&fat=＿＿</code><button onclick="App.copy('hk-url')">複製</button></div>
+      <label class="f">捷徑名稱</label>
+      <input type="text" id="sc-name" placeholder="回報教練" onchange="S_setShortcutName(this.value)">
+      <p class="muted">可用欄位：steps 步數、active 動態能量、exmin 運動分鐘、weight 體重、fat 體脂、waist 腰圍、sleep 睡眠小時、hr 靜止心率、floors 爬樓層。</p>
+      <button class="btn secondary" onclick="navigator.clipboard && navigator.clipboard.writeText('steps=6872&active=416&weight=100.4&fat=30').then(() => App.toast('已複製範例，到飲食頁按「📋 貼上匯入」試試'))">🧪 複製範例數字（測試用）</button>
     </div>
 
     <div class="card">
@@ -555,52 +631,20 @@
 
     <div class="card">
       <h2>⌚ 匯入 iPhone 健康／Garmin</h2>
+      <div class="btn-row">
+        <button type="button" class="btn" onclick="App.runShortcut()">⌚ 執行捷徑</button>
+        <button type="button" class="btn gold" onclick="App.pasteHealth()">📋 貼上匯入</button>
+      </div>
       <input type="file" accept="image/*" multiple id="health-shot" style="display:none" onchange="App.healthShot(this)">
-      <button type="button" class="btn secondary" onclick="document.getElementById('health-shot').click()">📷 上傳健康／Garmin 截圖，AI 自動讀數字</button>
+      <button type="button" class="btn ghost" onclick="document.getElementById('health-shot').click()">📷 或上傳截圖讓 AI 讀</button>
       <div class="food-status" id="health-status"></div>
-      <p class="muted" style="margin:6px 0 0">可以一次選多張（睡眠、步數、體重……）。讀完會自動填進下面欄位，確認後按「交給教練」。想全自動，請到「設定 → ⌚ 連動 iPhone 健康／Garmin」設定捷徑。</p>
+      <p class="muted" style="margin:6px 0 0">先按「⌚ 執行捷徑」，捷徑跑完點左上角「◀ 返回」回來，再按「📋 貼上匯入」。捷徑做法在「設定 → ⌚ 連動 iPhone 健康／Garmin」。</p>
     </div>
 
     <div class="card">
       <h2>🍱 飲食紀錄 <span class="done-chip" id="chip-diet">未記錄</span></h2>
-      <input type="file" accept="image/*" capture="environment" id="food-cam" style="display:none" onchange="App.foodPick(this)">
-      <input type="file" accept="image/*" multiple id="food-album" style="display:none" onchange="App.foodPick(this)">
-      <div class="food-actions">
-        <button type="button" class="btn" onclick="document.getElementById('food-cam').click()">📸 拍照紀錄</button>
-        <button type="button" class="btn secondary" onclick="document.getElementById('food-album').click()">🖼️ 相簿（可多張）</button>
-      </div>
-      <div class="food-text">
-        <input type="text" id="food-text" placeholder="或輸入食物：西瓜五片、地瓜、無糖豆漿">
-        <button type="button" class="btn secondary" onclick="App.foodText()">🔍 AI 查詢</button>
-        <button type="button" class="btn ghost" onclick="App.foodManual()">✍️</button>
-      </div>
-      <div id="food-draft">
-        <div class="thumbs" id="food-thumbs"></div>
-        <div class="food-status" id="food-status"></div>
-        <label class="f">食物名稱</label>
-        <input type="text" id="fd-name">
-        <div class="row">
-          <div><label class="f">🔥 熱量 kcal</label><input type="number" inputmode="numeric" id="fd-kcal"></div>
-          <div><label class="f">💪 蛋白質 g</label><input type="number" inputmode="decimal" step="0.1" id="fd-pro"></div>
-        </div>
-        <div class="row">
-          <div><label class="f">🕒 用餐時間</label><input type="text" id="fd-time" placeholder="12:30" inputmode="numeric"></div>
-          <div><label class="f">📍 餐別</label>
-            <select id="fd-slot">
-              <option value="auto">✨ 自動（依時間）</option>
-              <option value="breakfast">早餐</option><option value="brunch">早午餐</option><option value="lunch">午餐</option>
-              <option value="afternoon">下午</option><option value="dinner">晚餐</option>
-              <option value="snack_afternoon">🟣 下午零食</option><option value="snack_evening">🟣 晚上零食／宵夜</option>
-            </select></div>
-        </div>
-        <label class="check"><input type="checkbox" id="fd-snack"> 🟣 這是零食／甜點／飲料</label>
-        <div class="muted" id="fd-details" style="margin-top:6px"></div>
-        <div class="btn-row" style="margin-top:8px">
-          <button type="button" class="btn ghost" onclick="App.foodCancel()">取消</button>
-          <button type="button" class="btn" onclick="App.foodConfirm()">✅ 加入紀錄</button>
-        </div>
-      </div>
-      <div id="food-list" style="margin-top:8px"></div>
+      <div class="breakdown" id="sheet-food-sum"></div>
+      <button type="button" class="btn secondary" style="margin-top:8px" onclick="App.closeSheet(); App.switchTab('food')">🍱 到飲食頁拍照記錄</button>
       <details class="simple"><summary>✏️ 簡易文字紀錄（不用 AI）</summary>
       <div class="meal-grid">
         <div><label class="f">早餐</label><input type="text" id="m-b" placeholder="例：蛋餅＋無糖豆漿"></div>
@@ -690,7 +734,8 @@
 </div>
 
 <nav class="tabs">
-  <button class="active" data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏋️</span>健身房</button>
+  <button class="active" data-tab="food" onclick="App.switchTab('food')"><span class="ic">🍱</span>飲食</button>
+  <button data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏋️</span>健身房</button>
   <button data-tab="history" onclick="App.switchTab('history')"><span class="ic">📈</span>紀錄</button>
   <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🧑</span>角色</button>
   <button data-tab="rewards" onclick="App.switchTab('rewards')"><span class="ic">🏆</span>獎勵</button>
@@ -804,7 +849,7 @@
     settings: {
       coachName: '呀哈教練',
       startDate: today(),
-      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, steps: 8000, sleep: 7, kcalMin: 1800, kcalMax: 2100, protein: 90 },
+      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, steps: 8000, sleep: 7, kcalMin: 1800, kcalMax: 2100, protein: 90, fatG: 60, carbs: 200 },
     },
     avatar: DEFAULT_AVATAR(),
     records: {},
@@ -840,7 +885,9 @@
     const kcal = arr.reduce((a, x) => a + (Number(x.kcal) || 0), 0);
     const protein = Math.round(arr.reduce((a, x) => a + (Number(x.protein) || 0), 0) * 10) / 10;
     const snackKcal = arr.filter(x => x.snack).reduce((a, x) => a + (Number(x.kcal) || 0), 0);
-    return { kcal, protein, snackKcal, items: arr.map(x => Object.assign({}, x, { slotKey: x.slot, slot: SLOT_LABEL[x.slot] || x.slot })) };
+    const fat = Math.round(arr.reduce((a, x) => a + (Number(x.fat) || 0), 0) * 10) / 10;
+    const carbs = Math.round(arr.reduce((a, x) => a + (Number(x.carbs) || 0), 0) * 10) / 10;
+    return { kcal, protein, fat, carbs, snackKcal, items: arr.map(x => Object.assign({}, x, { slotKey: x.slot, slot: SLOT_LABEL[x.slot] || x.slot })) };
   };
   const rec = d => Object.assign(S.records[d] ? Object.assign(emptyRec(), S.records[d], { meals: Object.assign(emptyRec().meals, S.records[d].meals || {}) }) : emptyRec(), { _food: foodOf(d) });
   const hasDiet = r => !!r._food || Object.values(r.meals).some(v => v && v.trim()) || r.water > 0 || r.noSugar || num(r.kcal) !== null;
@@ -1669,7 +1716,7 @@
     const g = S.settings.goals;
     $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
     $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
-    $('g-kmin').value = g.kcalMin ?? ''; $('g-kmax').value = g.kcalMax ?? ''; $('g-pro').value = g.protein ?? '';
+    $('g-kmin').value = g.kcalMin ?? ''; $('g-kmax').value = g.kcalMax ?? ''; $('g-pro').value = g.protein ?? ''; $('g-fat').value = g.fatG ?? ''; $('g-carb').value = g.carbs ?? '';
     $('g-steps').value = g.steps ?? ''; $('g-sleep').value = g.sleep ?? '';
     $('g-startdate').value = S.settings.startDate;
     $('coach-name').value = S.settings.coachName;
@@ -1678,7 +1725,7 @@
     $('cloud-token').value = S.settings.cloudToken || '';
     setCloudStatus(S.settings.lastSync ? '上次同步：' + new Date(S.settings.lastSync).toLocaleString() : '', '');
     renderSlots(); renderNotifyLines();
-    $('hk-url').textContent = location.origin + location.pathname + '?steps=＿＿&active=＿＿&exmin=＿＿&weight=＿＿&fat=＿＿';
+    $('sc-name').value = S.settings.shortcutName || '';
   }
 
   function sceneMood() {
@@ -1697,15 +1744,36 @@
     const bar = $('food-bar'); bar.style.width = Math.min(100, ratio * 100) + '%';
     bar.style.background = ratio > 1 ? 'var(--primary)' : ratio > .85 ? 'var(--warn)' : 'var(--ok)';
   }
+  function renderFoodPage() {
+    const d = curDate, f = foodOf(d) || { kcal: 0, protein: 0, fat: 0, carbs: 0 }, g = S.settings.goals;
+    if ($('food-date-label')) {
+      $('food-date-label').textContent = (d === today() ? '今天 ' : '') + nice(d);
+      $('food-next-btn').style.opacity = d >= today() ? .3 : 1;
+    }
+    const box = (label, v, goal, unit, color, isMax) => {
+      const ratio = goal ? v / goal : 0;
+      const c = isMax ? (ratio > 1 ? 'var(--primary)' : ratio > .85 ? 'var(--warn)' : color) : (ratio >= 1 ? 'var(--ok)' : color);
+      return `<div class="macro"><span>${label}</span><b>${Math.round(v * 10) / 10}</b><span>/ ${goal || '—'} ${unit}</span><div class="mbar"><i style="width:${Math.min(100, ratio * 100)}%;background:${c}"></i></div></div>`;
+    };
+    if ($('macro-grid')) $('macro-grid').innerHTML = box('🔥 熱量', f.kcal, g.kcalMax, 'kcal', 'var(--ok)', true) + box('💪 蛋白質', f.protein, g.protein, 'g', '#4a8fd6', false)
+      + box('🧈 脂肪', f.fat, g.fatG, 'g', '#f0a32b', true) + box('🍚 碳水', f.carbs, g.carbs, 'g', '#8b5bd6', true);
+    const r = rec(d);
+    const hs = [['步數', r.steps, '步'], ['活動消耗', r.activeKcal, 'kcal'], ['運動', r.exMin, '分鐘'], ['體重', r.weight, 'kg'], ['體脂', r.fat, '%'], ['睡眠', r.sleep, '小時'], ['靜止心率', r.restHR, '']].filter(x => x[1] !== '' && x[1] !== undefined && x[1] !== null);
+    if ($('health-sum')) $('health-sum').innerHTML = hs.length ? hs.map(([a, b, u]) => `<div><span>${a}</span><span>${b} ${u}</span></div>`).join('') : '<p class="muted" style="margin:0">今天還沒匯入。按「⌚ 執行捷徑」→ 回來按「📋 貼上匯入」。</p>';
+    if ($('sheet-food-sum')) $('sheet-food-sum').innerHTML = foodOf(d)
+      ? `<div><span>已記錄 ${foodOf(d).items.length} 筆</span><span>${f.kcal} kcal · 蛋 ${f.protein} · 脂 ${f.fat} · 碳 ${f.carbs} g</span></div>`
+      : '<p class="muted" style="margin:0">這天還沒有飲食紀錄。</p>';
+  }
   function renderH26Box(d) {
+    renderFoodPage();
     const el = $('food-list'); if (!el) return;
     const f = foodOf(d), g = S.settings.goals;
     if (!f) { el.innerHTML = '<p class="muted" style="margin:4px 0 0">這天還沒有飲食紀錄。拍照或輸入食物，AI 幫你算熱量和蛋白質。</p>'; return; }
     const order = ['breakfast', 'brunch', 'lunch', 'afternoon', 'snack_afternoon', 'dinner', 'snack_evening'];
     const items = f.items.slice().sort((a, b) => (order.indexOf(a.slotKey) - order.indexOf(b.slotKey)) || String(a.time).localeCompare(String(b.time)));
     el.innerHTML = items.map(x => `<div class="food-item"><div class="nm">${x.snack ? '🟣' : '🍽️'} ${esc(x.name)}<small>${esc(x.slot)} · ${esc(x.time || '')}${x.details ? ' · ' + esc(x.details) : ''}</small></div>
-      <div class="kc">${x.kcal} kcal<small>蛋白質 ${x.protein} g</small></div><button onclick="App.foodDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
-      + `<div class="food-total"><span>今日合計</span><span>${f.kcal} / ${g.kcalMax || '—'} kcal · ${f.protein} / ${g.protein || '—'} g</span></div>`;
+      <div class="kc">${x.kcal} kcal<small>蛋 ${x.protein} · 脂 ${x.fat ?? 0} · 碳 ${x.carbs ?? 0} g</small></div><button onclick="App.foodDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
+      + `<div class="food-total"><span>合計</span><span>${f.kcal} kcal · 蛋 ${f.protein} · 脂 ${f.fat} · 碳 ${f.carbs} g</span></div>`;
   }
   function renderKcalChart(t) {
     const card = $('kcal-card'); if (!card) return;
@@ -1788,16 +1856,18 @@
   "foodName": "所有食物名稱（多項用空格連接）",
   "calories": 總熱量整數,
   "protein": 總蛋白質數值（小數一位）,
+  "fat": 總脂肪公克數（小數一位）,
+  "carbs": 總碳水化合物公克數（小數一位）,
   "isSnack": 布林值（點心、零食、甜點、含糖飲料、酒類為 true；一般正餐或原型食物為 false）,
   "details": "一行簡短估算依據（40 字內）"
 }`;
   async function analyzeFoodImages(images) {
-    const prompt = `請仔細觀察這 ${images.length} 張食物照片，辨識裡面所有食物與飲品（含包裝文字），以台灣常見份量合併估算總熱量（kcal）與總蛋白質（g）。\n` + FOOD_JSON_SPEC;
+    const prompt = `請仔細觀察這 ${images.length} 張食物照片，辨識裡面所有食物與飲品（含包裝文字），以台灣常見份量合併估算總熱量（kcal）、蛋白質、脂肪、碳水化合物（g）。\n` + FOOD_JSON_SPEC;
     const parts = [{ text: prompt }].concat(images.map(im => ({ inlineData: { mimeType: im.mimeType, data: im.base64 } })));
     return parseJSON(await geminiCall({ contents: [{ parts }] }, true));
   }
   async function estimateFoodByText(text) {
-    const prompt = `使用者輸入了食物：「${text}」。請以台灣常見份量（有寫份量或克數就依描述）估算總熱量（kcal）與總蛋白質（g）。foodName 請沿用使用者輸入。\n` + FOOD_JSON_SPEC;
+    const prompt = `使用者輸入了食物：「${text}」。請以台灣常見份量（有寫份量或克數就依描述）估算總熱量（kcal）、蛋白質、脂肪、碳水化合物（g）。foodName 請沿用使用者輸入。\n` + FOOD_JSON_SPEC;
     return parseJSON(await geminiCall({ contents: [{ parts: [{ text: prompt }] }] }, true));
   }
   function autoSlot(time, snack) {
@@ -1813,7 +1883,7 @@
   function showDraft(r, thumbs) {
     $('food-draft').classList.add('show');
     if (thumbs !== undefined) $('food-thumbs').innerHTML = (thumbs || []).map(u => `<img src="${u}" alt="">`).join('');
-    $('fd-name').value = r.foodName || ''; $('fd-kcal').value = r.calories ?? ''; $('fd-pro').value = r.protein ?? '';
+    $('fd-name').value = r.foodName || ''; $('fd-kcal').value = r.calories ?? ''; $('fd-pro').value = r.protein ?? ''; $('fd-fat').value = r.fat ?? ''; $('fd-carb').value = r.carbs ?? '';
     $('fd-snack').checked = !!r.isSnack; $('fd-details').textContent = r.details || '';
     if (!$('fd-time').value) $('fd-time').value = curDate === today() ? nowTime() : '12:00';
     $('fd-slot').value = 'auto';
@@ -1842,6 +1912,18 @@
     r.updatedAt = new Date().toISOString(); r.source = source;
     S.records[date] = r; persist();
     return got;
+  }
+  function importHealthText(text, date) {
+    text = String(text || '');
+    const i = text.search(/(steps|active|weight|fat|exmin|sleep|hr|floors)\s*=/);
+    if (i < 0) return null;
+    const q = new URLSearchParams(text.slice(i).replace(/\s*\n\s*/g, '&').replace(/[？]/g, '&'));
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date') : (date || today());
+    const vals = {};
+    Object.entries(HK_FIELDS).forEach(([p, key]) => { if (q.has(p)) vals[key] = hkNum(key, q.get(p)); });
+    const got = applyHealth(d, vals, 'clipboard');
+    if (got.length) cloudPush([d]);
+    return got.length ? got : null;
   }
   function importFromURL() {
     const q = new URLSearchParams(location.search);
@@ -2009,7 +2091,7 @@
       const d = addDays(t, -i), r = rec(d);
       if (!loggedCount(r)) { lines.push(`- ${d}：沒有紀錄`); continue; }
       let meals = ['b', 'l', 'd', 's'].map((k, j) => r.meals[k] ? ['早', '午', '晚', '點心'][j] + ':' + r.meals[k] : '').filter(Boolean).join('、');
-      if (r._food) meals = `共 ${r._food.kcal} kcal、蛋白質 ${r._food.protein} g：` + r._food.items.map(x => `${x.slot || x.col}${x.snack ? '(零食)' : ''} ${x.name} ${x.kcal}kcal/${x.protein}g`).join('；') + (meals ? '；另記：' + meals : '');
+      if (r._food) meals = `共 ${r._food.kcal} kcal、蛋白質 ${r._food.protein} g、脂肪 ${r._food.fat} g、碳水 ${r._food.carbs} g：` + r._food.items.map(x => `${x.slot || x.col}${x.snack ? '(零食)' : ''} ${x.name} ${x.kcal}kcal/蛋${x.protein}脂${x.fat || 0}碳${x.carbs || 0}g`).join('；') + (meals ? '；另記：' + meals : '');
       lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${r.noSugar ? '，無含糖飲料' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.activeKcal ? '；活動消耗 ' + r.activeKcal + ' kcal' : ''}${r.sleep ? '；睡眠 ' + r.sleep + ' 小時' : ''}${r.restHR ? '；靜止心率 ' + r.restHR : ''}${r.floors ? '；爬 ' + r.floors + ' 樓' : ''}${r.note ? '；心得：' + r.note : ''}`);
     }
     return lines.join('\n');
@@ -2035,6 +2117,7 @@
       if (tab === 'settings') fillSettings();
       if (tab === 'rewards') renderRewards();
       if (tab === 'today') { refreshStats(); renderPlayer(); sceneMood(); }
+      if (tab === 'food') { fillForm(); }
     },
     async goRegister() {
       if (busy) return;
@@ -2054,7 +2137,7 @@
     shiftDay(n) {
       const d = addDays(curDate, n);
       if (d > today()) return;
-      curDate = d; fillForm();
+      curDate = d; fillForm(); renderFoodPage();
     },
     goto(d) { App.switchTab('today'); openSheet(); curDate = d; fillForm(); },
     water(n) {
@@ -2126,7 +2209,7 @@
       g.exMin = Math.max(0, parseInt($('g-ex').value, 10) || 0);
       g.water = Math.max(0, parseInt($('g-water').value, 10) || 0);
       g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('g-week').value, 10) || 0));
-      g.kcalMin = Math.max(0, parseInt($('g-kmin').value, 10) || 0); g.kcalMax = Math.max(0, parseInt($('g-kmax').value, 10) || 0); g.protein = Math.max(0, parseInt($('g-pro').value, 10) || 0);
+      g.kcalMin = Math.max(0, parseInt($('g-kmin').value, 10) || 0); g.kcalMax = Math.max(0, parseInt($('g-kmax').value, 10) || 0); g.protein = Math.max(0, parseInt($('g-pro').value, 10) || 0); g.fatG = Math.max(0, parseInt($('g-fat').value, 10) || 0); g.carbs = Math.max(0, parseInt($('g-carb').value, 10) || 0);
       g.steps = Math.max(0, parseInt($('g-steps').value, 10) || 0); g.sleep = Math.max(0, parseFloat($('g-sleep').value) || 0);
       const sd = $('g-startdate').value; if (sd) S.settings.startDate = sd > today() ? today() : sd;
       persist(); toast('目標已儲存！');
@@ -2191,7 +2274,7 @@
       const snack = $('fd-snack').checked;
       let slot = $('fd-slot').value; if (slot === 'auto') slot = autoSlot(time, snack);
       if (slot.startsWith('snack')) { /* 選了零食時段就算零食 */ }
-      const item = { id: 'f' + Date.now().toString(36), time, slot, name, kcal: Math.round(Number($('fd-kcal').value) || 0), protein: Math.round((Number($('fd-pro').value) || 0) * 10) / 10, snack: snack || slot.startsWith('snack'), details: $('fd-details').textContent || '' };
+      const item = { id: 'f' + Date.now().toString(36), time, slot, name, kcal: Math.round(Number($('fd-kcal').value) || 0), protein: Math.round((Number($('fd-pro').value) || 0) * 10) / 10, fat: Math.round((Number($('fd-fat').value) || 0) * 10) / 10, carbs: Math.round((Number($('fd-carb').value) || 0) * 10) / 10, snack: snack || slot.startsWith('snack'), details: $('fd-details').textContent || '' };
       const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       (S.foods[curDate] = S.foods[curDate] || []).push(item);
       persist(); App.foodCancel(); $('food-text').value = '';
@@ -2199,6 +2282,8 @@
       const after = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       const f = foodOf(curDate), g = S.settings.goals, left = (g.kcalMax || 0) - f.kcal;
       if (after > before) fxAt('pts-pop', '+' + (after - before), pos.player);
+      const coachSay = left < 0 ? `😠 教練：已經超過 ${-left} 大卡了！` : item.snack ? `🧐 教練：零食記下來了，還能吃 ${left} 大卡` : `💪 教練：讚！今天還能吃 ${left} 大卡`;
+      if ($('view-food').classList.contains('active')) toast(coachSay);
       if (!busy) {
         if (g.kcalMax && left < 0) setCoach('angry', `${item.name} ${item.kcal} 大卡！今天已經超過 ${-left} 大卡了！噗嚕嚕！`);
         else if (item.snack) setCoach('inspect', `零食 ${item.kcal} 大卡……記下來了！今天還能吃 ${left} 大卡。`);
@@ -2230,6 +2315,21 @@
         updateHints();
         st.textContent = got.length ? `✅ 讀到：${got.join('、')}${r.date && r.date !== curDate ? `（截圖日期 ${r.date}，目前填在 ${curDate}）` : ''}。確認後按最下面「交給教練」` : '😵 沒讀到數字，換一張清楚一點的截圖試試';
       } catch (e) { st.textContent = '❌ ' + e.message; }
+    },
+    runShortcut() {
+      S.awaitHealth = Date.now(); persist();
+      location.href = 'shortcuts://run-shortcut?name=' + encodeURIComponent(S.settings.shortcutName || '回報教練');
+    },
+    async pasteHealth() {
+      let text = '';
+      try { text = await navigator.clipboard.readText(); } catch (e) { text = prompt('貼上捷徑複製的內容（長按 → 貼上）：') || ''; }
+      const st = $('view-food').classList.contains('active') ? $('health-status2') : $('health-status');
+      const got = importHealthText(text, curDate);
+      S.awaitHealth = 0; persist();
+      if (!got) { st.textContent = '😵 剪貼簿裡沒有健康數據。請先執行捷徑「回報教練」再貼上。'; return; }
+      st.textContent = '✅ 已匯入：' + got.join('、');
+      refreshStats(); fillForm(); renderFoodPage();
+      if (!busy) setCoach('cheer', `手錶數據收到了！${got.slice(0, 3).join('、')}！`);
     },
     testHealthLink() { location.href = location.pathname + '?steps=6872&active=416&weight=100.4&fat=30&sleep=7.2&hr=62&floors=8'; },
     // ---- gemini key ----
@@ -2414,6 +2514,7 @@
     },
   };
   window.App = App;
+  window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- boot ----------
   load();
@@ -2423,7 +2524,7 @@
   $('no-sugar').addEventListener('change', updateHints);
   place('player', pos.player); place('coach', pos.coach);
   importFromURL();
-  refreshStats(); renderPlayer(); fillForm();
+  refreshStats(); renderPlayer(); fillForm(); renderFoodPage();
 
   // tap to walk / tap coach to register
   $('gym').addEventListener('click', e => {
@@ -2461,6 +2562,7 @@
   } else startScene();
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
+    if (S.awaitHealth && Date.now() - S.awaitHealth < 10 * 60 * 1000) { toast('👉 按「📋 貼上匯入」把手錶數據帶進來'); }
     cloudPullMerge(false);
     if (curDate > today()) curDate = today();
     refreshStats(); renderPlayer();
