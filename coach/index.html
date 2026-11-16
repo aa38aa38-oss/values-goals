@@ -293,6 +293,10 @@
       <div class="stat"><b id="st-today">0</b><span>今日得分</span></div>
       <div class="stat"><b id="st-streak">0</b><span>連續天數 🔥</span></div>
     </div>
+    <div class="patience" id="food-hud" style="display:none">
+      <div class="patience-label"><span>🍱 今日熱量 <b id="food-kcal">0</b> / <span id="food-kmax">2100</span> kcal</span><span>💪 蛋白質 <b id="food-pro">0</b> / <span id="food-pgoal">90</span> g</span></div>
+      <div class="bar"><i id="food-bar"></i></div>
+    </div>
     <div class="patience">
       <div class="patience-label"><span>教練耐心值</span><span id="pat-text">80 / 100</span></div>
       <div class="bar"><i id="pat-bar"></i></div>
@@ -336,6 +340,10 @@
       <h2>🏃 每週運動分鐘（近 8 週）</h2>
       <div class="chart" id="chart-ex"></div>
     </div>
+    <div class="card" id="kcal-card" style="display:none">
+      <h2>🍱 每日熱量與蛋白質（近 14 天，健康26）</h2>
+      <div class="chart" id="chart-kcal"></div>
+    </div>
     <div class="card">
       <h2>📅 本週</h2>
       <div id="week-summary" class="breakdown"></div>
@@ -365,6 +373,11 @@
       </div>
       <div class="row">
         <div><label class="f">每週運動天數目標</label><input type="number" inputmode="numeric" id="g-week"></div>
+        <div><label class="f">每日熱量下限（kcal）</label><input type="number" inputmode="numeric" id="g-kmin"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">每日熱量上限（kcal）</label><input type="number" inputmode="numeric" id="g-kmax"></div>
+        <div><label class="f">每日蛋白質目標（g）</label><input type="number" inputmode="numeric" id="g-pro"></div>
         <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
       </div>
       <p class="muted">開始日期之後，整天沒有任何紀錄會扣 30 分。</p>
@@ -452,6 +465,11 @@
 
     <div class="card">
       <h2>🍱 飲食紀錄 <span class="done-chip" id="chip-diet">未記錄</span></h2>
+      <div id="h26-box" style="display:none;margin-bottom:8px">
+        <div class="breakdown" id="h26-list"></div>
+        <button type="button" class="btn secondary" style="margin-top:8px" onclick="App.openHealth26()">🍱 去健康26 拍照記飲食</button>
+        <p class="muted" style="margin:6px 0 0">健康26 有紀錄就算「已記錄飲食」，下面的欄位可以不填。</p>
+      </div>
       <div class="meal-grid">
         <div><label class="f">早餐</label><input type="text" id="m-b" placeholder="例：蛋餅＋無糖豆漿"></div>
         <div><label class="f">午餐</label><input type="text" id="m-l" placeholder="例：便當半飯"></div>
@@ -637,7 +655,7 @@
     settings: {
       coachName: '呀哈教練',
       startDate: today(),
-      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4 },
+      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, kcalMin: 1800, kcalMax: 2100, protein: 90 },
     },
     avatar: DEFAULT_AVATAR(),
     records: {},
@@ -664,8 +682,9 @@
 
   // ---------- record logic ----------
   const emptyRec = () => ({ meals: { b: '', l: '', d: '', s: '' }, water: 0, noSugar: false, kcal: '', exType: '', exMin: '', steps: '', weight: '', fat: '', waist: '', note: '' });
-  const rec = d => S.records[d] ? Object.assign(emptyRec(), S.records[d], { meals: Object.assign(emptyRec().meals, S.records[d].meals || {}) }) : emptyRec();
-  const hasDiet = r => Object.values(r.meals).some(v => v && v.trim()) || r.water > 0 || r.noSugar || num(r.kcal) !== null;
+  const foodOf = d => (S.food && S.food[d] && S.food[d].items && S.food[d].items.length) ? S.food[d] : null;
+  const rec = d => Object.assign(S.records[d] ? Object.assign(emptyRec(), S.records[d], { meals: Object.assign(emptyRec().meals, S.records[d].meals || {}) }) : emptyRec(), { _food: foodOf(d) });
+  const hasDiet = r => !!r._food || Object.values(r.meals).some(v => v && v.trim()) || r.water > 0 || r.noSugar || num(r.kcal) !== null;
   const hasEx = r => r.exType === 'rest' || (num(r.exMin) || 0) > 0 || (num(r.steps) || 0) > 0;
   const hasBody = r => num(r.weight) !== null || num(r.fat) !== null || num(r.waist) !== null;
   const loggedCount = r => (hasDiet(r) ? 1 : 0) + (hasEx(r) ? 1 : 0) + (hasBody(r) ? 1 : 0);
@@ -681,6 +700,14 @@
     if (g.exMin && (num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest') items.push([`達成運動 ${g.exMin} 分鐘`, 20]);
     if (g.water && r.water >= g.water) items.push([`達成喝水 ${g.water} 杯`, 20]);
     if (r.noSugar) items.push(['沒喝含糖飲料', 20]);
+    const f = r._food;
+    if (f) {
+      items.push([`健康26 記了 ${f.items.length} 筆飲食`, Math.min(20, f.items.length * 5)]);
+      if (d < today() || new Date().getHours() >= 20) {
+        if (g.kcalMax && f.kcal >= (g.kcalMin || 0) * 0.8 && f.kcal <= g.kcalMax) items.push([`達成熱量 ${g.kcalMin || 0}～${g.kcalMax} kcal`, 20]);
+      }
+      if (g.protein && f.protein >= g.protein) items.push([`達成蛋白質 ${g.protein} g`, 20]);
+    }
     if (n > 0 && streakBefore >= 2) items.push([`連續 ${streakBefore + 1} 天加成`, 10]);
     return items;
   }
@@ -703,6 +730,8 @@
       const goalsHit = items.filter(([l]) => l.startsWith('達成') || l === '沒喝含糖飲料').length;
       if (n === 0) { if (d < t) { patience -= 35; missed++; streak = 0; } }
       else { patience += 5 * n + 3 * goalsHit; streak++; }
+      const ff = rec(d)._food, gk = S.settings.goals.kcalMax;
+      if (ff && gk && ff.kcal > gk * 1.2) patience -= 15;
       patience = Math.max(0, Math.min(100, patience));
       d = addDays(d, 1);
     }
@@ -1170,6 +1199,7 @@
     bar.style.width = C.patience + '%';
     bar.style.background = C.patience >= 60 ? 'var(--ok)' : C.patience >= 30 ? 'var(--warn)' : 'var(--primary)';
     $('lv-badge').textContent = `Lv.${C.level} ${C.title}`;
+    renderFood();
     $('coach-name-tag').textContent = S.settings.coachName || '教練';
     const n = td ? td.n : 0;
     $('coach-marker').classList.toggle('on', n < 3);
@@ -1196,6 +1226,7 @@
     $('no-sugar').checked = !!r.noSugar; $('kcal').value = r.kcal;
     $('ex-type').value = r.exType; $('ex-min').value = r.exMin; $('steps').value = r.steps;
     $('weight').value = r.weight; $('fat').value = r.fat; $('waist').value = r.waist; $('note').value = r.note;
+    renderH26Box(curDate);
     updateHints();
   }
 
@@ -1212,7 +1243,7 @@
   function updateHints() {
     const r = readForm(), g = S.settings.goals;
     const chip = (id, on) => { const c = $(id); c.textContent = on ? '已記錄 ✓' : '未記錄'; c.classList.toggle('on', on); };
-    chip('chip-diet', hasDiet(r)); chip('chip-ex', hasEx(r)); chip('chip-body', hasBody(r));
+    chip('chip-diet', hasDiet(Object.assign(r, { _food: foodOf(curDate) }))); chip('chip-ex', hasEx(r)); chip('chip-body', hasBody(r));
     const hw = $('hint-water');
     hw.textContent = g.water ? (r.water >= g.water ? `✓ 達成喝水目標 ${g.water} 杯（+20）` : `目標 ${g.water} 杯，還差 ${g.water - r.water} 杯`) : '';
     hw.classList.toggle('hit', !!g.water && r.water >= g.water);
@@ -1310,6 +1341,7 @@
       const w = num(r.weight); if (w !== null) weights.push(w);
     }
     renderExChart(t);
+    renderKcalChart(t);
     const g = S.settings.goals;
     const avgW = weights.length ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : '—';
     $('week-summary').innerHTML = `<div><span>有紀錄的天數</span><span>${logged} 天</span></div>
@@ -1467,6 +1499,7 @@
     const g = S.settings.goals;
     $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
     $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
+    $('g-kmin').value = g.kcalMin ?? ''; $('g-kmax').value = g.kcalMax ?? ''; $('g-pro').value = g.protein ?? '';
     $('g-startdate').value = S.settings.startDate;
     $('coach-name').value = S.settings.coachName;
     $('cloud-url').value = S.settings.cloudUrl || '';
@@ -1478,6 +1511,47 @@
   function sceneMood() {
     if (busy) return;
     setCoach(moodState());
+  }
+
+  // ---------- 健康26 food ----------
+  function renderFood() {
+    const f = foodOf(today()), g = S.settings.goals;
+    const hud = $('food-hud'); if (!hud) return;
+    hud.style.display = S.settings.hasHealth26 ? 'block' : 'none';
+    const kcal = f ? f.kcal : 0, pro = f ? f.protein : 0;
+    $('food-kcal').textContent = kcal; $('food-kmax').textContent = g.kcalMax || '—';
+    $('food-pro').textContent = pro; $('food-pgoal').textContent = g.protein || '—';
+    const ratio = g.kcalMax ? kcal / g.kcalMax : 0;
+    const bar = $('food-bar'); bar.style.width = Math.min(100, ratio * 100) + '%';
+    bar.style.background = ratio > 1 ? 'var(--primary)' : ratio > .85 ? 'var(--warn)' : 'var(--ok)';
+  }
+  function renderH26Box(d) {
+    const box = $('h26-box'); if (!box) return;
+    box.style.display = S.settings.hasHealth26 ? 'block' : 'none';
+    const f = foodOf(d);
+    $('h26-list').innerHTML = f
+      ? f.items.map(x => `<div><span>${x.snack ? '🟣' : '🍽️'} ${esc(x.name)}</span><span>${x.kcal} kcal · ${x.protein} g</span></div>`).join('') + `<div><span>健康26 合計</span><span>${f.kcal} kcal · ${f.protein} g</span></div>`
+      : '<p class="muted" style="margin:0">健康26 這天還沒有飲食紀錄。</p>';
+  }
+  function renderKcalChart(t) {
+    const card = $('kcal-card'); if (!card) return;
+    card.style.display = S.settings.hasHealth26 ? 'block' : 'none';
+    if (!S.settings.hasHealth26) return;
+    const g = S.settings.goals, days = [];
+    for (let i = 13; i >= 0; i--) { const d = addDays(t, -i); const f = foodOf(d); days.push([d, f ? f.kcal : 0, f ? f.protein : 0]); }
+    const W = 340, H = 170, pl = 34, pb = 22, pt = 12, bw = (W - pl - 6) / 14;
+    const max = Math.max(g.kcalMax || 0, ...days.map(x => x[1]), 500) * 1.08;
+    const y = v => pt + (1 - v / max) * (H - pt - pb);
+    const band = g.kcalMax ? `<rect x="${pl}" y="${y(g.kcalMax)}" width="${W - pl - 4}" height="${Math.max(0, y(g.kcalMin || 0) - y(g.kcalMax))}" fill="#3fa86b" opacity=".12"/><text x="${W - 4}" y="${y(g.kcalMax) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">目標 ${g.kcalMin || 0}～${g.kcalMax}</text>` : '';
+    const bars = days.map(([d, k, p], i) => {
+      const x = pl + i * bw + 2, over = g.kcalMax && k > g.kcalMax;
+      return `<rect x="${x}" y="${y(k)}" width="${bw - 4}" height="${Math.max(0, H - pb - y(k))}" rx="3" fill="${over ? '#e8505b' : '#f0a32b'}"><title>${nice(d)}：${k} kcal，蛋白質 ${p} g</title></rect>
+        ${i % 2 === 1 ? `<text x="${x + (bw - 4) / 2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#8a7a70">${parse(d).getMonth() + 1}/${parse(d).getDate()}</text>` : ''}`;
+    }).join('');
+    const ticks = [0, Math.round(max / 2 / 100) * 100].map(v => `<text x="${pl - 4}" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="#8a7a70">${v}</text>`).join('');
+    const proHit = days.filter(x => x[1] > 0 && g.protein && x[2] >= g.protein).length, logged = days.filter(x => x[1] > 0).length;
+    $('chart-kcal').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 14 天每日熱量">${band}<line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${ticks}${bars}</svg>
+      <p class="muted" style="margin:6px 0 0">橘色＝目標內或以下，紅色＝超過上限。蛋白質達標 ${proHit} / ${logged} 天。</p>`;
   }
 
   // ---------- weekly exercise chart ----------
@@ -1528,6 +1602,12 @@
   async function cloudPullMerge(manual) {
     if (!cloudOn()) { if (manual) toast('請先設定雲端網址和暗號'); return; }
     try {
+      try {
+        const fd = await cloudCall('food', { days: 45 });
+        S.food = S.food || {};
+        (fd.days || []).forEach(x => { S.food[x.date] = { kcal: x.kcal, protein: x.protein, snackKcal: x.snackKcal, items: x.items }; });
+        S.settings.hasHealth26 = true;
+      } catch (e) { /* 後端沒有健康26 接口時略過 */ }
       const data = await cloudCall('list');
       let n = 0;
       (data.records || []).forEach(({ date, updatedAt, record }) => {
@@ -1550,13 +1630,15 @@
     const g = S.settings.goals, t = today();
     const lines = [
       `學員：${S.avatar.name || '學員'}；目標：起始體重 ${g.startWeight || '未填'} kg → 目標體重 ${g.targetWeight || '未填'} kg；每日運動 ${g.exMin} 分鐘；每日喝水 ${g.water} 杯；每週運動 ${g.weeklyExDays} 天`,
+      `飲食目標：每日 ${g.kcalMin}～${g.kcalMax} kcal，蛋白質 ${g.protein} g`,
       `遊戲狀態：總分 ${C.score}，等級 Lv.${C.level}（${C.title}），連續紀錄 ${C.streak} 天，教練耐心值 ${C.patience}/100`,
       '近 7 天紀錄：',
     ];
     for (let i = 6; i >= 0; i--) {
       const d = addDays(t, -i), r = rec(d);
       if (!loggedCount(r)) { lines.push(`- ${d}：沒有紀錄`); continue; }
-      const meals = ['b', 'l', 'd', 's'].map((k, j) => r.meals[k] ? ['早', '午', '晚', '點心'][j] + ':' + r.meals[k] : '').filter(Boolean).join('、');
+      let meals = ['b', 'l', 'd', 's'].map((k, j) => r.meals[k] ? ['早', '午', '晚', '點心'][j] + ':' + r.meals[k] : '').filter(Boolean).join('、');
+      if (r._food) meals = `健康26 共 ${r._food.kcal} kcal、蛋白質 ${r._food.protein} g：` + r._food.items.map(x => `${x.slot || x.col}${x.snack ? '(零食)' : ''} ${x.name} ${x.kcal}kcal/${x.protein}g`).join('；') + (meals ? '；另記：' + meals : '');
       lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${r.noSugar ? '，無含糖飲料' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.note ? '；心得：' + r.note : ''}`);
     }
     return lines.join('\n');
@@ -1671,6 +1753,7 @@
       g.exMin = Math.max(0, parseInt($('g-ex').value, 10) || 0);
       g.water = Math.max(0, parseInt($('g-water').value, 10) || 0);
       g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('g-week').value, 10) || 0));
+      g.kcalMin = Math.max(0, parseInt($('g-kmin').value, 10) || 0); g.kcalMax = Math.max(0, parseInt($('g-kmax').value, 10) || 0); g.protein = Math.max(0, parseInt($('g-pro').value, 10) || 0);
       const sd = $('g-startdate').value; if (sd) S.settings.startDate = sd > today() ? today() : sd;
       persist(); toast('目標已儲存！');
     },
@@ -1683,7 +1766,7 @@
       setCloudStatus('連線中…');
       try {
         const d = await cloudCall('ping');
-        setCloudStatus(d.hasGemini ? '✅ 連線成功，Gemini 已設定' : '✅ 連線成功（但還沒設定 GEMINI_API_KEY，問教練功能無法使用）', 'ok');
+        setCloudStatus((d.hasGemini ? '✅ 連線成功，Gemini 已設定' : '✅ 連線成功（但還沒設定 GEMINI_API_KEY，問教練功能無法使用）') + (d.food ? '；已連上健康26 飲食紀錄' : ''), 'ok');
         cloudPullMerge(false);
       } catch (e) { setCloudStatus('❌ ' + e.message, 'err'); }
     },
@@ -1695,6 +1778,11 @@
       setCloudStatus(`✅ 已上傳 ${dates.length} 天的紀錄`, 'ok');
     },
     cloudPull(manual) { return cloudPullMerge(manual); },
+    openHealth26() {
+      const u = cloudCfg().url;
+      if (!u) { toast('請先在設定填好 Apps Script 網址'); return; }
+      window.open(u, '_blank');
+    },
     // ---- chat ----
     openChat() {
       $('chat-coach').innerHTML = coachMarkup('goforit');
@@ -1875,19 +1963,26 @@
     walkPlayer({ x, y });
   });
 
-  const t0 = today();
+  function startScene() {
+    const t0 = today();
+    C = compute();
+    if (C.patience < 30 && S.lastAttack !== t0 && (C.perDay[t0] ? C.perDay[t0].n : 0) < 3) {
+      setCoach('angry', '……');
+      setTimeout(() => runAttack('耐心值見底了！給我過來！！'), 700);
+    } else {
+      setCoach('standby', pick(LINES.standby));
+      setTimeout(sceneMood, 1500);
+    }
+  }
   if (!S.onboarded) {
     setCoach('standby');
     App.obStart();
-  } else if (C.patience < 30 && S.lastAttack !== t0 && (C.perDay[t0] ? C.perDay[t0].n : 0) < 3) {
-    setCoach('angry', '……');
-    setTimeout(() => runAttack('耐心值見底了！給我過來！！'), 700);
-  } else {
-    setCoach('standby', pick(LINES.standby));
-    setTimeout(sceneMood, 1500);
-  }
-
-  setTimeout(() => cloudPullMerge(false), 1200);
+    setTimeout(() => cloudPullMerge(false), 1200);
+  } else if (cloudOn()) {
+    // 先同步雲端（含健康26 飲食），再決定教練要不要衝過來
+    setCoach('inspect', '同步紀錄中……');
+    Promise.race([cloudPullMerge(false), new Promise(r => setTimeout(r, 6000))]).then(startScene);
+  } else startScene();
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     cloudPullMerge(false);
