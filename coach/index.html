@@ -1962,7 +1962,10 @@
     const all = await geminiModels();
     // 上次成功的模型排第一，不用每次從頭試
     const good = S.settings.gmGood;
-    const models = good && all.includes(good) ? [good, ...all.filter(m => m !== good)] : all;
+    const quota = S.settings.gmQuota || {}; const now0 = Date.now();
+    let models = good && all.includes(good) ? [good, ...all.filter(m => m !== good)] : all;
+    // 額度用完的模型先排到最後（3 小時內）
+    models = [...models.filter(m => !(quota[m] > now0)), ...models.filter(m => quota[m] > now0)];
     let last = ''; gmTries = [];
     for (const model of models) {
       const tm0 = Date.now();
@@ -1970,7 +1973,7 @@
       for (let attempt = 0; attempt < 3; attempt++) {
         const body = JSON.parse(JSON.stringify(payload));
         body.generationConfig = Object.assign({ temperature: json ? 0.2 : 0.8 }, body.generationConfig || {});
-        if (json) { body.generationConfig.responseMimeType = 'application/json'; body.generationConfig.maxOutputTokens = 400; }
+        if (json) { body.generationConfig.responseMimeType = 'application/json'; body.generationConfig.maxOutputTokens = 2048; }
         if (useThinking) body.generationConfig.thinkingConfig = useThinking;
         let res, data;
         try {
@@ -1979,12 +1982,28 @@
           data = await res.json().catch(() => ({}));
         } catch (e) { last = `[${model}] 逾時`; gmTries.push(`${model} 逾時`); break; }
         const parts = (((data.candidates || [])[0] || {}).content || {}).parts;
+        const cand = (data.candidates || [])[0] || {};
         if (!data.error && parts) {
+          const text = parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
+          // JSON 模式：被截斷或格式壞掉就換下一個模型，不要把半成品交出去
+          if (json && !safeParseJSON(text)) {
+            last = `[${model}] 回答被截斷（${cand.finishReason || '格式不完整'}）`;
+            gmTries.push(`${model} 回答不完整`);
+            if (useThinking && attempt === 0) { useThinking = null; continue; } // 關掉思考再試一次
+            break;
+          }
           if (S.settings.gmGood !== model) { S.settings.gmGood = model; persist(); }
+          if (quota[model]) { delete quota[model]; S.settings.gmQuota = quota; persist(); }
           gmLast = { model, tries: gmTries };
-          return parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
+          return text;
         }
         const msg = (data.error && data.error.message) || String(res.status);
+        if (/exceeded your current quota|RESOURCE_EXHAUSTED|quota/i.test(msg)) {
+          quota[model] = Date.now() + 3 * 3600e3; S.settings.gmQuota = quota; persist();
+          last = `[${model}] 今日額度用完`; gmTries.push(`${model} 額度用完`);
+          if (S.settings.gmGood === model) { S.settings.gmGood = ''; persist(); }
+          break;
+        }
         last = `[${model}] ${msg}`; gmTries.push(`${model} 失敗 ${((Date.now() - tm0) / 1000).toFixed(1)} 秒`);
         if (data.error && /API key not valid|API_KEY_INVALID|PERMISSION_DENIED/i.test(msg + data.error.status)) throw new Error('API key 無效，請到設定重新貼上');
         if (useThinking && /thinking/i.test(msg)) { useThinking = null; S.settings.gmNoThink = [...new Set([...(S.settings.gmNoThink || []), model])]; persist(); continue; } // 這個模型不支援思考設定，拿掉重送
@@ -2003,7 +2022,7 @@
     const results = await Promise.all(cand.map(async model => {
       const t0 = Date.now();
       const tryOnce = async (thinking) => {
-        const gc = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 200 };
+        const gc = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 2048 };
         if (thinking) gc.thinkingConfig = thinking;
         const res = await fetchT(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(gmKey())}`,
           { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: gc }) }, 25000);
@@ -2013,7 +2032,7 @@
         let th = (S.settings.gmNoThink || []).includes(model) ? null : thinkingFor(model);
         let d = await tryOnce(th);
         if (d.error && th && /thinking/i.test(d.error.message)) { S.settings.gmNoThink = [...new Set([...(S.settings.gmNoThink || []), model])]; d = await tryOnce(null); }
-        if (d.error) throw new Error(d.error.message.slice(0, 40));
+        if (d.error) { if (/quota|RESOURCE_EXHAUSTED/i.test(d.error.message)) { const q = S.settings.gmQuota || {}; q[model] = Date.now() + 3 * 3600e3; S.settings.gmQuota = q; throw new Error('今日免費額度用完'); } throw new Error(d.error.message.slice(0, 40)); }
         const txt = (((d.candidates || [])[0] || {}).content || {}).parts.filter(p => !p.thought).map(p => p.text).join('');
         const j = parseJSON(txt); if (!j.calories) throw new Error('回傳格式不對');
         const r = { model, sec: (Date.now() - t0) / 1000, ok: true, kcal: j.calories };
@@ -2035,7 +2054,24 @@
     const id = setInterval(() => set(`${label}（${Math.round((Date.now() - t0) / 1000)} 秒）`), 1000);
     return () => { clearInterval(id); return ((Date.now() - t0) / 1000).toFixed(1); };
   }
-  const parseJSON = t => JSON.parse(String(t).replace(/```json/gi, '').replace(/```/g, '').trim());
+  function safeParseJSON(t) {
+    t = String(t || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+    const i = t.indexOf('{'), j = t.lastIndexOf('}');
+    if (i >= 0 && j > i) { try { return JSON.parse(t.slice(i, j + 1)); } catch (e) {} }
+    // 救援：從半截的回答裡把數字抓出來
+    const numOf = k => { const m = t.match(new RegExp('"' + k + '"\\s*:\\s*"?(-?\\d+(?:\\.\\d+)?)')); return m ? parseFloat(m[1]) : null; };
+    const strOf = k => { const m = t.match(new RegExp('"' + k + '"\\s*:\\s*"([^"]*)')); return m ? m[1] : null; };
+    const calories = numOf('calories');
+    if (calories === null) return null;
+    const o = { calories, protein: numOf('protein'), fat: numOf('fat'), carbs: numOf('carbs') };
+    const fn = strOf('foodName'); if (fn) o.foodName = fn;
+    const dt = strOf('details'); if (dt) o.details = dt;
+    const sn = t.match(/"isSnack"\s*:\s*(true|false)/); if (sn) o.isSnack = sn[1] === 'true';
+    // 健康截圖的欄位
+    ['steps', 'activeKcal', 'exerciseMinutes', 'weight', 'sleepHours', 'restingHR', 'floors'].forEach(k => { const v = numOf(k); if (v !== null) o[k] = v; });
+    return o;
+  }
+  const parseJSON = t => { const o = safeParseJSON(t); if (!o) throw new Error('AI 回答格式不完整，請再按一次'); return o; };
   function compressImage(file, max = 1024) {
     return new Promise((res, rej) => {
       const url = URL.createObjectURL(file); const im = new Image();
