@@ -631,6 +631,7 @@
 
     <div class="card">
       <h2>💾 資料備份</h2>
+      <p class="muted" id="app-ver"></p>
       <p class="muted">資料存在這支手機的瀏覽器裡。建議每週匯出一次備份。</p>
       <button class="btn secondary" onclick="App.exportData()">⬇️ 匯出備份檔</button>
       <input type="file" accept="application/json,.json" id="import-file" style="display:none" onchange="App.importData(this)">
@@ -2938,9 +2939,28 @@
   window.App = App;
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
+  // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
+  const APP_VERSION = '2026.11.17-1';
+  async function checkUpdate() {
+    try {
+      const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
+      const html = await res.text();
+      const m = html.match(/const APP_VERSION = '([^']+)'/);
+      if (m && m[1] !== APP_VERSION) {
+        if (safeGet('coachGame.reloadedFor') === m[1]) return; // 已經重新載入過還是舊的，避免無限重整
+        safeSet('coachGame.reloadedFor', m[1]);
+        toast('🔄 有新版本，更新中……');
+        setTimeout(() => location.replace(location.pathname + '?v=' + encodeURIComponent(m[1])), 600);
+      }
+    } catch (e) {}
+  }
+
   // ---------- boot ----------
   load();
   renderGymBG();
+  $('app-ver').textContent = '目前版本：' + APP_VERSION;
+  checkUpdate();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
   $('lpc-authors').textContent = LPC_AUTHORS.join(', ');
   ['m-b', 'm-l', 'm-d', 'm-s', 'kcal', 'ex-type', 'ex-min', 'steps', 'weight', 'fat', 'waist', 'sleep'].forEach(id => $(id).addEventListener('input', updateHints));
   $('no-sugar').addEventListener('change', updateHints);
