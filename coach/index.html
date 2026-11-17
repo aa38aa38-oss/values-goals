@@ -1919,8 +1919,11 @@
   }
 
   // ---------- Gemini (direct from browser, key stays on this phone) ----------
-  const GM_FALLBACK = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
-  const GM_CACHE = 'coachGame.gmModels';
+  // 跟健康26 一樣：穩定的 gemini-3-flash 系列排最前面（免費額度最寬、最快），找到的其他模型接在後面
+  const GM_DEFAULT = ['gemini-3-flash', 'gemini-3-flash-preview', 'gemini-3-flash-lite'];
+  const GM_CACHE = 'coachGame.gmModels.v2';
+  // 舊版設定（優先最新版號、思考設定、額度記錄）清掉一次
+  try { if (!safeGet('coachGame.gmMigrated2')) { safeDel('coachGame.gmModels'); safeSet('coachGame.gmMigrated2', '1'); setTimeout(() => { S.settings.gmGood = ''; S.settings.gmQuota = {}; S.settings.gmNoThink = []; persist(); }, 0); } } catch (e) {}
   let gmModels = null;
   const gmKey = () => (S.settings.geminiKey || '').trim();
   async function geminiModels() {
@@ -1939,10 +1942,9 @@
         .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
         .map(m => m.name.replace('models/', ''))
         .filter(n => n.includes('flash') && !/(image|tts|audio|live|embed|8b|1\.5|2\.0|thinking)/.test(n));
-      const ver = n => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]);
-      found.sort((a, b) => (ver(b) - ver(a)) || (a.includes('lite') - b.includes('lite')) || (a.includes('preview') - b.includes('preview')));
+      found = found.filter(n => !/2\.5/.test(n));
     } catch (e) { if (/API key|API_KEY|permission/i.test(e.message)) throw e; }
-    gmModels = [...new Set([...found.slice(0, 4), ...GM_FALLBACK])];
+    gmModels = [...new Set([...GM_DEFAULT, ...found])].slice(0, 8);
     safeSet(GM_CACHE, JSON.stringify({ key: gmKey().slice(-6), t: Date.now(), list: gmModels }));
     return gmModels;
   }
@@ -1952,11 +1954,7 @@
     return fetch(url, Object.assign({}, opt, { signal: ac.signal })).finally(() => clearTimeout(t));
   }
   // 關掉／降低「思考」：Gemini 2.5／3 預設會先思考，簡單的估熱量不需要，關掉快很多
-  function thinkingFor(model) {
-    if (/gemini-3/.test(model)) return { thinkingLevel: 'low' };
-    if (/2\.5-flash/.test(model)) return { thinkingBudget: 0 };
-    return null;
-  }
+  function thinkingFor(model) { return null; } // 跟健康26 一樣用模型預設值，不送額外設定
   async function geminiCall(payload, json) {
     if (!gmKey()) throw new Error('還沒設定 Gemini API key（設定 → 🤖 Gemini AI 設定）');
     const all = await geminiModels();
@@ -1973,7 +1971,7 @@
       for (let attempt = 0; attempt < 3; attempt++) {
         const body = JSON.parse(JSON.stringify(payload));
         body.generationConfig = Object.assign({ temperature: json ? 0.2 : 0.8 }, body.generationConfig || {});
-        if (json) { body.generationConfig.responseMimeType = 'application/json'; body.generationConfig.maxOutputTokens = 2048; }
+        if (json) body.generationConfig.responseMimeType = 'application/json';
         if (useThinking) body.generationConfig.thinkingConfig = useThinking;
         let res, data;
         try {
@@ -2017,12 +2015,12 @@
   // 測速：同時問每個候選模型，選最快且能正確回 JSON 的
   async function geminiSpeedTest(onRow) {
     const all = await geminiModels();
-    const cand = [...new Set([...all, 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'])].slice(0, 7);
+    const cand = all.slice(0, 4); // 只測前 4 個，避免一次把免費額度用光
     const prompt = '估算「蔥抓餅一片」的營養。只回傳 JSON：{"calories":整數,"protein":數字,"fat":數字,"carbs":數字}';
     const results = await Promise.all(cand.map(async model => {
       const t0 = Date.now();
       const tryOnce = async (thinking) => {
-        const gc = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 2048 };
+        const gc = { temperature: 0.2, responseMimeType: 'application/json' };
         if (thinking) gc.thinkingConfig = thinking;
         const res = await fetchT(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(gmKey())}`,
           { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: gc }) }, 25000);
