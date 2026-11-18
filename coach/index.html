@@ -153,7 +153,18 @@
   .macro .mbar { height: 5px; background: var(--line); border-radius: 99px; margin-top: 5px; overflow: hidden; }
   .macro .mbar i { display: block; height: 100%; border-radius: 99px; }
   #view-food .food-actions .btn { padding: 16px 6px; font-size: 1rem; }
-  nav.tabs button { max-width: 110px; }
+  nav.tabs button { max-width: 96px; }
+  nav.tabs button { font-size: .66rem !important; }
+  nav.tabs button .ic { font-size: 1.2rem !important; }
+  .cat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .cat-chips button { border: 2px solid var(--line); background: #fffdf9; border-radius: 99px; padding: 6px 10px; font: inherit; font-size: .86rem; color: var(--ink); }
+  .cat-chips button.sel { border-color: var(--primary); background: var(--primary-soft); font-weight: 700; }
+  .sync-tag { font-size: .7rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; margin-left: 4px; }
+  .sync-tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .sync-tag.wait { background: #fff1d6; color: #b7791f; }
+  .sync-tag.err { background: var(--primary-soft); color: var(--primary); }
+  .sync-box { margin-top: 10px; padding: 10px; border-radius: 14px; background: #f2f7ff; border: 1.5px solid #cfe0f7; }
+  .sync-box .btn { margin: 0; }
   .food-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .food-actions .btn { margin: 0; font-size: .92rem; }
   .food-text { display: flex; gap: 8px; margin-top: 8px; }
@@ -404,6 +415,10 @@
         </div>
       </div>
       <div id="food-list" style="margin-top:8px"></div>
+      <div class="sync-box" id="food-sync-box">
+        <button class="btn" onclick="App.syncSheets('food')">☁️ 把近 14 天飲食登記到「健康26」</button>
+        <div class="sync-status" id="food-sync-status"></div>
+      </div>
     </div>
     <div class="card">
       <h2>⌚ 今天的手錶／健康數據</h2>
@@ -465,6 +480,41 @@
   </section>
 
   <!-- ===== 紀錄 ===== -->
+  <section class="view" id="view-money">
+    <div class="card">
+      <div class="date-nav" style="margin-bottom:6px">
+        <button onclick="App.moneyShift(-1)">◀</button>
+        <b id="money-date"></b>
+        <button onclick="App.moneyShift(1)" id="money-next">▶</button>
+      </div>
+      <div class="macro-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="macro"><span>今天</span><b id="money-day">0</b><span>元</span></div>
+        <div class="macro"><span>本週</span><b id="money-week">0</b><span>元</span></div>
+        <div class="macro"><span>本月</span><b id="money-month">0</b><span>元</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>💰 記一筆</h2>
+      <div class="cat-chips" id="money-cats"></div>
+      <div class="row">
+        <div><label class="f">項目</label><input type="text" id="mn-name" placeholder="例：7-11 早餐"></div>
+        <div><label class="f">金額（元）</label><input type="number" inputmode="numeric" id="mn-amt" placeholder="例：85"></div>
+      </div>
+      <label class="f">🕒 時間</label>
+      <input type="text" id="mn-time" inputmode="numeric" placeholder="自動">
+      <button class="btn" style="margin-top:10px" onclick="App.moneyAdd()">➕ 記下這筆</button>
+      <div id="money-list" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>📊 記帳試算表</h2>
+      <p class="muted" style="margin:0 0 8px">會寫到「記帳」試算表的半年分頁（例如 2026 下半年 → <b>26H2</b>），依日期找到那一天，名稱寫在上列、金額寫在下列；同一格已經有東西就用「、」接在後面、金額相加。</p>
+      <div class="sync-box">
+        <button class="btn" onclick="App.syncSheets('expense')">☁️ 把近 14 天記帳登記到試算表</button>
+        <div class="sync-status" id="money-sync-status"></div>
+      </div>
+    </div>
+  </section>
+
   <section class="view" id="view-history">
     <div class="card">
       <h2>📉 體重趨勢（近 30 天）</h2>
@@ -610,8 +660,8 @@
     </div>
 
     <div class="card">
-      <h2>☁️ 雲端存檔（選用）</h2>
-      <p class="muted">連上你自己的 Google Apps Script 後端：紀錄會存進你的 Google 試算表，「💬 問教練」由 Gemini 回答。設定教學見 <a href="apps-script/README.md" target="_blank" rel="noopener">apps-script/README.md</a>。</p>
+      <h2>☁️ 試算表連線（健康26／記帳）</h2>
+      <p class="muted">填健康26 那個 Apps Script 的網址和暗號，就能一鍵把飲食登記到「健康26」、記帳登記到「26H2」等分頁。設定教學見 <a href="apps-script/README.md" target="_blank" rel="noopener">apps-script/README.md</a>。</p>
       <label class="f">Apps Script 網頁應用程式網址（…/exec）</label>
       <input type="text" id="cloud-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off">
       <label class="f">暗號（APP_TOKEN，和指令碼屬性填的一樣）</label>
@@ -768,6 +818,7 @@
 
 <nav class="tabs">
   <button class="active" data-tab="food" onclick="App.switchTab('food')"><span class="ic">🍱</span>飲食</button>
+  <button data-tab="money" onclick="App.switchTab('money')"><span class="ic">💰</span>記帳</button>
   <button data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏋️</span>健身房</button>
   <button data-tab="history" onclick="App.switchTab('history')"><span class="ic">📈</span>紀錄</button>
   <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🧑</span>角色</button>
@@ -888,6 +939,7 @@
     avatar: DEFAULT_AVATAR(),
     records: {},
     exercises: {},
+    expenses: {},
     lastAttack: '',
   });
 
@@ -907,6 +959,7 @@
         S.foods = d.foods || {};
         S.decor = d.decor || {};
         S.exercises = d.exercises || {};
+        S.expenses = d.expenses || {};
       } catch (e) {}
     }
   }
@@ -1896,7 +1949,7 @@
     if (!f) { el.innerHTML = '<p class="muted" style="margin:4px 0 0">這天還沒有飲食紀錄。拍照或輸入食物，AI 幫你算熱量和蛋白質。</p>'; return; }
     const order = ['breakfast', 'brunch', 'lunch', 'afternoon', 'snack_afternoon', 'dinner', 'snack_evening'];
     const items = f.items.slice().sort((a, b) => (order.indexOf(a.slotKey) - order.indexOf(b.slotKey)) || String(a.time).localeCompare(String(b.time)));
-    el.innerHTML = items.map(x => `<div class="food-item"><div class="nm">${x.snack ? '🟣' : '🍽️'} ${esc(x.name)}<small>${esc(x.slot)} · ${esc(x.time || '')}${x.details ? ' · ' + esc(x.details) : ''}</small></div>
+    el.innerHTML = items.map(x => `<div class="food-item"><div class="nm">${x.snack ? '🟣' : '🍽️'} ${esc(x.name)}${syncTag(x)}<small>${esc(x.slot)} · ${esc(x.time || '')}${x.details ? ' · ' + esc(x.details) : ''}</small></div>
       <div class="kc">${x.kcal} kcal<small>蛋 ${x.protein} · 脂 ${x.fat ?? 0} · 碳 ${x.carbs ?? 0} g</small></div><button onclick="App.foodDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
       + `<div class="food-total"><span>合計</span><span>${f.kcal} kcal · 蛋 ${f.protein} · 脂 ${f.fat} · 碳 ${f.carbs} g</span></div>`;
   }
@@ -2292,6 +2345,61 @@
     $('chart-ex').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 8 週每週運動分鐘"><line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${bars}${gl}</svg>`;
   }
 
+  // ---------- 記帳 ----------
+  const MONEY_CATS = [['auto_meal', '🍽️ 餐費（依時間）'], ['早餐', '🍳 早餐'], ['午餐', '🍱 午餐'], ['晚餐', '🍲 晚餐'], ['auto_trans', '🚌 交通（依時間）'],
+    ['運動', '🏃 運動'], ['買菜', '🥬 買菜'], ['電話費', '📱 電話費‧app'], ['交際娛樂', '🎉 交際娛樂'], ['媽媽費', '👩 媽媽費'], ['其他', '📦 其他']];
+  let moneyDate = today(), moneyCat = 'auto_meal';
+  function resolveCat(cat, time) {
+    const [h, m] = String(time || nowTime()).split(':').map(Number); const hr = (h || 0) + (m || 0) / 60;
+    if (cat === 'auto_meal') return hr < 10.5 ? '早餐' : hr < 16 ? '午餐' : '晚餐';
+    if (cat === 'auto_trans') return hr < 13 ? '早交通' : '晚交通';
+    return cat;
+  }
+  function syncTag(x) {
+    if (x.synced) return '<span class="sync-tag ok">☁️ 已登記</span>';
+    if (x.syncErr) return `<span class="sync-tag err" title="${esc(x.syncErr)}">⚠️ 未登記</span>`;
+    return cloudOn() ? '<span class="sync-tag wait">待登記</span>' : '';
+  }
+  const sumMoney = (from, to) => Object.entries(S.expenses || {}).filter(([d]) => d >= from && d <= to).reduce((a, [, arr]) => a + arr.reduce((b, x) => b + (Number(x.amount) || 0), 0), 0);
+  function renderMoney() {
+    const d = moneyDate;
+    $('money-date').textContent = (d === today() ? '今天 ' : '') + nice(d);
+    $('money-next').style.opacity = d >= today() ? .3 : 1;
+    $('money-day').textContent = sumMoney(d, d);
+    $('money-week').textContent = sumMoney(mondayOf(d), addDays(mondayOf(d), 6));
+    $('money-month').textContent = sumMoney(d.slice(0, 8) + '01', d.slice(0, 8) + '31');
+    $('money-cats').innerHTML = MONEY_CATS.map(([k, l]) => `<button class="${moneyCat === k ? 'sel' : ''}" onclick="App.moneyCat('${k}')">${l}</button>`).join('');
+    const arr = (S.expenses || {})[d] || [];
+    $('money-list').innerHTML = arr.length ? arr.slice().sort((a, b) => String(a.time).localeCompare(String(b.time))).map(x =>
+      `<div class="food-item"><div class="nm">💰 ${esc(x.name || x.cat)}${syncTag(x)}<small>${esc(x.cat)} · ${esc(x.time || '')}</small></div><div class="kc">${x.amount} 元</div><button onclick="App.moneyDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
+      + `<div class="food-total"><span>這天合計</span><span>${sumMoney(d, d)} 元</span></div>`
+      : '<p class="muted" style="margin:4px 0 0">這天還沒有記帳。</p>';
+  }
+  // 同步到 Google 試算表（健康26／26H2）
+  async function syncSheets(kind) {
+    const st = $(kind === 'food' ? 'food-sync-status' : 'money-sync-status');
+    if (!cloudOn()) { st.textContent = '請先到「⚙️ 設定 → ☁️ 試算表連線」填好網址和暗號'; st.className = 'sync-status err'; return; }
+    const from = addDays(today(), -13), store = kind === 'food' ? S.foods : S.expenses, items = [];
+    Object.entries(store || {}).forEach(([d, arr]) => { if (d >= from && d <= today()) arr.forEach(x => { if (!x.synced) items.push(Object.assign({ date: d }, x)); }); });
+    if (!items.length) { st.textContent = '✅ 近 14 天都已經登記過了'; st.className = 'sync-status ok'; return; }
+    st.textContent = `登記 ${items.length} 筆中……`; st.className = 'sync-status';
+    try {
+      const data = await cloudCall(kind === 'food' ? 'syncFood' : 'syncExpense', { items: items.map(x => kind === 'food'
+        ? { id: x.id, date: x.date, time: x.time, slot: x.slot, snack: !!x.snack, name: x.name, kcal: x.kcal, protein: x.protein }
+        : { id: x.id, date: x.date, cat: x.cat, name: x.name, amount: x.amount }) });
+      let ok = 0; const errs = [];
+      (data.results || []).forEach(r => {
+        const it = items.find(x => x.id === r.id); if (!it) return;
+        const orig = (store[it.date] || []).find(x => x.id === r.id); if (!orig) return;
+        if (r.ok) { orig.synced = true; delete orig.syncErr; ok++; } else { orig.syncErr = r.error; errs.push(`${it.date} ${it.name || it.cat}：${r.error}`); }
+      });
+      persist(); renderH26Box(curDate); if ($('view-money').classList.contains('active')) renderMoney();
+      st.textContent = `✅ 登記成功 ${ok} 筆` + (errs.length ? `；❌ ${errs.length} 筆失敗：${errs.slice(0, 2).join('；')}` : '');
+      st.className = 'sync-status ' + (errs.length ? 'err' : 'ok');
+      if (ok) toast(`☁️ 已登記 ${ok} 筆到試算表`);
+    } catch (e) { st.textContent = '❌ ' + e.message + '（如果是「未知的 action」，代表試算表那邊還沒加 Sync.gs 或還沒部署新版本）'; st.className = 'sync-status err'; }
+  }
+
   // ---------- cloud (Google Apps Script) ----------
   const cloudCfg = () => ({ url: (S.settings.cloudUrl || '').trim(), token: (S.settings.cloudToken || '').trim() });
   const cloudOn = () => { const c = cloudCfg(); return /^https:\/\/script\.google(usercontent)?\.com\//.test(c.url) && !!c.token; };
@@ -2475,6 +2583,7 @@
       if (tab === 'rewards') renderRewards();
       if (tab === 'today') { refreshStats(); renderPlayer(); sceneMood(); }
       if (tab === 'food') { fillForm(); }
+      if (tab === 'money') { renderMoney(); }
     },
     async goRegister() {
       if (busy) return;
@@ -2602,7 +2711,7 @@
       setCloudStatus('連線中…');
       try {
         const d = await cloudCall('ping');
-        setCloudStatus((d.hasGemini ? '✅ 連線成功，Gemini 已設定' : '✅ 連線成功（但還沒設定 GEMINI_API_KEY，問教練功能無法使用）') + (d.food ? '；已連上健康26 飲食紀錄' : ''), 'ok');
+        setCloudStatus((d.sheets ? '✅ 已連上記帳試算表（健康26／記帳）。' : '') + (d.hasGemini ? '✅ 連線成功，Gemini 已設定' : '✅ 連線成功（但還沒設定 GEMINI_API_KEY，問教練功能無法使用）') + (d.food ? '；已連上健康26 飲食紀錄' : ''), 'ok');
         cloudPullMerge(false);
       } catch (e) { setCloudStatus('❌ ' + e.message, 'err'); }
     },
@@ -2670,10 +2779,29 @@
         else setCoach('cheer', `${item.name} ${item.kcal} 大卡、蛋白質 ${item.protein} g！今天還能吃 ${left} 大卡！`);
       }
     },
+    // ---- money ----
+    moneyCat(k) { moneyCat = k; renderMoney(); },
+    moneyShift(n) { const d = addDays(moneyDate, n); if (d > today()) return; moneyDate = d; renderMoney(); },
+    moneyAdd() {
+      const amt = Math.round(Number($('mn-amt').value) || 0);
+      if (!amt) { toast('請填金額'); return; }
+      const time = /^\d{1,2}:\d{2}$/.test($('mn-time').value.trim()) ? $('mn-time').value.trim() : (moneyDate === today() ? nowTime() : '12:00');
+      const cat = resolveCat(moneyCat, time);
+      S.expenses = S.expenses || {};
+      (S.expenses[moneyDate] = S.expenses[moneyDate] || []).push({ id: 'm' + Date.now().toString(36), time, cat, name: $('mn-name').value.trim() || cat, amount: amt });
+      persist(); $('mn-name').value = ''; $('mn-amt').value = ''; $('mn-time').value = '';
+      renderMoney(); toast(`💰 ${cat} ${amt} 元，記下來了！`);
+    },
+    moneyDel(id) {
+      const arr = (S.expenses || {})[moneyDate] || []; const i = arr.findIndex(x => x.id === id); if (i < 0) return;
+      if (!confirm(`刪除「${arr[i].name} ${arr[i].amount} 元」？${arr[i].synced ? '\n（試算表上已登記的不會自動刪除，要到試算表手動改）' : ''}`)) return;
+      arr.splice(i, 1); if (!arr.length) delete S.expenses[moneyDate]; persist(); renderMoney();
+    },
+    syncSheets(kind) { return syncSheets(kind); },
     foodDel(id) {
       const arr = S.foods[curDate] || [];
       const i = arr.findIndex(x => x.id === id); if (i < 0) return;
-      if (!confirm(`刪除「${arr[i].name}」？`)) return;
+      if (!confirm(`刪除「${arr[i].name}」？${arr[i].synced ? '\n（健康26 上已登記的不會自動刪除，要到試算表手動改）' : ''}`)) return;
       arr.splice(i, 1); if (!arr.length) delete S.foods[curDate];
       persist(); refreshStats(); renderH26Box(curDate); updateHints();
     },
@@ -2940,7 +3068,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.17-1';
+  const APP_VERSION = '2026.11.18-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
