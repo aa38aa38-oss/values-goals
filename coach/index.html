@@ -2376,28 +2376,50 @@
       : '<p class="muted" style="margin:4px 0 0">這天還沒有記帳。</p>';
   }
   // 同步到 Google 試算表（健康26／26H2）
+  const syncBusy = {};
   async function syncSheets(kind) {
     const st = $(kind === 'food' ? 'food-sync-status' : 'money-sync-status');
     if (!cloudOn()) { st.textContent = '請先到「⚙️ 設定 → ☁️ 試算表連線」填好網址和暗號'; st.className = 'sync-status err'; return; }
     const from = addDays(today(), -13), store = kind === 'food' ? S.foods : S.expenses, items = [];
     Object.entries(store || {}).forEach(([d, arr]) => { if (d >= from && d <= today()) arr.forEach(x => { if (!x.synced) items.push(Object.assign({ date: d }, x)); }); });
     if (!items.length) { st.textContent = '✅ 近 14 天都已經登記過了'; st.className = 'sync-status ok'; return; }
-    st.textContent = `登記 ${items.length} 筆中……`; st.className = 'sync-status';
+    if (syncBusy[kind]) { st.textContent = '還在登記中，請稍等……'; return; }
+    syncBusy[kind] = true;
+    const toPayload = x => kind === 'food'
+      ? { id: x.id, date: x.date, time: x.time, slot: x.slot, snack: !!x.snack, name: x.name, kcal: x.kcal, protein: x.protein }
+      : { id: x.id, date: x.date, cat: x.cat, name: x.name, amount: x.amount };
+    let ok = 0; const errs = []; let fatal = '';
     try {
-      const data = await cloudCall(kind === 'food' ? 'syncFood' : 'syncExpense', { items: items.map(x => kind === 'food'
-        ? { id: x.id, date: x.date, time: x.time, slot: x.slot, snack: !!x.snack, name: x.name, kcal: x.kcal, protein: x.protein }
-        : { id: x.id, date: x.date, cat: x.cat, name: x.name, amount: x.amount }) });
-      let ok = 0; const errs = [];
-      (data.results || []).forEach(r => {
-        const it = items.find(x => x.id === r.id); if (!it) return;
-        const orig = (store[it.date] || []).find(x => x.id === r.id); if (!orig) return;
-        if (r.ok) { orig.synced = true; delete orig.syncErr; ok++; } else { orig.syncErr = r.error; errs.push(`${it.date} ${it.name || it.cat}：${r.error}`); }
-      });
-      persist(); renderH26Box(curDate); if ($('view-money').classList.contains('active')) renderMoney();
-      st.textContent = `✅ 登記成功 ${ok} 筆` + (errs.length ? `；❌ ${errs.length} 筆失敗：${errs.slice(0, 2).join('；')}` : '');
-      st.className = 'sync-status ' + (errs.length ? 'err' : 'ok');
-      if (ok) toast(`☁️ 已登記 ${ok} 筆到試算表`);
-    } catch (e) { st.textContent = '❌ ' + e.message + '（如果是「未知的 action」，代表試算表那邊還沒加 Sync.gs 或還沒部署新版本）'; st.className = 'sync-status err'; }
+      // 分批送（每批 6 筆），每批成功就先標記，中途被打斷也不會白做
+      for (let b = 0; b < items.length; b += 6) {
+        const batch = items.slice(b, b + 6);
+        st.textContent = `登記中…（${Math.min(b + batch.length, items.length)} / ${items.length} 筆）`; st.className = 'sync-status';
+        let data = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          try { data = await cloudCall(kind === 'food' ? 'syncFood' : 'syncExpense', { items: batch.map(toPayload) }); break; }
+          catch (e) {
+            // 試算表正在處理上一次的登記（例如剛剛切到別的 App 時還沒做完），等一下再試
+            if (/鎖定|lock|Lock|timed out|逾時/.test(e.message) && attempt < 4) {
+              st.textContent = `試算表忙碌中，${8} 秒後自動重試（第 ${attempt + 1} 次）……`;
+              await new Promise(r => setTimeout(r, 8000)); continue;
+            }
+            throw e;
+          }
+        }
+        (data.results || []).forEach(r => {
+          const it = batch.find(x => x.id === r.id); if (!it) return;
+          const orig = (store[it.date] || []).find(x => x.id === r.id); if (!orig) return;
+          if (r.ok) { orig.synced = true; delete orig.syncErr; ok++; } else { orig.syncErr = r.error; errs.push(`${it.date} ${it.name || it.cat}：${r.error}`); }
+        });
+        persist();
+      }
+    } catch (e) { fatal = e.message; }
+    finally { syncBusy[kind] = false; }
+    renderH26Box(curDate); if ($('view-money').classList.contains('active')) renderMoney();
+    st.textContent = (ok || !fatal ? `✅ 登記成功 ${ok} 筆` : '') + (errs.length ? `；❌ ${errs.length} 筆失敗：${errs.slice(0, 2).join('；')}` : '')
+      + (fatal ? `${ok ? '；' : ''}❌ ${fatal}${ok ? '（剩下的再按一次即可，不會重複）' : ''}` : '');
+    st.className = 'sync-status ' + (errs.length || fatal ? 'err' : 'ok');
+    if (ok) toast(`☁️ 已登記 ${ok} 筆到試算表`);
   }
 
   // ---------- cloud (Google Apps Script) ----------
@@ -3079,7 +3101,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.18-3';
+  const APP_VERSION = '2026.11.18-4';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
