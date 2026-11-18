@@ -2406,8 +2406,13 @@
   async function cloudCall(action, payload = {}) {
     const c = cloudCfg();
     if (!cloudOn()) throw new Error('還沒設定雲端網址或暗號');
-    const res = await fetch(c.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action, token: c.token }, payload)) });
-    const data = await res.json();
+    let res, data;
+    try {
+      res = await fetch(c.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action, token: c.token }, payload)) });
+    } catch (e) {
+      throw new Error('連不上 Apps Script（' + e.message + '）。最常見原因：①部署時「誰可以存取」不是「所有人」②加了 Sync.gs 後還沒「部署 → 管理部署作業 → 編輯 → 新版本」③網址不是 /exec 結尾');
+    }
+    try { data = await res.json(); } catch (e) { throw new Error('Apps Script 回傳的不是資料（可能 Sync.gs 有錯或還沒部署新版本）'); }
     if (!data.ok) throw new Error(data.error || '雲端回應錯誤');
     return data;
   }
@@ -3068,7 +3073,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.18-1';
+  const APP_VERSION = '2026.11.18-2';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
