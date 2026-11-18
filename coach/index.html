@@ -211,7 +211,7 @@
   @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   #levelup h2 { color: var(--gold); margin: 0 0 4px; font-size: 1.5rem; }
   #levelup ul { text-align: left; padding-left: 20px; margin: 10px 0; font-size: .9rem; }
-  .sync-status { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+  .sync-status { white-space: pre-line; font-size: .78rem; color: var(--muted); margin-top: 6px; }
   .sync-status.ok { color: var(--ok); } .sync-status.err { color: var(--primary); }
 
   /* forms */
@@ -669,7 +669,7 @@
       <button class="btn" onclick="App.cloudSaveSettings()">💾 儲存並測試連線</button>
       <div class="sync-status" id="cloud-status"></div>
       <div class="btn-row" style="margin-top:8px">
-        <button class="btn secondary" onclick="App.cloudPushAll()">⬆️ 上傳全部紀錄</button>
+        <button class="btn secondary" onclick="App.cloudPushAll()">⬆️ 上傳全部紀錄（含飲食、記帳登記到試算表）</button>
         <button class="btn secondary" onclick="App.cloudPull(true)">⬇️ 從雲端下載</button>
       </div>
     </div>
@@ -2725,7 +2725,13 @@
       const dates = Object.keys(S.records);
       setCloudStatus(`上傳 ${dates.length} 天的紀錄中…`);
       await cloudPush(dates);
-      setCloudStatus(`✅ 已上傳 ${dates.length} 天的紀錄`, 'ok');
+      setCloudStatus('登記飲食到「健康26」中…');
+      await syncSheets('food');
+      setCloudStatus('登記記帳到「26H2」中…');
+      await syncSheets('expense');
+      const f = $('food-sync-status'), m = $('money-sync-status');
+      const bad = f.classList.contains('err') || m.classList.contains('err');
+      setCloudStatus(`✅ 已備份 ${dates.length} 天紀錄\n🍱 飲食：${f.textContent}\n💰 記帳：${m.textContent}`, bad ? 'err' : 'ok');
     },
     cloudPull(manual) { return cloudPullMerge(manual); },
     // ---- food (photo / text / manual) ----
@@ -3073,7 +3079,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.18-2';
+  const APP_VERSION = '2026.11.18-3';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
