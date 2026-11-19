@@ -54,9 +54,9 @@
   .actor .inner { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
   .actor .flip { width: 100%; height: 100%; display: flex; align-items: flex-end; justify-content: center; transition: transform .15s; }
   .actor .flip.left { transform: scaleX(-1); }
-  #coach { width: 44%; aspect-ratio: 1 / 1.05; cursor: pointer; }
+  #coach { width: 34%; aspect-ratio: 1 / 1.05; cursor: pointer; }
   #coach img, #coach svg { max-width: 100%; max-height: 100%; }
-  #player { width: 38%; aspect-ratio: 1 / 1; }
+  #player { width: 46%; aspect-ratio: 1 / 1; }
   #player .inner { position: relative; }
   canvas.px, .cc-stage canvas, .cc-opt canvas, .preset canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
   #player canvas { width: 100%; height: 100%; display: block; }
@@ -84,7 +84,27 @@
   @keyframes waddle { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-7%) rotate(6deg); } }
   .emo { font-size: 1.7rem; animation: emoUp 1.5s ease-out forwards; transform: translateX(-50%); }
   @keyframes emoUp { 0% { margin-top: 0; opacity: 0; } 15% { opacity: 1; } 100% { margin-top: -110px; opacity: 0; } }
-  .dust { font-size: .9rem; opacity: .6; animation: emoUp .9s ease-out forwards; transform: translateX(-50%); }
+  .dust { font-size: .9rem; opacity: .7; animation: dustPuff .7s ease-out forwards; transform: translateX(-50%); }
+  @keyframes dustPuff { 0% { opacity: .8; transform: translateX(-50%) scale(.5); } 100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(1.4); } }
+  .rps-duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; width: 100%; height: 100%; padding: 6px; }
+  .rps-duel .side { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+  .rps-duel .who { height: 92px; display: flex; align-items: flex-end; justify-content: center; }
+  .rps-duel .who { width: 100%; }
+  .rps-duel .who img { max-height: 92px; max-width: 100%; object-fit: contain; }
+  .rps-duel .who svg { width: 100%; height: 92px; }
+  .rps-duel .hand { font-size: 2.6rem; line-height: 1; height: 46px; }
+  .rps-duel .hand.shake { animation: rpsShake .2s ease-in-out infinite; }
+  .rps-duel .hand.show { animation: rpsPop .35s ease-out; }
+  .rps-duel .side.mine .hand { transform: scaleX(-1); }
+  .rps-duel .side.mine .hand.shake { animation-name: rpsShakeM; }
+  .rps-duel .side.mine .hand.show { animation-name: rpsPopM; }
+  .rps-duel .vs { font-weight: 900; color: var(--primary); font-size: 1.2rem; }
+  .rps-duel b { font-size: .8rem; }
+  .rps-duel .win .hand { filter: drop-shadow(0 0 8px #f2b134); }
+  @keyframes rpsShake { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  @keyframes rpsShakeM { 0%,100% { transform: scaleX(-1) translateY(0); } 50% { transform: scaleX(-1) translateY(-12px); } }
+  @keyframes rpsPop { 0% { transform: scale(.4); } 70% { transform: scale(1.3); } 100% { transform: scale(1); } }
+  @keyframes rpsPopM { 0% { transform: scaleX(-1) scale(.4); } 70% { transform: scaleX(-1) scale(1.3); } 100% { transform: scaleX(-1) scale(1); } }
   .slot .cnt { position: absolute; left: 4px; top: 2px; font-size: .68rem; font-weight: 700; background: var(--ok); color: #fff; border-radius: 99px; padding: 0 6px; }
   .a-standby { animation: bob 1.4s ease-in-out infinite; }
   @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -1573,7 +1593,7 @@
   const pos = { player: { x: 74, y: 9 }, coach: { ...COACH_HOME } };
   function place(id, p, ms = 0) {
     const el = $(id);
-    const wPct = id === 'coach' ? 44 : 38;
+    const wPct = id === 'coach' ? 34 : 46;
     el.style.transitionDuration = ms + 'ms';
     const cx = id === 'coach' ? Math.max(wPct / 2 - 2, Math.min(102 - wPct / 2, p.x)) : p.x;
     el.style.left = (cx - wPct / 2) + '%';
@@ -2654,7 +2674,7 @@
   async function coachWalk(target, speed = 14) {
     const el = $('coach'); el.classList.add('walking');
     const t0 = Date.now();
-    const dust = setInterval(() => fxAt('dust', '💨', { x: pos.coach.x, y: pos.coach.y - 4 }, -12), 450);
+    const dust = setInterval(() => { const c = actorAt('coach'); fxAt('dust', '💨', { x: c.x, y: c.y }, -16); }, 450);
     await moveTo('coach', clampPos(target), speed);
     clearInterval(dust); el.classList.remove('walking');
     return Date.now() - t0;
@@ -2954,14 +2974,20 @@
     persist();
   }
 
+  // 角色在畫面上的實際位置（移動中也準確）：x＝中心、y＝腳底，皆為 % 
+  function actorAt(id) {
+    const g = $('gym').getBoundingClientRect(), r = $(id).getBoundingClientRect();
+    if (!g.width) return pos[id];
+    return { x: (r.left + r.width / 2 - g.left) / g.width * 100, y: (g.bottom - r.bottom) / g.height * 100 };
+  }
   // ---------- 怪獸動作特效 ----------
   let fxN = 0;
   setInterval(() => {
     if (!S.monster || document.visibilityState !== 'visible' || !$('view-today').classList.contains('active')) return;
     const img = document.querySelector('#player img.mon'); if (!img) return;
     const pose = (img.className.match(/p-(\w+)/) || [])[1]; fxN++;
-    const p = pos.player, left = $('player-flip').classList.contains('left');
-    if (pose === 'walk') fxAt('dust', '💨', { x: p.x + (left ? 7 : -7), y: p.y - 4 }, -12);
+    const p = actorAt('player'), left = $('player-flip').classList.contains('left');
+    if (pose === 'walk') fxAt('dust', '💨', { x: p.x + (left ? 6 : -6), y: p.y }, -16);
     else if (pose === 'sleep' && fxN % 2 === 0) fxAt('emo', pick(['💤', 'Z', 'z']), { x: p.x + 6, y: p.y }, 8);
     else if (pose === 'cry' && fxN % 2 === 0) fxAt('emo', '💧', { x: p.x + (Math.random() * 10 - 5), y: p.y }, 4);
     else if (pose === 'sick' && fxN % 3 === 0) fxAt('emo', pick(['💦', '🌀']), { x: p.x + 5, y: p.y }, 8);
@@ -3008,6 +3034,16 @@
     </div>`;
   }
   const RPS = { r: '✊', s: '✌️', p: '✋' }, BEATS = { r: 's', s: 'p', p: 'r' };
+  function rpsDuel(myHand, coHand, shaking, result) {
+    const m = S.monster;
+    const me = m ? `<img src="${monImg(m.line, m.form, m.form === '0-egg' ? 'idle' : (result === 'win' ? 'win' : result === 'lose' ? 'cry' : 'attack'))}" alt="">` : '<span style="font-size:3rem">🙂</span>';
+    const coState = result === 'win' ? 'cry' : result === 'lose' ? 'cheer' : shaking ? 'goforit' : 'inspect';
+    $('mg-coach').innerHTML = `<div class="rps-duel">
+      <div class="side mine ${result === 'win' ? 'win' : ''}"><div class="hand ${shaking ? 'shake' : 'show'}">${myHand}</div><div class="who">${me}</div><b>${esc(S.avatar.name || '你')}</b></div>
+      <div class="vs">VS</div>
+      <div class="side ${result === 'lose' ? 'win' : ''}"><div class="hand ${shaking ? 'shake' : 'show'}">${coHand}</div><div class="who">${coachMarkup(coState)}</div><b>${esc(S.settings.coachName || '教練')}</b></div>
+    </div>`;
+  }
   function rpsDraw() {
     $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">你 <b>${mg.me}</b> ： <b>${mg.co}</b> 教練</p>
       <div class="mg-row">${Object.entries(RPS).map(([k, v]) => `<button onclick="App.rps('${k}')">${v}</button>`).join('')}</div>
@@ -3146,7 +3182,7 @@
     closeGames() { if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
     gameStart(k) {
       if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv);
-      if (k === 'rps') { mg = { k, me: 0, co: 0 }; $('mg-title').textContent = '✊ 猜拳三戰兩勝'; mgCoach('standby'); mgSay('剪刀、石頭——出！'); rpsDraw(); }
+      if (k === 'rps') { mg = { k, me: 0, co: 0 }; $('mg-title').textContent = '✊ 猜拳三戰兩勝'; rpsDuel('❔', '❔', false); mgSay('選一個拳，跟教練同時出拳！'); rpsDraw(); }
       if (k === 'box') { mg = { k, round: 0, hits: 0 }; $('mg-title').textContent = '🥊 反應拳擊'; boxRound(); }
       if (k === 'squat') {
         mg = { k, n: 0, left: 10, on: false }; $('mg-title').textContent = '🏋️ 10 秒深蹲挑戰';
@@ -3155,15 +3191,25 @@
       }
     },
     rps(k) {
-      if (!mg || mg.k !== 'rps') return;
+      if (!mg || mg.k !== 'rps' || mg.busy) return;
+      mg.busy = true;
+      document.querySelectorAll('.mg-row button').forEach(b => b.disabled = true);
+      rpsDuel('✊', '✊', true); mgSay('剪刀、石頭——');
+      setTimeout(() => {
+        if (!mg || mg.k !== 'rps') return;
+        mgSay('出！');
+        App._rpsReveal(k);
+      }, 900);
+    },
+    _rpsReveal(k) {
       const c = pick(Object.keys(RPS));
       let r = k === c ? '平手' : BEATS[k] === c ? '你贏' : '教練贏';
       if (r === '你贏') mg.me++; if (r === '教練贏') mg.co++;
-      mgCoach(r === '你贏' ? 'cry' : r === '教練贏' ? 'cheer' : 'inspect');
+      rpsDuel(RPS[k], RPS[c], false, r === '你贏' ? 'win' : r === '教練贏' ? 'lose' : 'tie');
       mgSay(`你 ${RPS[k]} vs ${RPS[c]} 教練 → ${r}！`);
+      mg.busy = false;
       if (mg.me >= 2 || mg.co >= 2) {
         const win = mg.me >= 2;
-        mgCoach(win ? 'cry' : 'dance');
         mgSay(win ? `可惡……你贏了！${gameAward('rps')}` : '呀哈！教練贏了！再來挑戰吧！');
         if (win) monAct('win', 2600);
         $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">你 <b>${mg.me}</b> ： <b>${mg.co}</b> 教練</p><button class="btn" onclick="App.gameStart('rps')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
@@ -3689,7 +3735,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.19-3';
+  const APP_VERSION = '2026.11.19-4';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
