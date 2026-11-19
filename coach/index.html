@@ -210,6 +210,36 @@
   @keyframes expIn { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.5); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } 22% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1); } }
   .exp-pulse { animation: expPulse .9s ease-out 2; }
   @keyframes expPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242, 177, 52, 0); } 40% { box-shadow: 0 0 0 6px rgba(242, 177, 52, .55); } }
+  #player img.mon { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; display: block; pointer-events: none; }
+  #player .mon-badge { position: absolute; left: 50%; top: -6%; transform: translateX(-50%); font-size: 1.15rem; animation: mark 1.2s ease-in-out infinite; white-space: nowrap; }
+  .away-note { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); background: #fffdf5; border: 2px solid var(--ink); border-radius: 10px; padding: 6px 10px; font-size: .78rem; font-weight: 700; text-align: center; box-shadow: var(--shadow); white-space: nowrap; }
+  .mon-card { text-align: center; }
+  .mon-stage-img { height: 220px; display: flex; align-items: flex-end; justify-content: center; background: radial-gradient(ellipse at 50% 85%, #f6e6cc 0 35%, transparent 36%), var(--stage); border-radius: 18px; border: 2px solid var(--line); padding: 8px; cursor: pointer; }
+  .mon-stage-img img { max-height: 200px; max-width: 90%; object-fit: contain; }
+  .mon-name { font-size: 1.35rem; font-weight: 900; margin: 8px 0 0; }
+  .mon-sub { font-size: .82rem; color: var(--muted); }
+  .mon-tree { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .mon-tree .node { background: var(--stage); border: 2px solid var(--line); border-radius: 12px; padding: 4px; text-align: center; font-size: .7rem; }
+  .mon-tree .node img { width: 100%; height: 70px; object-fit: contain; }
+  .mon-tree .node.unseen img { filter: brightness(0); opacity: .18; }
+  .mon-tree .node.cur { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+  .mon-tree .row-label { grid-column: 1 / -1; font-size: .75rem; color: var(--muted); font-weight: 700; margin-top: 4px; text-align: left; }
+  .egg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .egg-pick { background: var(--card); border: 3px solid var(--line); border-radius: 16px; padding: 8px 4px; text-align: center; font: inherit; color: var(--ink); }
+  .egg-pick img { width: 100%; height: 110px; object-fit: contain; animation: bob 1.6s ease-in-out infinite; }
+  .egg-pick.sel { border-color: var(--primary); background: var(--primary-soft); }
+  .egg-pick b { display: block; font-size: .95rem; } .egg-pick span { font-size: .72rem; color: var(--muted); }
+  #evolve { position: fixed; inset: 0; z-index: 46; display: none; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,240,180,.95), rgba(40,25,70,.92) 70%); padding: 16px; }
+  #evolve.show { display: flex; }
+  #evolve .box { text-align: center; color: #fff; max-width: 360px; width: 100%; }
+  #evolve .stage { position: relative; height: 260px; display: flex; align-items: center; justify-content: center; }
+  #evolve .stage img { position: absolute; max-height: 240px; max-width: 90%; object-fit: contain; }
+  #evolve .old { animation: evoOut 2.2s ease-in forwards; }
+  #evolve .new { opacity: 0; animation: evoIn 1.2s ease-out 2s forwards; }
+  @keyframes evoOut { 0% { filter: brightness(1); transform: scale(1); } 20%,40%,60% { filter: brightness(4); } 30%,50%,70% { filter: brightness(1); } 90% { filter: brightness(8); transform: scale(1.1); opacity: 1; } 100% { filter: brightness(8); opacity: 0; transform: scale(1.3); } }
+  @keyframes evoIn { 0% { opacity: 0; filter: brightness(8); transform: scale(.6); } 60% { opacity: 1; filter: brightness(2); transform: scale(1.1); } 100% { opacity: 1; filter: brightness(1); transform: scale(1); } }
+  #evolve h2 { color: var(--gold); font-size: 1.5rem; margin: 6px 0; text-shadow: 0 2px 0 #7a4a10; }
+  #evolve p { margin: 4px 0 12px; }
   #levelup { position: fixed; inset: 0; z-index: 45; display: none; align-items: center; justify-content: center; background: rgba(30, 20, 60, .6); padding: 16px; }
   #levelup.show { display: flex; }
   #levelup .box { background: radial-gradient(ellipse at 50% 0%, #4b5a8a, #2b2f4a 70%); color: #fff; border-radius: 22px; padding: 18px; max-width: 360px; width: 100%; text-align: center; border: 3px solid var(--gold); animation: pop .4s ease-out; }
@@ -551,7 +581,8 @@
 
   <!-- ===== 主角 ===== -->
   <section class="view" id="view-avatar">
-    <div class="creator" id="creator"></div>
+    <div id="mon-view"></div>
+    <div class="creator" id="creator" style="display:none"></div>
   </section>
 
   <!-- ===== 設定 ===== -->
@@ -559,13 +590,13 @@
     <div class="card">
       <h2>🏆 等級與經驗值</h2>
       <div id="rw-level"></div>
-      <p class="muted">每天回報教練就能獲得經驗值（EXP），每 300 EXP 升一級。升級會解鎖健身房裝飾和角色服裝。</p>
+      <p class="muted">每天回報教練就能獲得經驗值（EXP），每 300 EXP 升一級。升級會解鎖健身房裝飾。你的怪獸也會靠這些經驗值成長、進化。</p>
     </div>
     <div class="card">
       <h2>🏋️ 健身房裝飾</h2>
       <div id="rw-decor"></div>
     </div>
-    <div class="card">
+    <div class="card" style="display:none">
       <h2>👕 服裝解鎖</h2>
       <div id="rw-clothes"></div>
     </div>
@@ -832,12 +863,18 @@
   <button data-tab="money" onclick="App.switchTab('money')"><span class="ic">💰</span>記帳</button>
   <button data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏋️</span>健身房</button>
   <button data-tab="history" onclick="App.switchTab('history')"><span class="ic">📈</span>紀錄</button>
-  <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🧑</span>角色</button>
+  <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🐣</span>怪獸</button>
   <button data-tab="rewards" onclick="App.switchTab('rewards')"><span class="ic">🏆</span>獎勵</button>
   <button data-tab="settings" onclick="App.switchTab('settings')"><span class="ic">⚙️</span>設定</button>
 </nav>
 <div class="toast" id="toast"></div>
 <div id="exp-gain"><div class="stars">✨⭐✨</div><div class="big" id="eg-big">+0 EXP</div><div class="why" id="eg-why"></div></div>
+<div id="evolve"><div class="box">
+  <div class="stage"><img class="old" id="evo-old" alt=""><img class="new" id="evo-new" alt=""></div>
+  <h2 id="evo-title">進化！</h2>
+  <p id="evo-sub"></p>
+  <button class="btn gold" onclick="App.closeEvolve()">太棒了！</button>
+</div></div>
 <div id="levelup" onclick="App.closeLevelUp()"><div class="box" onclick="event.stopPropagation()">
   <div style="font-size:2.4rem">🎉</div>
   <h2 id="lu-title">升級！</h2>
@@ -851,13 +888,13 @@
     <div class="ob-steps"><i data-s="1"></i><i data-s="2"></i><i data-s="3"></i></div>
 
     <div class="ob-step" data-step="1">
-      <h2>創造你的角色</h2>
-      <p class="sub">先選一個造型，再往下用紙娃娃零件細捏體型、臉、表情、髮型、衣服</p>
-      <div class="creator" style="padding:10px">
-        <div class="preset-grid" id="preset-grid"></div>
-      </div>
-      <div class="creator" id="ob-creator"></div>
-      <button class="btn" onclick="App.obNext(2)">下一步 ▶</button>
+      <h2>選一顆蛋</h2>
+      <p class="sub">每天回報教練，牠就會孵化、長大、進化。你越自律，牠就越強！</p>
+      <div class="egg-grid" id="ob-eggs"></div>
+      <label class="f">你的名字</label>
+      <input type="text" id="ob-myname" placeholder="例：自律的我">
+      <div style="display:none"><div class="preset-grid" id="preset-grid"></div><div class="creator" id="ob-creator"></div></div>
+      <button class="btn" style="margin-top:12px" onclick="App.obNext(2)">下一步 ▶</button>
     </div>
 
     <div class="ob-step" data-step="2">
@@ -1471,6 +1508,7 @@
     const dist = Math.hypot(dx, dy * 1.4);
     const ms = Math.max(120, dist / speed * 1000);
     if (id === 'coach') { const flip = $('coach-flip'); if (Math.abs(dx) > 1) flip.classList.toggle('left', dx < 0); }
+    else if (S.monster && Math.abs(dx) > 1) $('player-flip').classList.toggle('left', dx < 0);
     else if (playerDoll && dist > 0.5) playerDoll.play('walk', Math.abs(dx) >= Math.abs(dy) * 1.2 ? (dx < 0 ? DIR.left : DIR.right) : (dy > 0 ? DIR.up : DIR.down));
     pos[id] = { x: target.x, y: target.y };
     place(id, pos[id], ms);
@@ -1483,21 +1521,25 @@
     const token = ++walkToken;
     const el = $('player');
     el.classList.remove('idle', 'happy'); el.classList.add('walking');
+    if (S.monster) renderMonsterActor();
     await moveTo('player', clampPos(target), 30);
     if (token !== walkToken) return false;
     el.classList.remove('walking'); el.classList.add('idle');
+    if (S.monster) renderMonsterActor();
     if (playerDoll) playerDoll.play('idle');
     return true;
   }
 
   let playerDoll = null;
   function renderPlayer(extra = {}) {
+    if (S.monster) { playerDoll = null; renderMonsterActor(); return; }
     const t = today();
     const bump = S.lastAttack === t && C && C.perDay[t] && C.perDay[t].n < 3;
     if (!playerDoll) {
       $('player-inner').innerHTML = '<canvas width="64" height="64" class="px"></canvas><div class="bump">🤕</div>';
       playerDoll = makeDoll($('player-inner').firstElementChild, S.avatar, 'idle', DIR.down);
-    } else playerDoll.setAvatar(S.avatar);
+    } else if (playerDoll.c && playerDoll.c.isConnected) playerDoll.setAvatar(S.avatar);
+    else { $('player-inner').innerHTML = '<canvas width="64" height="64" class="px"></canvas><div class="bump">🤕</div>'; playerDoll = makeDoll($('player-inner').firstElementChild, S.avatar, 'idle', DIR.down); }
     $('player-inner').querySelector('.bump').style.display = bump ? 'block' : 'none';
     $('player-tag').textContent = S.avatar.name || '我';
   }
@@ -1533,6 +1575,8 @@
     renderFood();
     trackExpGain();
     checkLevelUp();
+    checkEvolve();
+    if (S.monster) renderMonsterActor();
     $('coach-name-tag').textContent = S.settings.coachName || '教練';
     const n = td ? td.n : 0;
     $('coach-marker').classList.toggle('on', n < 3);
@@ -1919,6 +1963,9 @@
 
   function sceneMood() {
     if (busy) return;
+    const ms = S.monster ? monStatus() : {};
+    if (ms.hungry && Math.random() < .5) { setCoach('angry', pick([`${monName()}都餓扁了！快記錄飲食！`, `噗嚕嚕！${monName()}在哭了，還不去記錄！`])); return; }
+    if (ms.sick && Math.random() < .5) { setCoach('cry', `${monName()}生病了……今天要好好照顧牠！`); return; }
     setCoach(moodState());
   }
 
@@ -2615,6 +2662,215 @@
     }
   }
 
+  // ---------- 怪獸養成 ----------
+  const MON_LINES = {
+    sky: { label: '天空系列', icon: '🌤️', hint: '雛鷹 → 鳳凰' },
+    wave: { label: '海浪系列', icon: '🌊', hint: '小海豚 → 鯊魚王' },
+    snow: { label: '雪原系列', icon: '❄️', hint: '小熊 → 冰熊帝' },
+  };
+  const MON_FORMS = ['0-egg', '1-baby', '2-lazy', '2-normal', '2-elite', '3-lazy', '3-normal', '3-elite', '4-final'];
+  // 名字（之後依你的選擇修改這裡即可）
+  const MON_NAMES = {
+    sky: { '0-egg': '天空蛋', '1-baby': '啾啾', '2-lazy': '瞌睡鷹', '2-normal': '翔翔鷹', '2-elite': '疾風鷹', '3-lazy': '棉被鷹王', '3-normal': '遊俠鷹', '3-elite': '焰翼鷹騎士', '4-final': '烈焰鳳凰' },
+    wave: { '0-egg': '海浪蛋', '1-baby': '浪浪', '2-lazy': '懶懶豚', '2-normal': '跳跳豚', '2-elite': '疾風豚', '3-lazy': '度假鯊', '3-normal': '水手鯊', '3-elite': '鯊騎士', '4-final': '霸海鯊王' },
+    snow: { '0-egg': '雪原蛋', '1-baby': '糖糖熊', '2-lazy': '蜜罐熊', '2-normal': '揮揮熊', '2-elite': '鍛鍊熊', '3-lazy': '浴袍熊', '3-normal': '雪嶺戰熊', '3-elite': '霜甲熊騎士', '4-final': '極光熊王' },
+  };
+  const STAGE_LABEL = { 0: '蛋', 1: '幼年期', 2: '成長期', 3: '成熟期', 4: '完全體' };
+  const TIER_LABEL = { lazy: '懶惰型', normal: '普通型', elite: '菁英型', baby: '', egg: '', final: '菁英型' };
+  const EVO_LV = { 1: 3, 2: 7, 3: 12 };   // 幼年→成長 Lv3、成長→成熟 Lv7、成熟菁英→完全體 Lv12
+  const monStage = f => +f[0];
+  const monTier = f => f.split('-')[1];
+  const monName = (m = S.monster) => m ? MON_NAMES[m.line][m.form] : '';
+  function monImg(line, form, pose) {
+    if (form === '0-egg') pose = { idle: 'idle', wobble: 'wobble', crack: 'crack', hatch: 'hatch' }[pose] || 'idle';
+    return `monsters/${line}-${form}-${pose}.webp`;
+  }
+  // 每天紀律分 0～100
+  function dailyScore(d) {
+    const r = rec(d), g = S.settings.goals; let sc = 0;
+    if (hasDiet(r)) sc += 20; if (hasEx(r)) sc += 20; if (hasBody(r)) sc += 15;
+    if (g.exMin && r.exType !== 'rest' && (num(r.exMin) || 0) >= g.exMin) sc += 10;
+    if (g.water && r.water >= g.water) sc += 10;
+    if (r.noSugar) sc += 5;
+    const f = r._food;
+    if (f && g.kcalMax && f.kcal >= (g.kcalMin || 0) * 0.8 && f.kcal <= g.kcalMax) sc += 10;
+    if (f && g.protein && f.protein >= g.protein) sc += 10;
+    if (f && g.kcalMax && f.kcal > g.kcalMax * 1.2) sc -= 10;
+    return Math.max(0, Math.min(100, sc));
+  }
+  function avgScore(from, to) {
+    const t = today(); let sum = 0, n = 0;
+    for (let d = from; d <= to; d = addDays(d, 1)) {
+      if (d === t && loggedCount(rec(d)) === 0) continue; // 今天還沒記錄就先不算
+      sum += dailyScore(d); n++;
+    }
+    return n ? Math.round(sum / n) : 0;
+  }
+  const tierOf = avg => avg >= 80 ? 'elite' : avg >= 50 ? 'normal' : 'lazy';
+  function monExp() { return S.monster ? Math.max(0, (C ? C.score : 0) - (S.monster.base || 0)) : 0; }
+  const monLevel = () => Math.floor(monExp() / LEVEL_PTS) + 1;
+  function lastLoggedDay() {
+    const t = today();
+    for (let i = 0; i < 60; i++) { const d = addDays(t, -i); if (loggedCount(rec(d)) > 0) return d; }
+    return null;
+  }
+  function monStatus() {
+    const m = S.monster; if (!m) return {};
+    const t = today(), hour = new Date().getHours();
+    const last = lastLoggedDay();
+    const gone = !last || (parse(t) - parse(last)) / 864e5 >= 7;
+    const away = gone && (parse(t) - parse(m.born || t)) / 864e5 >= 7;
+    let lowDays = 0; for (let i = 1; i <= 3; i++) if (dailyScore(addDays(t, -i)) < 30) lowDays++;
+    const sick = lowDays >= 2 && (parse(t) - parse(m.born || t)) / 864e5 >= 3;
+    const r = rec(t);
+    const hungry = !hasDiet(r) && hour >= 11;
+    const great = dailyScore(t) >= 80;
+    return { away, sick, hungry, great, sleepy: hour < 6 };
+  }
+  let monTempPose = null, monTempT = null;
+  function monPose() {
+    const m = S.monster; if (!m) return 'idle';
+    if (m.form === '0-egg') {
+      const n = eggProgress();
+      return n >= 2 ? 'crack' : n >= 1 ? 'wobble' : 'idle';
+    }
+    if (monTempPose) return monTempPose;
+    if ($('player').classList.contains('walking')) return 'walk';
+    const st = monStatus();
+    if (st.sleepy) return 'sleep';
+    if (st.sick) return 'sick';
+    if (st.hungry) return 'cry';
+    if (st.great) return 'happy';
+    return 'idle';
+  }
+  function eggProgress() {
+    const m = S.monster; let n = 0;
+    for (let d = m.stageStart; d <= today(); d = addDays(d, 1)) n += loggedCount(rec(d));
+    return n;
+  }
+  function renderMonsterActor() {
+    const m = S.monster, inner = $('player-inner');
+    const st = monStatus();
+    if (st.away) {
+      inner.innerHTML = `<div class="away-note">📝 ${esc(monName())}離家出走了…<br>今天記錄就會回來</div>`;
+      $('player-tag').textContent = '';
+      return;
+    }
+    const pose = monPose();
+    const src = monImg(m.line, m.form, pose);
+    let img = inner.querySelector('img.mon');
+    if (!img) { inner.innerHTML = '<img class="mon av" alt=""><div class="mon-badge"></div>'; img = inner.querySelector('img.mon'); }
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+    const scale = { 0: .55, 1: .62, 2: .8, 3: .95, 4: 1.08 }[monStage(m.form)];
+    img.style.transform = `scale(${scale})`; img.style.transformOrigin = '50% 100%';
+    const badge = st.sick ? '🤒' : st.hungry ? '🍖❓' : st.great ? '✨' : '';
+    inner.querySelector('.mon-badge').textContent = m.form === '0-egg' ? '' : badge;
+    inner.querySelector('.mon-badge').style.top = (100 - scale * 100 - 6) + '%';
+    $('player-tag').textContent = (S.monster.nick || monName()) + (m.form === '0-egg' ? '' : ` Lv.${monLevel()}`);
+  }
+  function monAct(pose, ms = 2200) {
+    if (!S.monster || S.monster.form === '0-egg') return;
+    monTempPose = pose; clearTimeout(monTempT);
+    renderMonsterActor();
+    monTempT = setTimeout(() => { monTempPose = null; renderMonsterActor(); }, ms);
+  }
+  function evolveTo(form, why) {
+    const m = S.monster, old = m.form;
+    m.history = m.history || []; m.history.push({ form, date: today(), why });
+    m.form = form; m.stageStart = today(); m.lastCheck = today();
+    m.seen = m.seen || {}; (m.seen[m.line] = m.seen[m.line] || []);
+    if (!m.seen[m.line].includes(form)) m.seen[m.line].push(form);
+    persist();
+    $('evo-old').src = monImg(m.line, old, old === '0-egg' ? 'hatch' : 'idle');
+    $('evo-new').src = monImg(m.line, form, form === '1-baby' ? 'happy' : 'win');
+    $('evo-title').textContent = old === '0-egg' ? `🐣 孵化了！${MON_NAMES[m.line][form]}` : `✨ 進化！${MON_NAMES[m.line][form]}`;
+    $('evo-sub').textContent = why;
+    const box = $('evolve'); box.classList.remove('show'); void box.offsetWidth; box.classList.add('show');
+    ['evo-old', 'evo-new'].forEach(id => { const el = $(id); el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
+    try { navigator.vibrate && navigator.vibrate([60, 60, 60, 60, 200]); } catch (e) {}
+    renderMonsterActor();
+    if (!busy) setCoach('dance', old === '0-egg' ? `呀哈！蛋孵出來了！是${MON_NAMES[m.line][form]}！` : `進化成${MON_NAMES[m.line][form]}了！繼續保持！`);
+  }
+  // 每次資料變動後檢查要不要進化
+  function checkEvolve() {
+    const m = S.monster; if (!m || !S.onboarded || $('evolve').classList.contains('show')) return;
+    const st = monStage(m.form), lv = monLevel(), t = today();
+    if (m.form === '0-egg') {
+      if (eggProgress() >= 3) evolveTo('1-baby', '完成 3 項紀錄，蛋孵化了！');
+      return;
+    }
+    if (st === 1 && lv >= EVO_LV[1]) {
+      const avg = avgScore(m.stageStart, t), tier = tierOf(avg);
+      evolveTo('2-' + tier, `幼年期平均紀律分 ${avg} 分 → ${TIER_LABEL[tier]}`); return;
+    }
+    if (st === 2 && lv >= EVO_LV[2]) {
+      const avg = avgScore(m.stageStart, t), tier = tierOf(avg);
+      evolveTo('3-' + tier, `成長期平均紀律分 ${avg} 分 → ${TIER_LABEL[tier]}`); return;
+    }
+    if (st === 3 && monTier(m.form) !== 'elite') {
+      // 非菁英成熟期：每 7 天檢查一次最近 7 天，80 分以上就原地升級成菁英
+      if ((parse(t) - parse(m.lastCheck || m.stageStart)) / 864e5 >= 7) {
+        const avg = avgScore(addDays(t, -6), t);
+        m.lastCheck = t; persist();
+        if (avg >= 80) { evolveTo('3-elite', `最近 7 天平均 ${avg} 分，升級成菁英型！`); return; }
+      }
+      return;
+    }
+    if (m.form === '3-elite' && lv >= EVO_LV[3]) evolveTo('4-final', '菁英成熟期＋等級達標，進化成完全體！');
+  }
+  function nextEvoText() {
+    const m = S.monster, st = monStage(m.form), lv = monLevel();
+    if (m.form === '0-egg') return `再完成 ${Math.max(0, 3 - eggProgress())} 項紀錄就會孵化`;
+    if (st === 1 || st === 2) return `Lv.${EVO_LV[st]} 進化（目前 Lv.${lv}，還差 ${Math.max(0, EVO_LV[st] * LEVEL_PTS - LEVEL_PTS - monExp())} EXP）`;
+    if (st === 3 && monTier(m.form) !== 'elite') {
+      const left = 7 - Math.floor((parse(today()) - parse(m.lastCheck || m.stageStart)) / 864e5);
+      return `先升級成菁英型：每 7 天檢查一次，最近 7 天平均 80 分以上（${left} 天後檢查）`;
+    }
+    if (m.form === '3-elite') return `Lv.${EVO_LV[3]} 進化成完全體（目前 Lv.${lv}）`;
+    return '已經是完全體了！🎉';
+  }
+  function renderMonsterTab() {
+    const box = $('mon-view'); if (!box) return;
+    const m = S.monster;
+    if (!m) {
+      box.innerHTML = `<div class="card"><h2>🥚 選一顆蛋</h2><p class="muted" style="margin-top:0">每天回報教練，牠就會孵化、長大、進化。進化成哪一種，看你這一個階段的表現！</p>
+        <div class="egg-grid">${eggPickHTML()}</div></div>`;
+      return;
+    }
+    const st = monStatus(), stg = monStage(m.form);
+    const avg = m.form === '0-egg' ? null : avgScore(m.stageStart, today());
+    const status = st.away ? '🏃 離家出走中（今天記錄就會回來）' : [st.sick ? '🤒 生病了（連續表現太差）' : '', st.hungry ? '🍖 肚子餓了（還沒記錄飲食）' : '', st.great ? '✨ 今天狀態超好' : '', st.sleepy ? '😴 睡覺中' : ''].filter(Boolean).join('　') || '🙂 精神很好';
+    const seen = (m.seen && m.seen[m.line]) || [m.form];
+    const node = f => `<div class="node ${seen.includes(f) ? '' : 'unseen'} ${f === m.form ? 'cur' : ''}"><img src="${monImg(m.line, f, 'idle')}" alt=""><div>${seen.includes(f) ? MON_NAMES[m.line][f] : '？？？'}</div></div>`;
+    box.innerHTML = `<div class="card mon-card">
+        <div class="mon-stage-img" onclick="App.monPoke()"><img id="mon-big" src="${monImg(m.line, m.form, st.away ? 'cry' : monPose())}" alt=""></div>
+        <div class="mon-name">${esc(m.nick || monName())}</div>
+        <div class="mon-sub">${MON_LINES[m.line].icon} ${monName()}・${STAGE_LABEL[stg]}${['lazy', 'normal', 'elite'].includes(monTier(m.form)) ? '・' + TIER_LABEL[monTier(m.form)] : ''}${m.form === '0-egg' ? '' : `・Lv.${monLevel()}`}</div>
+        <p style="margin:8px 0 2px;font-size:.88rem">${status}</p>
+        ${avg === null ? '' : `<p class="muted" style="margin:2px 0">這個階段平均紀律分 <b>${avg}</b> 分 → 現在進化會是 <b>${TIER_LABEL[tierOf(avg)]}</b>（80↑菁英、50↑普通）</p>`}
+        <p class="muted" style="margin:2px 0 0">下一步：${nextEvoText()}</p>
+        <div class="btn-row" style="margin-top:10px"><button class="btn secondary" onclick="App.monRename()">✏️ 取暱稱</button><button class="btn ghost" onclick="App.monReset()">🥚 重新選蛋</button></div>
+      </div>
+      <div class="card"><h2>📖 進化圖鑑</h2>
+        <div class="mon-tree">
+          <div class="row-label">蛋・幼年期</div>${node('0-egg')}${node('1-baby')}<div></div>
+          <div class="row-label">成長期（懶惰／普通／菁英）</div>${node('2-lazy')}${node('2-normal')}${node('2-elite')}
+          <div class="row-label">成熟期（懶惰／普通／菁英）</div>${node('3-lazy')}${node('3-normal')}${node('3-elite')}
+          <div class="row-label">完全體</div><div></div>${node('4-final')}<div></div>
+        </div>
+        <p class="muted" style="margin:8px 0 0">每日紀律分：記錄飲食 20、運動 20、減脂數據 15，運動／喝水達標各 10、熱量在目標內 10、蛋白質達標 10、沒喝含糖飲料 5；熱量超標 20% 扣 10。</p>
+      </div>`;
+  }
+  let pickedEgg = '';
+  function eggPickHTML() {
+    return Object.entries(MON_LINES).map(([k, v]) => `<button class="egg-pick ${pickedEgg === k ? 'sel' : ''}" onclick="App.pickEgg('${k}')"><img src="${monImg(k, '0-egg', 'idle')}" alt=""><b>${MON_NAMES[k]['0-egg']}</b><span>${v.icon} ${v.hint}</span></button>`).join('');
+  }
+  function startMonster(line) {
+    const seen = Object.assign({}, S._seenKeep || {}); seen[line] = [...new Set([...(seen[line] || []), '0-egg'])]; delete S._seenKeep;
+    S.monster = { line, form: '0-egg', born: today(), stageStart: today(), lastCheck: today(), base: C ? C.score : 0, seen, history: [{ form: '0-egg', date: today() }] };
+    persist();
+  }
+
   // ---------- public API ----------
   const App = {
     toast,
@@ -2623,7 +2879,7 @@
       document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
       window.scrollTo(0, 0);
       if (tab === 'history') renderHistory();
-      if (tab === 'avatar') renderCreators();
+      if (tab === 'avatar') renderMonsterTab();
       if (tab === 'settings') fillSettings();
       if (tab === 'rewards') renderRewards();
       if (tab === 'today') { refreshStats(); renderPlayer(); sceneMood(); }
@@ -2677,20 +2933,43 @@
       renderPlayer();
       const n = loggedCount(r);
       if (S.records[savedDate]) cloudPush([savedDate]);
-      if (n === 0) { runAttack('什麼都沒填就交給我！？吃我一棒！'); return; }
+      if (n === 0) { setCoach('angry', S.monster ? `什麼都沒填！${monName()}會餓肚子的！` : '什麼都沒填就交給我！？'); monAct('cry'); return; }
       if (delta) fxAt('pts-pop', (delta > 0 ? '+' : '') + delta, pos.player);
       const pl = $('player'); pl.classList.remove('idle'); pl.classList.add('happy');
       setTimeout(() => { pl.classList.remove('happy'); pl.classList.add('idle'); }, 1600);
       if (n === 3) {
-        setCoach('cheer', delta > 0 ? `呀哈！+${delta} 分！三項全記！` : '已更新！三項全記，讚！');
+        setCoach('cheer', delta > 0 ? `呀哈！+${delta} 分！三項全記！` : '已更新！三項全記，讚！'); monAct('win', 2600);
         setTimeout(() => { if (!busy) setCoach('dance'); }, 2400);
       } else {
+        monAct('happy');
         setCoach('cheer', delta > 0 ? `有記錄！+${delta} 分！還差 ${3 - n} 項～` : `已更新！還差 ${3 - n} 項～`);
         setTimeout(() => { if (!busy) setCoach('inspect'); }, 2400);
       }
       if (!prevBody && hasBody(r) && C.reached) toast('🎉 達成目標體重！+200 分！');
     },
-    pokeCoach() { pokeCoach(); },
+    pokeCoach() { pokeCoach(); monAct(pick(['happy', 'attack', 'win']), 2400); },
+    pickEgg(k) {
+      pickedEgg = k;
+      if ($('onboard').classList.contains('show')) { $('ob-eggs').innerHTML = eggPickHTML(); return; }
+      if (!confirm(`確定選「${MON_NAMES[k]['0-egg']}」嗎？`)) { pickedEgg = ''; renderMonsterTab(); return; }
+      startMonster(k); pickedEgg = ''; renderMonsterTab(); renderPlayer(); refreshStats();
+      toast(`🥚 ${MON_NAMES[k]['0-egg']} 來到你身邊了！完成 3 項紀錄就會孵化`);
+    },
+    monPoke() {
+      const m = S.monster; if (!m) return;
+      const poses = m.form === '0-egg' ? ['wobble', 'crack', 'idle'] : ['happy', 'attack', 'win', 'eat', 'walk', 'idle'];
+      const img = $('mon-big'); img.src = monImg(m.line, m.form, pick(poses));
+    },
+    monRename() {
+      const v = prompt('幫牠取個暱稱（留空就用原本的名字）', S.monster.nick || '');
+      if (v === null) return; S.monster.nick = v.trim(); persist(); renderMonsterTab(); renderPlayer();
+    },
+    monReset() {
+      if (!confirm('重新選蛋會失去目前的怪獸（圖鑑紀錄會保留），確定嗎？')) return;
+      const seen = S.monster.seen; S.monster = null; persist(); renderMonsterTab(); renderPlayer();
+      S._seenKeep = seen;
+    },
+    closeEvolve() { $('evolve').classList.remove('show'); refreshStats(); renderMonsterTab(); },
     exAdd() {
       const pend = exPending();
       if (!pend) { toast($('ex-type').value === 'rest' ? '休息日不用加，直接按「交給教練」' : '請選運動項目並填分鐘數'); return; }
@@ -2817,6 +3096,7 @@
       const item = { id: 'f' + Date.now().toString(36), time, slot, name, kcal: Math.round(Number($('fd-kcal').value) || 0), protein: Math.round((Number($('fd-pro').value) || 0) * 10) / 10, fat: Math.round((Number($('fd-fat').value) || 0) * 10) / 10, carbs: Math.round((Number($('fd-carb').value) || 0) * 10) / 10, snack: snack || slot.startsWith('snack'), details: $('fd-details').textContent || '' };
       const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       (S.foods[curDate] = S.foods[curDate] || []).push(item);
+      setTimeout(() => monAct('eat', 2600), 50);
       persist(); App.foodCancel(); $('food-text').value = '';
       refreshStats(); renderH26Box(curDate); updateHints();
       const after = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
@@ -3113,7 +3393,8 @@
       $('ob-start').value = g.startWeight; $('ob-target').value = g.targetWeight;
       $('ob-ex').value = g.exMin; $('ob-water').value = g.water; $('ob-week').value = g.weeklyExDays;
       $('onboard').classList.add('show');
-      renderCreators(); renderObCoach();
+      pickedEgg = S.monster ? S.monster.line : ''; $('ob-eggs').innerHTML = eggPickHTML(); $('ob-myname').value = S.avatar.name && S.avatar.name !== '我' ? S.avatar.name : '';
+      renderObCoach();
       App.obNext(1);
     },
     obPick(i) {
@@ -3124,7 +3405,8 @@
       const keep = obPreset; renderCreators(); obPreset = keep; renderPresets();
     },
     obNext(step) {
-      if (step === 2) renderObCoach();
+      if (step === 2 && !pickedEgg) { toast('先選一顆蛋！'); return; }
+      if (step === 2) { S.avatar.name = $('ob-myname').value.trim() || S.avatar.name || '我'; persist(); renderObCoach(); }
       document.querySelectorAll('.ob-step').forEach(el => el.style.display = el.dataset.step == step ? 'block' : 'none');
       document.querySelectorAll('.ob-steps i').forEach(el => el.classList.toggle('on', +el.dataset.s <= step));
       $('onboard').scrollTop = 0;
@@ -3138,10 +3420,12 @@
       g.water = Math.max(0, parseInt($('ob-water').value, 10) || 0);
       g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('ob-week').value, 10) || 0));
       if (!S.avatar.name) S.avatar.name = '我';
-      S.onboarded = true; persist();
+      if (pickedEgg && (!S.monster || S.monster.line !== pickedEgg)) startMonster(pickedEgg);
+      pickedEgg = '';
+      S.onboarded = true; persist(); renderPlayer();
       $('onboard').classList.remove('show');
       App.switchTab('today');
-      setCoach('goforit', `${S.avatar.name}！歡迎來到紀律健身房！從今天起由我來盯你！`);
+      setCoach('goforit', `${S.avatar.name}！好好照顧${monName()}！完成 3 項紀錄牠就會孵化！`);
       setTimeout(sceneMood, 3000);
     },
   };
@@ -3149,7 +3433,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.19-1';
+  const APP_VERSION = '2026.11.19-2';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
@@ -3195,9 +3479,9 @@
   function startScene() {
     const t0 = today();
     C = compute();
-    if (C.patience < 30 && S.lastAttack !== t0 && (C.perDay[t0] ? C.perDay[t0].n : 0) < 3) {
-      setCoach('angry', '……');
-      setTimeout(() => runAttack('耐心值見底了！給我過來！！'), 700);
+    const ms = monStatus();
+    if (S.monster && (ms.away || ms.sick || ms.hungry)) {
+      setCoach('angry', ms.away ? `${monName()}離家出走了！今天快記錄把牠找回來！` : ms.sick ? `${monName()}生病了！最近表現太差，今天要好好記錄！` : `${monName()}肚子餓扁了！快去記錄飲食！`);
     } else {
       setCoach('standby', pick(LINES.standby));
       setTimeout(sceneMood, 1500);
