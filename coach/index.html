@@ -1531,59 +1531,24 @@
   const DEFAULT_AVATAR = () => Object.assign({ v: 3, name: '我' }, PRESETS[0][1]);
 
   // ---------- gym background ----------
+  // 健身房依等級改裝：Lv1 木頭館 → Lv6 都會館 → Lv11 黃金殿堂
+  const gymTier = lv => (lv >= 11 ? 3 : lv >= 6 ? 2 : 1);
+  const GYM_TIER_NAME = { 1: '陽光木頭健身房', 2: '都會夜景健身房', 3: '黃金冠軍殿堂' };
+  // 每個裝飾在三種背景的位置 [中心x, 底部y, 寬]（viewBox 360×400）
+  const DECOR_POS = {
+    1: { plant: [345, 398, 48], mats: [245, 272, 60], trophies: [258, 214, 50], barbell: [328, 332, 62], neon: [212, 66, 40], cooler: [232, 214, 24], statue: [190, 398, 50], bunting: [[75, 96, 135], [285, 96, 135]], belt: [262, 82, 44] },
+    2: { plant: [345, 398, 48], mats: [300, 292, 66], trophies: [80, 205, 46], barbell: [328, 350, 62], neon: [40, 128, 40], cooler: [150, 222, 24], statue: [215, 238, 40], bunting: [[75, 92, 135], [285, 92, 135]], belt: [300, 52, 48] },
+    3: { plant: [345, 398, 48], mats: [225, 268, 62], trophies: [150, 214, 48], barbell: [200, 330, 62], neon: [60, 180, 40], cooler: [235, 214, 24], statue: [300, 250, 50], bunting: [[75, 110, 130], [285, 110, 130]], belt: [300, 170, 54] },
+  };
+  const DECOR_AR = { plant: 300 / 231, mats: 173 / 300, trophies: 297 / 252, barbell: 285 / 280, neon: 255 / 230, cooler: 300 / 146, statue: 299 / 207, bunting: 200 / 300, belt: 178 / 278 };
+  function decorSpots(id, tier) { const v = DECOR_POS[tier][id]; return Array.isArray(v[0]) ? v : [v]; }
   function gymBG() {
-    const L = '#4a2f1f';
-    let planks = '';
-    for (let i = 0; i < 9; i++) { const y = 215 + i * i * 2.4 + i * 4; planks += `<path d="M0 ${y.toFixed(1)} H360" stroke="#c4925e" stroke-width="1.5"/>`; }
-    for (let i = -6; i <= 6; i++) planks += `<path d="M${180 + i * 22} 215 L${180 + i * 70} 400" stroke="#c4925e" stroke-width="1.2" opacity=".7"/>`;
-    return `
-      <defs>
-        <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#d9f1ff"/></linearGradient>
-        <linearGradient id="floorG" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d79c63"/><stop offset="1" stop-color="#e9b77f"/></linearGradient>
-        <radialGradient id="lamp" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#fff6c9" stop-opacity=".7"/><stop offset="1" stop-color="#fff6c9" stop-opacity="0"/></radialGradient>
-      </defs>
-      <rect width="360" height="215" fill="#f3dfc0"/>
-      <rect y="168" width="360" height="47" fill="#e2c296"/><path d="M0 168 H360" stroke="#b98a58" stroke-width="4"/>
-      <!-- window -->
-      <rect x="138" y="26" width="96" height="84" rx="6" fill="url(#sky)" stroke="${L}" stroke-width="4"/>
-      <circle cx="210" cy="50" r="11" fill="#ffe27a"/><path d="M150 92 q14 -10 28 0 q10 -8 22 0" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <path d="M186 26 V110 M138 66 H234" stroke="${L}" stroke-width="4"/>
-      <!-- clock -->
-      <circle cx="62" cy="30" r="15" fill="#fff" stroke="${L}" stroke-width="3"/><path d="M62 30 V20 M62 30 l7 4" stroke="${L}" stroke-width="2.5" stroke-linecap="round"/>
-      <!-- reception board -->
-      <rect x="16" y="54" width="94" height="40" rx="6" fill="#2f6e8f" stroke="${L}" stroke-width="3"/>
-      <text x="63" y="81" text-anchor="middle" font-size="18" font-weight="900" fill="#fff" font-family="-apple-system, 'PingFang TC', sans-serif">📋 登記處</text>
-      <!-- poster -->
-      <g transform="rotate(4 280 70)"><rect x="248" y="34" width="66" height="74" rx="4" fill="#fff6e8" stroke="${L}" stroke-width="3"/>
-        <text x="281" y="58" text-anchor="middle" font-size="12" font-weight="900" fill="#e8505b" font-family="Arial Black, sans-serif">NO PAIN</text>
-        <text x="281" y="74" text-anchor="middle" font-size="12" font-weight="900" fill="#e8505b" font-family="Arial Black, sans-serif">NO GAIN</text>
-        <text x="281" y="98" text-anchor="middle" font-size="18">🔥💪</text></g>
-      <!-- punching bag -->
-      <path d="M338 0 V24" stroke="#555" stroke-width="3"/><rect x="322" y="24" width="32" height="92" rx="14" fill="#c43d3d" stroke="${L}" stroke-width="3"/><path d="M322 44 h32 M322 98 h32" stroke="#8e2a2a" stroke-width="3"/>
-      <!-- floor -->
-      <rect y="215" width="360" height="185" fill="url(#floorG)"/>${planks}
-      <path d="M0 215 H360" stroke="#9c6a3d" stroke-width="3"/>
-      <!-- mat -->
-      <path d="M110 300 L300 300 L330 380 L80 380 Z" fill="#6aa58a" opacity=".55"/>
-      <!-- treadmill -->
-      <g><path d="M150 206 L232 206 L240 228 L146 228 Z" fill="#3b3f4a" stroke="${L}" stroke-width="3"/><rect x="206" y="150" width="10" height="58" fill="#5b616e" stroke="${L}" stroke-width="2.5"/><rect x="196" y="140" width="34" height="16" rx="4" fill="#5b616e" stroke="${L}" stroke-width="2.5"/><rect x="202" y="144" width="14" height="7" fill="#7fe0ff"/></g>
-      <!-- dumbbell rack -->
-      <g><rect x="252" y="176" width="100" height="10" fill="#7a4a26" stroke="${L}" stroke-width="2.5"/><rect x="258" y="186" width="6" height="34" fill="#7a4a26" stroke="${L}" stroke-width="2"/><rect x="340" y="186" width="6" height="34" fill="#7a4a26" stroke="${L}" stroke-width="2"/>
-        ${[266, 292, 318].map(x => `<rect x="${x - 2}" y="166" width="22" height="5" fill="#888"/><rect x="${x - 6}" y="161" width="9" height="15" rx="2" fill="#3b3f4a"/><rect x="${x + 15}" y="161" width="9" height="15" rx="2" fill="#3b3f4a"/>`).join('')}</g>
-      <!-- kettlebells -->
-      <g><path d="M262 232 q10 -14 20 0" stroke="#3b3f4a" stroke-width="5" fill="none"/><circle cx="272" cy="240" r="11" fill="#3b3f4a"/>
-         <path d="M290 236 q8 -12 16 0" stroke="#e8505b" stroke-width="4" fill="none"/><circle cx="298" cy="242" r="9" fill="#e8505b"/></g>
-      <!-- reception desk -->
-      <g><rect x="10" y="196" width="104" height="14" rx="4" fill="#d9a06b" stroke="${L}" stroke-width="3"/>
-         <rect x="16" y="210" width="92" height="52" fill="#b5764a" stroke="${L}" stroke-width="3"/>
-         <path d="M16 236 H108" stroke="#8e5a35" stroke-width="2"/>
-         <rect x="26" y="180" width="20" height="18" rx="2" fill="#fff" stroke="${L}" stroke-width="2.5" transform="rotate(-8 36 189)"/>
-         <rect x="86" y="178" width="10" height="20" rx="3" fill="#7fd3ff" stroke="${L}" stroke-width="2.5"/>
-         <text x="62" y="254" text-anchor="middle" font-size="11" font-weight="700" fill="#fff6e8" font-family="-apple-system, 'PingFang TC', sans-serif">每日紀錄 ✔</text></g>
-      <ellipse cx="180" cy="0" rx="160" ry="120" fill="url(#lamp)"/>
-      ${DECOR.filter(decorOn).map(d => `<g>${d.svg}</g>`).join('')}
-      ${DECOR.filter(d => decorOn(d) && (S.newDecor || []).includes(d.id)).map(d => `<g><circle cx="${d.at[0]}" cy="${d.at[1]}" r="22" fill="none" stroke="#ffd36a" stroke-width="4"><animate attributeName="r" values="16;34;16" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.3;1" dur="1.2s" repeatCount="indefinite"/></circle><text x="${d.at[0]}" y="${d.at[1] - 24}" text-anchor="middle" font-size="14" font-weight="900" fill="#e8505b" stroke="#fff" stroke-width="3" paint-order="stroke">NEW!</text></g>`).join('')}
-`;
+    const tier = gymTier(curLevel());
+    const on = DECOR.filter(decorOn);
+    const imgs = on.flatMap(d => decorSpots(d.id, tier).map(([x, y, w]) => { const h = w * DECOR_AR[d.id]; return `<image href="gym/decor-${d.id}.webp" x="${x - w / 2}" y="${y - h}" width="${w}" height="${h.toFixed(1)}"/>`; })).join('');
+    const hl = on.filter(d => (S.newDecor || []).includes(d.id)).map(d => { const [x, y, w] = decorSpots(d.id, tier)[0]; const cy = y - w * DECOR_AR[d.id] / 2;
+      return `<g><circle cx="${x}" cy="${cy}" r="22" fill="none" stroke="#ffd36a" stroke-width="4"><animate attributeName="r" values="${w * .45};${w * .75};${w * .45}" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.3;1" dur="1.2s" repeatCount="indefinite"/></circle><text x="${x}" y="${Math.max(16, cy - w * .6)}" text-anchor="middle" font-size="14" font-weight="900" fill="#e8505b" stroke="#fff" stroke-width="3" paint-order="stroke">NEW!</text></g>`; }).join('');
+    return `<image href="gym/bg-${tier}.webp" x="0" y="0" width="360" height="400" preserveAspectRatio="xMidYMid slice"/>${imgs}${hl}`;
   }
   function dormBG() {
     const L = '#4a2f1f';
@@ -2434,21 +2399,22 @@
   const lockLv = (slot, id) => (LOCKS[slot] && LOCKS[slot][id]) || 1;
   const curLevel = () => (C ? C.level : 1);
   const L_ = '#4a2f1f';
-  const trophy = (x, c) => `<path d="M${x - 8} 124 h16 q0 13 -8 13 q-8 0 -8 -13z" fill="${c}" stroke="#7a5a10" stroke-width="1.5"/><rect x="${x - 2}" y="137" width="4" height="5" fill="${c}"/><rect x="${x - 6}" y="142" width="12" height="4" fill="#7a4a26"/>`;
   const DECOR = [
-    { id: 'plant', at: [131, 175], lv: 2, icon: '🪴', label: '綠色盆栽', svg: `<path d="M118 214 l4 -22 h18 l4 22 z" fill="#c9774a" stroke="${L_}" stroke-width="2.5"/><path d="M131 192 q-14 -20 -6 -40 q6 16 6 40 M131 192 q2 -26 16 -38 q-2 22 -16 38 M131 192 q-20 -8 -24 -24 q14 4 24 24" fill="#3fa86b" stroke="#2c6e48" stroke-width="2"/>` },
-    { id: 'mats', at: [280, 305], lv: 3, icon: '🧘', label: '彩色瑜伽墊', svg: `<rect x="236" y="296" width="76" height="16" rx="4" fill="#f08fb0" opacity=".9" transform="rotate(-8 274 304)"/><rect x="250" y="318" width="76" height="16" rx="4" fill="#7fd3ff" opacity=".9" transform="rotate(-8 288 326)"/>` },
-    { id: 'trophies', at: [282, 132], lv: 4, icon: '🏆', label: '獎盃櫃', svg: `<rect x="244" y="146" width="76" height="6" rx="2" fill="#7a4a26" stroke="${L_}" stroke-width="1.5"/>${trophy(258, '#f2c14e')}${trophy(282, '#c9d0d8')}${trophy(306, '#d08a4a')}` },
-    { id: 'barbell', at: [325, 252], lv: 5, icon: '🏋️', label: '槓鈴臥推架', svg: `<rect x="306" y="262" width="40" height="8" rx="3" fill="#3b3f4a"/><rect x="312" y="270" width="5" height="14" fill="#555"/><rect x="336" y="270" width="5" height="14" fill="#555"/><path d="M294 252 h62" stroke="#888" stroke-width="4"/><rect x="290" y="241" width="8" height="22" rx="2" fill="#e8505b" stroke="${L_}" stroke-width="1.5"/><rect x="352" y="241" width="8" height="22" rx="2" fill="#e8505b" stroke="${L_}" stroke-width="1.5"/>` },
-    { id: 'neon', at: [186, 14], lv: 6, icon: '💡', label: '霓虹燈招牌', svg: `<text x="186" y="19" text-anchor="middle" font-size="15" font-weight="900" fill="#ff7ad9" stroke="#fff" stroke-width=".6" style="filter:drop-shadow(0 0 4px #ff3fbf)" font-family="Arial Black, sans-serif">DISCIPLINE</text>` },
-    { id: 'cooler', at: [158, 160], lv: 7, icon: '🚰', label: '飲水機', svg: `<rect x="148" y="166" width="20" height="40" rx="3" fill="#e9eef5" stroke="${L_}" stroke-width="2"/><rect x="150" y="146" width="16" height="22" rx="6" fill="#7fd3ff" stroke="${L_}" stroke-width="2" opacity=".85"/><rect x="155" y="182" width="6" height="4" fill="#4a8fd6"/>` },
-    { id: 'statue', at: [38, 350], lv: 8, icon: '🥇', label: '黃金啞鈴雕像', svg: `<rect x="16" y="364" width="44" height="26" rx="3" fill="#8e5a35" stroke="${L_}" stroke-width="2"/><path d="M22 352 h32" stroke="#e8b931" stroke-width="5"/><rect x="16" y="340" width="9" height="24" rx="2" fill="#f2c14e" stroke="#7a5a10" stroke-width="1.5"/><rect x="51" y="340" width="9" height="24" rx="2" fill="#f2c14e" stroke="#7a5a10" stroke-width="1.5"/>` },
-    { id: 'bunting', at: [180, 14], lv: 10, icon: '🎏', label: '冠軍彩旗', svg: `<path d="M0 6 Q180 30 360 6" stroke="#7a4a26" stroke-width="1.5" fill="none"/>${Array.from({ length: 12 }, (_, i) => { const x = 10 + i * 30, y = 6 + Math.sin(Math.PI * (x / 360)) * 12; return `<path d="M${x} ${y} l12 0 l-6 12z" fill="${['#e8505b', '#f2b134', '#3fa86b', '#4a8fd6', '#8b5bd6'][i % 5]}"/>`; }).join('')}` },
+    { id: 'plant', lv: 2, icon: '🪴', label: '龜背芋盆栽' },
+    { id: 'mats', lv: 3, icon: '🧘', label: '彩色瑜伽墊' },
+    { id: 'trophies', lv: 4, icon: '🏆', label: '獎盃櫃' },
+    { id: 'barbell', lv: 5, icon: '🏋️', label: '槓鈴臥推架' },
+    { id: 'neon', lv: 6, icon: '💡', label: '霓虹肌肉招牌' },
+    { id: 'cooler', lv: 7, icon: '🚰', label: '飲水機' },
+    { id: 'statue', lv: 8, icon: '🥇', label: '黃金啞鈴雕像' },
+    { id: 'bunting', lv: 10, icon: '🎏', label: '冠軍彩旗' },
+    { id: 'belt', lv: 12, icon: '🥊', label: '冠軍金腰帶' },
   ];
   function decorOn(d) { return curLevel() >= d.lv && S.decor[d.id] !== false; }
   function renderGymBG() { const el = $('gym-bg'); if (el) el.innerHTML = S.room === 'dorm' ? dormBG() : gymBG(); }
   function unlocksAt(lv) {
     const out = DECOR.filter(d => d.lv === lv).map(d => `${d.icon} 健身房裝飾：${d.label}`);
+    if (lv > 1 && gymTier(lv) !== gymTier(lv - 1)) out.unshift(`🏟️ 健身房大改裝：${GYM_TIER_NAME[gymTier(lv)]}`);
     const CAT = { top: '上衣', legs: '下身', feet: '鞋子', acc: '眼鏡', hat: '帽子', hair: '髮型' };
     Object.entries(LOCKS).forEach(([slot, m]) => Object.entries(m).forEach(([id, l]) => {
       if (l !== lv) return; const p = findPart(slot, id); if (p) out.push(`👕 ${CAT[slot]}：${p.label}`);
@@ -2508,8 +2474,9 @@
     $('lu-sub').textContent = `稱號：${C.title}`;
     const newDec = DECOR.filter(d => d.lv > (C.level - (C.level - (S._prevSeen || 0))) && d.lv <= C.level && d.lv > (S._prevSeen || 0));
     S.newDecor = [...new Set([...(S.newDecor || []), ...newDec.map(d => d.id)])]; persist();
-    $('lu-new').innerHTML = newDec.map(d => `<div class="lu-new"><div class="big">${d.icon}</div><b>🆕 新擺設：${d.label}</b><span>已經放進健身房了！</span></div>`).join('')
-      + (newDec.length ? `<button class="btn secondary" style="margin-bottom:8px" onclick="App.seeNewDecor()">👀 去健身房看看</button>` : '');
+    const tierUp = gymTier(C.level) > gymTier(S._prevSeen || 1);
+    $('lu-new').innerHTML = (tierUp ? `<div class="lu-new"><img src="gym/bg-${gymTier(C.level)}.webp" alt="" style="width:100%;border-radius:10px;animation:pop .5s ease-out"><b>🏟️ 健身房大改裝！</b><span>升級成「${GYM_TIER_NAME[gymTier(C.level)]}」了！</span></div>` : '') + newDec.map(d => `<div class="lu-new"><div class="big">${d.icon}</div><b>🆕 新擺設：${d.label}</b><span>已經放進健身房了！</span></div>`).join('')
+      + (newDec.length || tierUp ? `<button class="btn secondary" style="margin-bottom:8px" onclick="App.seeNewDecor()">👀 去健身房看看</button>` : '');
     $('lu-list').innerHTML = (gained.length ? gained : ['新的稱號！繼續保持紀律！']).map(x => `<li>${esc(x)}</li>`).join('');
     $('levelup').classList.add('show');
     renderGymBG();
@@ -3952,7 +3919,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.20-4';
+  const APP_VERSION = '2026.11.20-5';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
