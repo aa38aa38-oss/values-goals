@@ -1583,7 +1583,7 @@
       <ellipse cx="180" cy="0" rx="160" ry="120" fill="url(#lamp)"/>
       ${DECOR.filter(decorOn).map(d => `<g>${d.svg}</g>`).join('')}
       ${DECOR.filter(d => decorOn(d) && (S.newDecor || []).includes(d.id)).map(d => `<g><circle cx="${d.at[0]}" cy="${d.at[1]}" r="22" fill="none" stroke="#ffd36a" stroke-width="4"><animate attributeName="r" values="16;34;16" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.3;1" dur="1.2s" repeatCount="indefinite"/></circle><text x="${d.at[0]}" y="${d.at[1] - 24}" text-anchor="middle" font-size="14" font-weight="900" fill="#e8505b" stroke="#fff" stroke-width="3" paint-order="stroke">NEW!</text></g>`).join('')}
-      <rect x="6" y="110" width="34" height="105" rx="3" fill="#b5764a" stroke="${L}" stroke-width="3"/><rect x="11" y="118" width="24" height="40" rx="2" fill="#9fd8f7" stroke="${L}" stroke-width="2"/><circle cx="33" cy="168" r="3" fill="#f2c14e"/>`;
+`;
   }
   function dormBG() {
     const L = '#4a2f1f';
@@ -1658,7 +1658,7 @@
   }
 
   // ----- actors & movement -----
-  const COACH_HOME = { x: 44, y: 30 };
+  const COACH_HOME = { x: 20, y: 24 };
   const pos = { player: { x: 74, y: 9 }, coach: { ...COACH_HOME } };
   function place(id, p, ms = 0) {
     const el = $(id);
@@ -2811,29 +2811,38 @@
   async function wanderStep() {
     if (!sceneFree()) { scheduleWander(4000); return; }
     const tok = ++wanderToken;
+    // 教練站穩不動，只換表情／動作，並轉頭看怪獸
+    $('coach-flip').classList.toggle('left', pos.player.x < pos.coach.x);
     const r = Math.random();
-    if (r < 0.62) {
-      // 走到地板上隨機一點，避開玩家
-      let tgt, tries = 0;
-      do { tgt = { x: 14 + Math.random() * 72, y: 6 + Math.random() * 30 }; } while (Math.hypot(tgt.x - pos.player.x, (tgt.y - pos.player.y) * 1.4) < 18 && ++tries < 10);
-      if (Math.random() < 0.25) tgt = { ...COACH_HOME };
-      setCoach(moodState(), false);
-      await coachWalk(tgt);
-      if (tok !== wanderToken || !sceneFree()) return;
-      $('coach-flip').classList.toggle('left', pos.player.x < pos.coach.x);
-      if (Math.random() < 0.5) setCoach(moodState());
-    } else if (r < 0.85) {
-      // 換個姿勢／換張圖
+    if (r < 0.55) {
       const st = pick(['standby', 'inspect', 'goforit', 'cheer', moodState(), moodState()]);
-      setCoach(st, Math.random() < 0.6 ? undefined : false);
+      setCoach(st, Math.random() < 0.5 ? undefined : false);
       clearTimeout(App._p); App._p = setTimeout(() => { if (sceneFree()) setCoach(moodState(), false); }, 2600);
-    } else {
-      // 看向玩家、跳一下
-      $('coach-flip').classList.toggle('left', pos.player.x < pos.coach.x);
-      setCoach('cheer', pick([`${S.avatar.name || '你'}～有在認真嗎？`, '嗶嗶！今天也要動起來！', '我在看著你喔！']));
+    } else if (r < 0.8) {
+      setCoach('cheer', pick([`${S.monster ? (S.monster.nick || monName()) : '你'}～有在認真嗎？`, '嗶嗶！今天也要動起來！', '我在看著你喔！', '加油！再走兩圈！']));
       emoBurst(['❗', '✨'], pos.coach, 2);
-    }
+    } else setCoach(moodState(), false);
     if (tok === wanderToken) scheduleWander();
+  }
+  // ---------- 怪獸自己在健身房走來走去、換動作 ----------
+  let monWanderT = null;
+  function scheduleMonWander(ms) { clearTimeout(monWanderT); monWanderT = setTimeout(monWanderStep, ms ?? (2500 + Math.random() * 3500)); }
+  async function monWanderStep() {
+    const m = S.monster;
+    if (!sceneFree() || !m || m.form === '0-egg' || monTempPose || $('player').classList.contains('walking') || monStatus().away || monStatus().sleepy) { scheduleMonWander(4000); return; }
+    const r = Math.random();
+    if (r < 0.7) {
+      // 走到地板上隨機一點，避開教練站的位置
+      let tgt, tries = 0;
+      do { tgt = { x: 14 + Math.random() * 74, y: 4 + Math.random() * 32 }; }
+      while ((Math.hypot(tgt.x - pos.coach.x, (tgt.y - pos.coach.y) * 1.4) < 26 || Math.hypot(tgt.x - pos.player.x, (tgt.y - pos.player.y) * 1.4) < 14) && ++tries < 12);
+      await walkPlayer(tgt);
+    } else {
+      const st = monStatus();
+      const poses = st.sick ? ['sick', 'cry'] : st.hungry ? ['cry', 'eat', 'idle'] : ['happy', 'eat', 'win', 'attack', 'happy', 'sleep'];
+      monAct(pick(poses), 2000 + Math.random() * 1500);
+    }
+    scheduleMonWander();
   }
 
   let pokeTimes = [];
@@ -2841,10 +2850,9 @@
     async () => { setCoach('cheer', pick(['呀哈！收到你的打氣了！', '嘿嘿～被誇獎了！', '我們一起變強吧！'])); emoBurst(['🎉', '✨', '⭐', '🎊'], pos.coach, 6); },
     async () => { setCoach('dance', pick(['跳舞時間到！♪', '跟著我扭一扭！燃燒卡路里！'])); emoBurst(['🎵', '🎶', '💃'], pos.coach, 6); },
     async () => {
-      setCoach('sprint', '擊掌！！');
-      const side = pos.player.x > pos.coach.x ? -1 : 1;
-      await coachWalk({ x: pos.player.x + side * 14, y: pos.player.y + 1 }, 40);
-      $('coach-flip').classList.toggle('left', side > 0);
+      setCoach('goforit', '過來擊掌！！');
+      await walkPlayer({ x: pos.coach.x + 18, y: pos.coach.y - 3 });
+      $('coach-flip').classList.toggle('left', false); $('player-flip').classList.add('left');
       setCoach('cheer', '耶～！👏 好樣的！');
       fxAt('boom', '👏', { x: (pos.player.x + pos.coach.x) / 2, y: pos.player.y }, 10);
       const pl = $('player'); pl.classList.remove('idle'); pl.classList.add('happy');
@@ -2855,9 +2863,9 @@
     async () => { setCoach('sleep', '呼……呼……'); emoBurst(['💤', 'Z'], pos.coach, 3); await sleep(1500); setCoach('angry', '幹嘛吵醒我！快去運動！'); emoBurst(['💢'], pos.coach, 2); },
     async () => { setCoach('cry', pick(['嗚嗚……你終於來找我了……', '我好感動……你居然幫我打氣……'])); emoBurst(['💧', '😭', '💗'], pos.coach, 4); },
     async () => {
-      setCoach('sprint', '跟我一起跑一圈！');
-      for (const p of [{ x: 20, y: 34 }, { x: 80, y: 32 }, { x: 78, y: 8 }, { x: 22, y: 10 }]) await coachWalk(p, 48);
-      setCoach('goforit', '呼……好喘！你也要動起來！');
+      setCoach('goforit', '去跑一圈！嗶嗶——！');
+      for (const p of [{ x: 82, y: 32 }, { x: 82, y: 6 }, { x: 40, y: 6 }, { x: 50, y: 20 }]) await walkPlayer(p);
+      setCoach('cheer', '跑得好！呼吸調整一下！');
     },
     async () => {
       const n = C.perDay[today()] ? C.perDay[today()].n : 0;
@@ -3240,8 +3248,7 @@
       : `<button class="btn" onclick="App.goRegister()">📋 找教練登記</button>
          <button class="btn ai" onclick="App.openChat()">💬 問教練</button>
          <button class="btn gold" onclick="App.pokeCoach()">💪 打氣</button>
-         <button class="btn secondary" onclick="App.openGames()">🎮 和教練玩</button>
-         <button class="btn ghost wide" onclick="App.goRoom('dorm')">🏠 回宿舍</button>`;
+         <button class="btn secondary" onclick="App.openGames()">🎮 和教練玩</button>`;
   }
   function applyRoom() {
     const dorm = S.room === 'dorm';
@@ -3251,6 +3258,7 @@
     door.style.left = dorm ? '' : '1.5%'; door.style.right = dorm ? '1%' : '';
     $('door-label').textContent = dorm ? '🏋️ 健身房 ▶' : '◀ 🏠 宿舍';
     $('room-tag').textContent = dorm ? '🏠 宿舍' : '🏋️ 健身房';
+    door.style.display = 'none'; $('room-tag').style.display = 'none';
   }
   window.S_room = () => S.room;
   const todayVisit = () => { const v = S.visits || {}; return v.date === today() ? v : { date: today() }; };
@@ -3944,7 +3952,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.20-3';
+  const APP_VERSION = '2026.11.20-4';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
@@ -3971,10 +3979,11 @@
   place('player', pos.player); place('coach', pos.coach);
   $('ex-home').after($('ex-card'));
   importFromURL();
-  if (!S.room) S.room = 'dorm';
+  S.room = 'gym'; // 只保留健身房
   applyRoom();
-  if (S.room === 'gym') { pos.player = { x: 74, y: 9 }; } else { pos.player = { x: 50, y: 14 }; }
-  place('player', pos.player);
+  pos.player = { x: 66, y: 12 }; place('player', pos.player);
+  pos.coach = { ...COACH_HOME }; place('coach', pos.coach);
+  scheduleMonWander(3000);
 
   refreshStats(); renderPlayer(); fillForm(); renderFoodPage();
 
