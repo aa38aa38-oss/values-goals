@@ -2330,8 +2330,9 @@
     return got;
   }
   function importHealthText(text, date) {
-    text = String(text || '');
-    const i = text.search(/(steps|active|weight|fat|exmin|sleep|hr|floors)\s*=/);
+    // 捷徑的「文字」常被自動改成大寫開頭（Steps=），欄位名稱一律轉小寫
+    text = String(text || '').replace(/(steps|active|weight|fat|exmin|sleep|hr|floors|waist|date)\s*=/gi, m => m.toLowerCase().replace(/\s/g, ''));
+    const i = text.search(/(steps|active|weight|fat|exmin|sleep|hr|floors|waist)=/);
     if (i < 0) return null;
     const q = new URLSearchParams(text.slice(i).replace(/\s*\n\s*/g, '&').replace(/[？]/g, '&'));
     const d = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date') : (date || today());
@@ -3805,7 +3806,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.20-1';
+  const APP_VERSION = '2026.11.20-2';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
