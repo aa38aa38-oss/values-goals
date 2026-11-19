@@ -156,6 +156,11 @@
   nav.tabs button { max-width: 96px; }
   nav.tabs button { font-size: .66rem !important; }
   nav.tabs button .ic { font-size: 1.2rem !important; }
+  .calc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .calc button { border: none; border-radius: 12px; padding: 12px 0; font: inherit; font-size: 1.2rem; font-weight: 700; background: #fffdf9; border: 1.5px solid var(--line); color: var(--ink); }
+  .calc button.op { background: var(--primary-soft); color: var(--primary); }
+  .calc button.eq { background: var(--primary); color: #fff; }
+  .calc-hint { font-size: .85rem; color: var(--ok); font-weight: 700; min-height: 1.2em; margin-top: 4px; }
   .cat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
   .cat-chips button { border: 2px solid var(--line); background: #fffdf9; border-radius: 99px; padding: 6px 10px; font: inherit; font-size: .86rem; color: var(--ink); }
   .cat-chips button.sel { border-color: var(--primary); background: var(--primary-soft); font-weight: 700; }
@@ -416,8 +421,9 @@
       </div>
       <div id="food-list" style="margin-top:8px"></div>
       <div class="sync-box" id="food-sync-box">
-        <button class="btn" onclick="App.syncSheets('food')">☁️ 把近 14 天飲食登記到「健康26」</button>
+        <button class="btn" onclick="App.syncBoth('food')">☁️ 同步登記：飲食（健康26）＋記帳</button>
         <div class="sync-status" id="food-sync-status"></div>
+        <div class="sync-status" id="both-sync-food"></div>
       </div>
     </div>
     <div class="card">
@@ -498,7 +504,11 @@
       <div class="cat-chips" id="money-cats"></div>
       <div class="row">
         <div><label class="f">項目</label><input type="text" id="mn-name" placeholder="例：7-11 早餐"></div>
-        <div><label class="f">金額（元）</label><input type="number" inputmode="numeric" id="mn-amt" placeholder="例：85"></div>
+        <div><label class="f">金額（元）</label><input type="text" inputmode="decimal" id="mn-amt" placeholder="例：85 或 95+68" oninput="App.calcPreview()"></div>
+      </div>
+      <div class="calc-hint" id="calc-hint"></div>
+      <button type="button" class="btn ghost" style="margin-top:6px;padding:8px" onclick="App.calcToggle()">🧮 計算機</button>
+      <div class="calc" id="calc" style="display:none">
       </div>
       <label class="f">🕒 時間</label>
       <input type="text" id="mn-time" inputmode="numeric" placeholder="自動">
@@ -509,8 +519,9 @@
       <h2>📊 記帳試算表</h2>
       <p class="muted" style="margin:0 0 8px">會寫到「記帳」試算表的半年分頁（例如 2026 下半年 → <b>26H2</b>），依日期找到那一天，名稱寫在上列、金額寫在下列；同一格已經有東西就用「、」接在後面、金額相加。</p>
       <div class="sync-box">
-        <button class="btn" onclick="App.syncSheets('expense')">☁️ 把近 14 天記帳登記到試算表</button>
+        <button class="btn" onclick="App.syncBoth('money')">☁️ 同步登記：記帳＋飲食（健康26）</button>
         <div class="sync-status" id="money-sync-status"></div>
+        <div class="sync-status" id="both-sync-money"></div>
       </div>
     </div>
   </section>
@@ -2345,6 +2356,13 @@
     $('chart-ex').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 8 週每週運動分鐘"><line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${bars}${gl}</svg>`;
   }
 
+  // ---------- 計算機 ----------
+  function calcEval(expr) {
+    const e = String(expr || '').replace(/[×xX]/g, '*').replace(/[÷]/g, '/').replace(/−/g, '-').replace(/，/g, '').replace(/\s/g, '');
+    if (!e) return null;
+    if (!/^[0-9+\-*/.()]+$/.test(e)) return null;
+    try { const v = Function('"use strict";return (' + e + ')')(); return isFinite(v) ? Math.round(v * 100) / 100 : null; } catch (err) { return null; }
+  }
   // ---------- 記帳 ----------
   const MONEY_CATS = [['auto_meal', '🍽️ 餐費（依時間）'], ['早餐', '🍳 早餐'], ['午餐', '🍱 午餐'], ['晚餐', '🍲 晚餐'], ['auto_trans', '🚌 交通（依時間）'],
     ['運動', '🏃 運動'], ['買菜', '🥬 買菜'], ['電話費', '📱 電話費‧app'], ['交際娛樂', '🎉 交際娛樂'], ['媽媽費', '👩 媽媽費'], ['其他', '📦 其他']];
@@ -2816,7 +2834,7 @@
     moneyCat(k) { moneyCat = k; renderMoney(); },
     moneyShift(n) { const d = addDays(moneyDate, n); if (d > today()) return; moneyDate = d; renderMoney(); },
     moneyAdd() {
-      const amt = Math.round(Number($('mn-amt').value) || 0);
+      const amt = Math.round(calcEval($('mn-amt').value) || 0);
       if (!amt) { toast('請填金額'); return; }
       const time = /^\d{1,2}:\d{2}$/.test($('mn-time').value.trim()) ? $('mn-time').value.trim() : (moneyDate === today() ? nowTime() : '12:00');
       const cat = resolveCat(moneyCat, time);
@@ -2831,6 +2849,36 @@
       arr.splice(i, 1); if (!arr.length) delete S.expenses[moneyDate]; persist(); renderMoney();
     },
     syncSheets(kind) { return syncSheets(kind); },
+    async syncBoth(from) {
+      const out = $(from === 'food' ? 'both-sync-food' : 'both-sync-money');
+      out.textContent = ''; out.className = 'sync-status';
+      await syncSheets('expense');
+      await syncSheets('food');
+      const f = $('food-sync-status'), m = $('money-sync-status');
+      const bad = f.classList.contains('err') || m.classList.contains('err');
+      const msg = `💰 記帳：${m.textContent}\n🍱 飲食：${f.textContent}`;
+      [['both-sync-food', 'food-sync-status'], ['both-sync-money', 'money-sync-status']].forEach(([o, st]) => { $(st).textContent = ''; $(o).textContent = msg; $(o).className = 'sync-status ' + (bad ? 'err' : 'ok'); });
+    },
+    calcToggle() {
+      const el = $('calc'); const show = el.style.display === 'none';
+      if (show && !el.children.length) {
+        el.innerHTML = ['7', '8', '9', '÷', '4', '5', '6', '×', '1', '2', '3', '−', '0', '.', 'C', '+', '⌫', '(', ')', '=']
+          .map(k => `<button type="button" class="${'÷×−+'.includes(k) ? 'op' : k === '=' ? 'eq' : ''}" onclick="App.calcKey('${k}')">${k}</button>`).join('');
+      }
+      el.style.display = show ? 'grid' : 'none';
+    },
+    calcKey(k) {
+      const inp = $('mn-amt');
+      if (k === 'C') inp.value = '';
+      else if (k === '⌫') inp.value = inp.value.slice(0, -1);
+      else if (k === '=') { const v = calcEval(inp.value); if (v !== null) inp.value = String(v); }
+      else inp.value += k === '−' ? '-' : k;
+      App.calcPreview();
+    },
+    calcPreview() {
+      const raw = $('mn-amt').value, v = calcEval(raw);
+      $('calc-hint').textContent = v !== null && /[+\-*/×÷−()]/.test(raw.replace(/^-/, '')) ? `＝ ${v} 元` : '';
+    },
     foodDel(id) {
       const arr = S.foods[curDate] || [];
       const i = arr.findIndex(x => x.id === id); if (i < 0) return;
@@ -3101,7 +3149,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.18-4';
+  const APP_VERSION = '2026.11.19-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
