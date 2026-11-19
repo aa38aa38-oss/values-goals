@@ -177,6 +177,15 @@
   .p-crack { animation: mCrack 1s ease-in-out infinite; }
   @keyframes mCrack { 0%,100% { filter: drop-shadow(0 0 2px #ffd36a); transform: rotate(-3deg); } 50% { filter: drop-shadow(0 0 14px #ffd36a); transform: rotate(3deg) scale(1.03); } }
   @media (prefers-reduced-motion: reduce) { #player img.mon { animation: none !important; } }
+  .chart-card h2 .ctl { display: none; gap: 4px; }
+  #charts.editing .chart-card h2 .ctl { display: flex; }
+  .ctl button { border: 1.5px solid var(--line); background: #fffdf9; border-radius: 8px; width: 32px; height: 30px; font: inherit; font-size: .85rem; color: var(--ink); }
+  .ctl button:disabled { opacity: .3; }
+  #chart-tip { position: fixed; z-index: 70; display: none; background: var(--ink); color: #fff; font-size: .82rem; font-weight: 700; padding: 6px 10px; border-radius: 10px; pointer-events: none; white-space: nowrap; transform: translate(-50%, -120%); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+  #chart-tip.show { display: block; }
+  .chart svg [data-tip] { cursor: pointer; }
+  .chart-add-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: .9rem; }
+  .chart-add-row button { border: none; background: var(--primary-soft); color: var(--primary); border-radius: 10px; padding: 6px 12px; font: inherit; font-weight: 700; }
   .overlay { position: fixed; inset: 0; z-index: 44; display: none; align-items: flex-end; justify-content: center; background: rgba(40,25,15,.5); }
   .overlay.show { display: flex; }
   .overlay .ov-box { background: var(--bg); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; border-radius: 22px 22px 0 0; padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); animation: up .25s ease-out; }
@@ -638,18 +647,10 @@
   </section>
 
   <section class="view" id="view-history">
-    <div class="card">
-      <h2>📉 體重趨勢（近 30 天）</h2>
-      <div class="chart" id="chart"></div>
-    </div>
-    <div class="card">
-      <h2>🏃 每週運動分鐘（近 8 週）</h2>
-      <div class="chart" id="chart-ex"></div>
-    </div>
-    <div class="card" id="kcal-card">
-      <h2>🍱 每日熱量與蛋白質（近 14 天）</h2>
-      <div class="chart" id="chart-kcal"></div>
-    </div>
+    <div class="btn-row" style="margin-bottom:10px"><button class="btn ghost" id="chart-edit-btn" onclick="App.chartEdit()">✏️ 調整圖表</button></div>
+    <div id="charts"></div>
+    <div class="card" id="chart-add" style="display:none"></div>
+    <div id="chart-tip"></div>
     <div class="card">
       <h2>📅 本週</h2>
       <div id="week-summary" class="breakdown"></div>
@@ -707,7 +708,14 @@
         <div><label class="f">每日碳水上限（g）</label><input type="number" inputmode="numeric" id="g-carb"></div>
       </div>
       <div class="row">
-        <div><label class="f">每日步數目標</label><input type="number" inputmode="numeric" id="g-steps"></div>
+        <div><label class="f">步數：達標（普通加分）</label><input type="number" inputmode="numeric" id="g-steps"></div>
+        <div><label class="f">步數：非常高（大加分）</label><input type="number" inputmode="numeric" id="g-steps-hi"></div>
+      </div>
+      <div class="row">
+        <div><label class="f">活動消耗：達標 kcal</label><input type="number" inputmode="numeric" id="g-act"></div>
+        <div><label class="f">活動消耗：非常高 kcal</label><input type="number" inputmode="numeric" id="g-act-hi"></div>
+      </div>
+      <div class="row">
         <div><label class="f">每晚睡眠目標（小時）</label><input type="number" inputmode="decimal" step="0.5" id="g-sleep"></div>
         <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
       </div>
@@ -1081,7 +1089,7 @@
     settings: {
       coachName: '呀哈教練',
       startDate: today(),
-      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, steps: 8000, sleep: 7, kcalMin: 1800, kcalMax: 2100, protein: 90, fatG: 60, carbs: 200 },
+      goals: { startWeight: '', targetWeight: '', exMin: 30, water: 8, weeklyExDays: 4, steps: 8000, stepsHigh: 12000, active: 400, activeHigh: 700, sleep: 7, kcalMin: 1800, kcalMax: 2100, protein: 90, fatG: 60, carbs: 200 },
     },
     avatar: DEFAULT_AVATAR(),
     records: {},
@@ -1141,7 +1149,11 @@
     if (n === 3) items.push(['三項全記獎勵', 15]);
     if (g.exMin && (num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest') items.push([`達成運動 ${g.exMin} 分鐘`, 20]);
     if (g.water && r.water >= g.water) items.push([`達成喝水 ${g.water} 杯`, 20]);
-    if (g.steps && (num(r.steps) || 0) >= g.steps) items.push([`達成步數 ${g.steps} 步`, 20]);
+    { const st = num(r.steps) || 0, ak = num(r.activeKcal) || 0;
+      if (g.stepsHigh && st >= g.stepsHigh) items.push([`運動表現：步數 ${st}（非常高）`, 40]);
+      else if (g.steps && st >= g.steps) items.push([`運動表現：步數 ${st}（達標）`, 20]);
+      if (g.activeHigh && ak >= g.activeHigh) items.push([`運動表現：活動消耗 ${ak} kcal（非常高）`, 30]);
+      else if (g.active && ak >= g.active) items.push([`運動表現：活動消耗 ${ak} kcal（達標）`, 15]); }
     if (g.sleep && (num(r.sleep) || 0) >= g.sleep) items.push([`達成睡眠 ${g.sleep} 小時`, 10]);
     if (r.noSugar) items.push(['沒喝含糖飲料', 20]);
     const f = r._food;
@@ -1824,27 +1836,7 @@
   function renderHistory() {
     C = compute();
     const t = today();
-    // chart
-    const pts = [];
-    for (let i = 29; i >= 0; i--) { const d = addDays(t, -i); const w = num(rec(d).weight); if (w !== null) pts.push([30 - i, w, d]); }
-    const ch = $('chart');
-    if (pts.length < 2) ch.innerHTML = '<p class="muted">至少要有 2 天的體重紀錄才會出現趨勢圖。</p>';
-    else {
-      const W = 340, H = 170, pl = 34, pr = 10, pt = 14, pb = 24;
-      const ws = pts.map(p => p[1]); const tw = num(S.settings.goals.targetWeight);
-      let lo = Math.min(...ws, tw ?? Infinity), hi = Math.max(...ws);
-      lo = Math.floor(lo - .5); hi = Math.ceil(hi + .5);
-      const x = i => pl + (i - 1) / 29 * (W - pl - pr), y = v => pt + (hi - v) / (hi - lo) * (H - pt - pb);
-      const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)} ${y(p[1]).toFixed(1)}`).join(' ');
-      const ticks = [lo, (lo + hi) / 2, hi].map(v => `<text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="#8a7a70">${v.toFixed(1)}</text><line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="#f0dfc8"/>`).join('');
-      const goal = tw !== null && tw >= lo && tw <= hi ? `<line x1="${pl}" x2="${W - pr}" y1="${y(tw)}" y2="${y(tw)}" stroke="#3fa86b" stroke-dasharray="4 4"/><text x="${W - pr}" y="${y(tw) - 4}" text-anchor="end" font-size="10" fill="#3fa86b">目標 ${tw}</text>` : '';
-      const last = pts[pts.length - 1];
-      ch.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 30 天體重趨勢">${ticks}${goal}
-        <path d="${path}" fill="none" stroke="#e8505b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-        ${pts.map(p => `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="3" fill="#e8505b"><title>${nice(p[2])} ${p[1]} kg</title></circle>`).join('')}
-        <text x="${x(last[0])}" y="${y(last[1]) - 8}" text-anchor="end" font-size="11" font-weight="700" fill="#3b2f2a">${last[1]} kg</text>
-        <text x="${pl}" y="${H - 6}" font-size="10" fill="#8a7a70">30 天前</text><text x="${W - pr}" y="${H - 6}" text-anchor="end" font-size="10" fill="#8a7a70">今天</text></svg>`;
-    }
+    renderCharts(t);
     // week summary
     const mon = mondayOf(t); let exDays = 0, logged = 0, wpts = 0, weights = [];
     for (let i = 0; i < 7; i++) {
@@ -1853,8 +1845,6 @@
       if (C.perDay[d]) wpts += C.perDay[d].pts;
       const w = num(r.weight); if (w !== null) weights.push(w);
     }
-    renderExChart(t);
-    renderKcalChart(t);
     const g = S.settings.goals;
     const avgW = weights.length ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : '—';
     $('week-summary').innerHTML = `<div><span>有紀錄的天數</span><span>${logged} 天</span></div>
@@ -2051,7 +2041,7 @@
     $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
     $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
     $('g-kmin').value = g.kcalMin ?? ''; $('g-kmax').value = g.kcalMax ?? ''; $('g-pro').value = g.protein ?? ''; $('g-fat').value = g.fatG ?? ''; $('g-carb').value = g.carbs ?? '';
-    $('g-steps').value = g.steps ?? ''; $('g-sleep').value = g.sleep ?? '';
+    $('g-steps').value = g.steps ?? ''; $('g-steps-hi').value = g.stepsHigh ?? ''; $('g-act').value = g.active ?? ''; $('g-act-hi').value = g.activeHigh ?? ''; $('g-sleep').value = g.sleep ?? '';
     $('g-startdate').value = S.settings.startDate;
     $('coach-name').value = S.settings.coachName;
     $('gm-key').value = S.settings.geminiKey || '';
@@ -2112,25 +2102,6 @@
       <div class="kc">${x.kcal} kcal<small>蛋 ${x.protein} · 脂 ${x.fat ?? 0} · 碳 ${x.carbs ?? 0} g</small></div><button onclick="App.foodDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
       + `<div class="food-total"><span>合計</span><span>${f.kcal} kcal · 蛋 ${f.protein} · 脂 ${f.fat} · 碳 ${f.carbs} g</span></div>`;
   }
-  function renderKcalChart(t) {
-    const card = $('kcal-card'); if (!card) return;
-    const g = S.settings.goals, days = [];
-    for (let i = 13; i >= 0; i--) { const d = addDays(t, -i); const f = foodOf(d); days.push([d, f ? f.kcal : 0, f ? f.protein : 0]); }
-    const W = 340, H = 170, pl = 34, pb = 22, pt = 12, bw = (W - pl - 6) / 14;
-    const max = Math.max(g.kcalMax || 0, ...days.map(x => x[1]), 500) * 1.08;
-    const y = v => pt + (1 - v / max) * (H - pt - pb);
-    const band = g.kcalMax ? `<rect x="${pl}" y="${y(g.kcalMax)}" width="${W - pl - 4}" height="${Math.max(0, y(g.kcalMin || 0) - y(g.kcalMax))}" fill="#3fa86b" opacity=".12"/><text x="${W - 4}" y="${y(g.kcalMax) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">目標 ${g.kcalMin || 0}～${g.kcalMax}</text>` : '';
-    const bars = days.map(([d, k, p], i) => {
-      const x = pl + i * bw + 2, over = g.kcalMax && k > g.kcalMax;
-      return `<rect x="${x}" y="${y(k)}" width="${bw - 4}" height="${Math.max(0, H - pb - y(k))}" rx="3" fill="${over ? '#e8505b' : '#f0a32b'}"><title>${nice(d)}：${k} kcal，蛋白質 ${p} g</title></rect>
-        ${i % 2 === 1 ? `<text x="${x + (bw - 4) / 2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#8a7a70">${parse(d).getMonth() + 1}/${parse(d).getDate()}</text>` : ''}`;
-    }).join('');
-    const ticks = [0, Math.round(max / 2 / 100) * 100].map(v => `<text x="${pl - 4}" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="#8a7a70">${v}</text>`).join('');
-    const proHit = days.filter(x => x[1] > 0 && g.protein && x[2] >= g.protein).length, logged = days.filter(x => x[1] > 0).length;
-    $('chart-kcal').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 14 天每日熱量">${band}<line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${ticks}${bars}</svg>
-      <p class="muted" style="margin:6px 0 0">橘色＝目標內或以下，紅色＝超過上限。蛋白質達標 ${proHit} / ${logged} 天。</p>`;
-  }
-
   // ---------- Gemini (direct from browser, key stays on this phone) ----------
   // 跟健康26 一樣：穩定的 gemini-3-flash 系列排最前面（免費額度最寬、最快），找到的其他模型接在後面
   const GM_DEFAULT = ['gemini-3-flash', 'gemini-3-flash-preview', 'gemini-3-flash-lite'];
@@ -2482,27 +2453,118 @@
   }
 
   // ---------- weekly exercise chart ----------
-  function renderExChart(t) {
-    const weeks = [];
-    const mon0 = mondayOf(t);
-    for (let k = 7; k >= 0; k--) {
-      const mon = addDays(mon0, -7 * k); let mins = 0;
-      for (let i = 0; i < 7; i++) { const r = rec(addDays(mon, i)); if (r.exType !== 'rest') mins += num(r.exMin) || 0; }
-      weeks.push([mon, mins]);
-    }
-    const goal = (S.settings.goals.exMin || 0) * (S.settings.goals.weeklyExDays || 0);
-    const W = 340, H = 160, pl = 30, pb = 22, pt = 12, bw = (W - pl - 8) / 8;
-    const max = Math.max(goal, ...weeks.map(w => w[1]), 60);
-    const y = v => pt + (1 - v / max) * (H - pt - pb);
-    const bars = weeks.map(([mon, m], i) => {
-      const x = pl + i * bw + 4, hh = H - pb - y(m), hit = goal && m >= goal;
-      return `<rect x="${x}" y="${y(m)}" width="${bw - 8}" height="${Math.max(0, hh)}" rx="4" fill="${hit ? '#3fa86b' : '#4a8fd6'}"><title>${nice(mon)} 起：${m} 分鐘</title></rect>
-        ${m ? `<text x="${x + (bw - 8) / 2}" y="${y(m) - 3}" text-anchor="middle" font-size="9" fill="#3b2f2a">${m}</text>` : ''}
-        <text x="${x + (bw - 8) / 2}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#8a7a70">${parse(mon).getMonth() + 1}/${parse(mon).getDate()}</text>`;
-    }).join('');
-    const gl = goal ? `<line x1="${pl}" x2="${W - 4}" y1="${y(goal)}" y2="${y(goal)}" stroke="#3fa86b" stroke-dasharray="4 4"/><text x="${W - 4}" y="${y(goal) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">週目標 ${goal}</text>` : '';
-    $('chart-ex').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="近 8 週每週運動分鐘"><line x1="${pl}" x2="${W - 4}" y1="${H - pb}" y2="${H - pb}" stroke="#f0dfc8"/>${bars}${gl}</svg>`;
+  // ---------- 圖表（可排序、隱藏、新增、點擊看數值） ----------
+  const CW = 340, CH = 170;
+  const md = d => `${parse(d).getMonth() + 1}/${parse(d).getDate()}`;
+  const fmtN = (v, dec) => (dec ? (+v).toFixed(dec) : Math.round(v)).toString();
+  function lineChart({ pts, n, unit, color, goal, goalLabel, dec = 1, emptyMsg }) {
+    if (pts.length < 2) return `<p class="muted">${emptyMsg || '至少要有 2 筆紀錄才會出現趨勢圖。'}</p>`;
+    const pl = 36, pr = 12, pt = 16, pb = 24;
+    const vs = pts.map(p => p[1]);
+    let lo = Math.min(...vs, goal ?? Infinity), hi = Math.max(...vs, goal ?? -Infinity);
+    const pad = Math.max(.5, (hi - lo) * .12); lo = Math.floor(lo - pad); hi = Math.ceil(hi + pad);
+    const x = i => pl + i / (n - 1) * (CW - pl - pr), y = v => pt + (hi - v) / (hi - lo) * (CH - pt - pb);
+    const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p[0]).toFixed(1)} ${y(p[1]).toFixed(1)}`).join(' ');
+    const ticks = [lo, (lo + hi) / 2, hi].map(v => `<text x="${pl - 5}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="#8a7a70">${fmtN(v, dec)}</text><line x1="${pl}" x2="${CW - pr}" y1="${y(v)}" y2="${y(v)}" stroke="#f0dfc8"/>`).join('');
+    const gl = goal != null ? `<line x1="${pl}" x2="${CW - pr}" y1="${y(goal)}" y2="${y(goal)}" stroke="#3fa86b" stroke-dasharray="4 4"/><text x="${CW - pr}" y="${y(goal) - 4}" text-anchor="end" font-size="10" fill="#3fa86b">${goalLabel || '目標'} ${goal}</text>` : '';
+    const last = pts[pts.length - 1];
+    return `<svg viewBox="0 0 ${CW} ${CH}" role="img">${ticks}${gl}
+      <path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${pts.map(p => `<circle cx="${x(p[0])}" cy="${y(p[1])}" r="3.5" fill="${color}"/><circle cx="${x(p[0])}" cy="${y(p[1])}" r="13" fill="transparent" data-tip="${nice(p[2])}：${fmtN(p[1], dec)} ${unit}"/>`).join('')}
+      <text x="${x(last[0])}" y="${y(last[1]) - 9}" text-anchor="end" font-size="11" font-weight="700" fill="#3b2f2a">${fmtN(last[1], dec)} ${unit}</text>
+      <text x="${pl}" y="${CH - 6}" font-size="10" fill="#8a7a70">${md(pts[0][2])}</text><text x="${CW - pr}" y="${CH - 6}" text-anchor="end" font-size="10" fill="#8a7a70">${md(last[2])}</text></svg>`;
   }
+  function barChart({ items, unit, colorOf, goal, goalLabel, band, labelEvery = 2, showVals, emptyMsg }) {
+    if (!items.some(it => it.v > 0)) return `<p class="muted">${emptyMsg || '這段期間還沒有資料。'}</p>`;
+    const pl = 36, pb = 22, pt = 14, n = items.length, bw = (CW - pl - 6) / n;
+    const max = Math.max(goal || 0, band ? band[1] : 0, ...items.map(it => it.v), 1) * 1.1;
+    const y = v => pt + (1 - v / max) * (CH - pt - pb);
+    const bandEl = band ? `<rect x="${pl}" y="${y(band[1])}" width="${CW - pl - 4}" height="${Math.max(0, y(band[0]) - y(band[1]))}" fill="#3fa86b" opacity=".12"/><text x="${CW - 4}" y="${y(band[1]) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">目標 ${band[0]}～${band[1]}</text>` : '';
+    const gl = goal ? `<line x1="${pl}" x2="${CW - 4}" y1="${y(goal)}" y2="${y(goal)}" stroke="#3fa86b" stroke-dasharray="4 4"/><text x="${CW - 4}" y="${y(goal) - 3}" text-anchor="end" font-size="9" fill="#3fa86b">${goalLabel || '目標'} ${goal}</text>` : '';
+    const ticks = [0, max / 2].map(v => `<text x="${pl - 4}" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="#8a7a70">${Math.round(v)}</text>`).join('');
+    const bars = items.map((it, i) => {
+      const x = pl + i * bw + 2;
+      return `<rect x="${x}" y="${y(it.v)}" width="${bw - 4}" height="${Math.max(0, CH - pb - y(it.v))}" rx="3" fill="${colorOf(it)}"/>
+        ${showVals && it.v ? `<text x="${x + (bw - 4) / 2}" y="${y(it.v) - 3}" text-anchor="middle" font-size="9" fill="#3b2f2a">${Math.round(it.v)}</text>` : ''}
+        ${i % labelEvery === labelEvery - 1 || n <= 8 ? `<text x="${x + (bw - 4) / 2}" y="${CH - 6}" text-anchor="middle" font-size="9" fill="#8a7a70">${it.label}</text>` : ''}
+        <rect x="${x - 2}" y="${pt}" width="${bw}" height="${CH - pb - pt}" fill="transparent" data-tip="${esc(it.tip)}"/>`;
+    }).join('');
+    return `<svg viewBox="0 0 ${CW} ${CH}" role="img">${bandEl}<line x1="${pl}" x2="${CW - 4}" y1="${CH - pb}" y2="${CH - pb}" stroke="#f0dfc8"/>${ticks}${gl}${bars}</svg>`;
+  }
+  const lastDays = (t, n) => Array.from({ length: n }, (_, i) => addDays(t, i - n + 1));
+  function seriesLine(t, n, get) { const pts = []; lastDays(t, n).forEach((d, i) => { const v = get(d); if (v !== null && v !== undefined) pts.push([i, v, d]); }); return pts; }
+  const CHARTS = {
+    weight: { title: '📉 體重趨勢（近 30 天）', render: t => lineChart({ pts: seriesLine(t, 30, d => num(rec(d).weight)), n: 30, unit: 'kg', color: '#e8505b', goal: num(S.settings.goals.targetWeight), goalLabel: '目標' }) },
+    fat: { title: '🧈 體脂率趨勢（近 30 天）', render: t => lineChart({ pts: seriesLine(t, 30, d => num(rec(d).fat)), n: 30, unit: '%', color: '#f0a32b', emptyMsg: '至少要有 2 天的體脂紀錄（捷徑匯入或手動填）才會出現趨勢圖。' }) },
+    waist: { title: '📏 腰圍趨勢（近 30 天）', render: t => lineChart({ pts: seriesLine(t, 30, d => num(rec(d).waist)), n: 30, unit: 'cm', color: '#8b5bd6' }) },
+    exWeek: { title: '🏃 每週運動分鐘（近 8 週）', render: t => {
+      const mon0 = mondayOf(t), g = S.settings.goals, goal = (g.exMin || 0) * (g.weeklyExDays || 0);
+      const items = Array.from({ length: 8 }, (_, k) => { const mon = addDays(mon0, -7 * (7 - k)); let v = 0; for (let i = 0; i < 7; i++) v += exList(addDays(mon, i)).reduce((a, x) => a + (num(x.min) || 0), 0); return { v, label: md(mon), tip: `${md(mon)} 起一週：${v} 分鐘` }; });
+      return barChart({ items, unit: '分', goal, goalLabel: '週目標', colorOf: it => goal && it.v >= goal ? '#3fa86b' : '#4a8fd6', showVals: true });
+    } },
+    kcal: { title: '🍱 每日熱量（近 14 天）', render: t => {
+      const g = S.settings.goals;
+      const items = lastDays(t, 14).map(d => { const f = foodOf(d); return { v: f ? f.kcal : 0, label: md(d), tip: f ? `${nice(d)}：${f.kcal} kcal・蛋 ${f.protein}・脂 ${f.fat}・碳 ${f.carbs} g` : `${nice(d)}：沒有紀錄` }; });
+      return barChart({ items, unit: 'kcal', band: g.kcalMax ? [g.kcalMin || 0, g.kcalMax] : null, colorOf: it => g.kcalMax && it.v > g.kcalMax ? '#e8505b' : '#f0a32b' }) + '<p class="muted" style="margin:6px 0 0">橘色＝目標內或以下，紅色＝超過上限。點長條看當天數值。</p>';
+    } },
+    protein: { title: '💪 每日蛋白質（近 14 天）', render: t => {
+      const g = S.settings.goals;
+      const items = lastDays(t, 14).map(d => { const f = foodOf(d); return { v: f ? f.protein : 0, label: md(d), tip: `${nice(d)}：蛋白質 ${f ? f.protein : 0} g` }; });
+      return barChart({ items, goal: g.protein, goalLabel: '目標', colorOf: it => g.protein && it.v >= g.protein ? '#3fa86b' : '#4a8fd6' });
+    } },
+    steps: { title: '👣 每日步數（近 14 天）', render: t => {
+      const g = S.settings.goals;
+      const items = lastDays(t, 14).map(d => { const v = num(rec(d).steps) || 0; return { v, label: md(d), tip: `${nice(d)}：${v} 步${g.stepsHigh && v >= g.stepsHigh ? '（非常高 +40）' : g.steps && v >= g.steps ? '（達標 +20）' : ''}` }; });
+      return barChart({ items, goal: g.steps, goalLabel: '達標', colorOf: it => g.stepsHigh && it.v >= g.stepsHigh ? '#8b5bd6' : g.steps && it.v >= g.steps ? '#3fa86b' : '#9fb5cc', emptyMsg: '還沒有步數紀錄（用捷徑匯入或手動填）。' }) + `<p class="muted" style="margin:6px 0 0">綠色＝達標 ${g.steps || '—'} 步，紫色＝非常高 ${g.stepsHigh || '—'} 步。</p>`;
+    } },
+    active: { title: '🔥 每日活動消耗（近 14 天）', render: t => {
+      const g = S.settings.goals;
+      const items = lastDays(t, 14).map(d => { const v = num(rec(d).activeKcal) || 0; return { v, label: md(d), tip: `${nice(d)}：活動消耗 ${v} kcal${g.activeHigh && v >= g.activeHigh ? '（非常高 +30）' : g.active && v >= g.active ? '（達標 +15）' : ''}` }; });
+      return barChart({ items, goal: g.active, goalLabel: '達標', colorOf: it => g.activeHigh && it.v >= g.activeHigh ? '#8b5bd6' : g.active && it.v >= g.active ? '#e8705b' : '#f3c2a8', emptyMsg: '還沒有活動消耗紀錄（用捷徑匯入或手動填）。' }) + `<p class="muted" style="margin:6px 0 0">橘紅＝達標 ${g.active || '—'} kcal，紫色＝非常高 ${g.activeHigh || '—'} kcal。</p>`;
+    } },
+    sleep: { title: '😴 每晚睡眠（近 14 天）', render: t => {
+      const g = S.settings.goals;
+      const items = lastDays(t, 14).map(d => { const v = num(rec(d).sleep) || 0; return { v, label: md(d), tip: `${nice(d)}：睡眠 ${v} 小時` }; });
+      return barChart({ items, goal: g.sleep, goalLabel: '目標', colorOf: it => g.sleep && it.v >= g.sleep ? '#3fa86b' : '#6b8fd6', emptyMsg: '還沒有睡眠紀錄。' });
+    } },
+    score: { title: '⭐ 每日紀律分（近 14 天）', render: t => {
+      const items = lastDays(t, 14).map(d => { const v = dailyScore(d); return { v, label: md(d), tip: `${nice(d)}：紀律分 ${v}` }; });
+      return barChart({ items, goal: 80, goalLabel: '菁英線', colorOf: it => it.v >= 80 ? '#f2b134' : it.v >= 50 ? '#4a8fd6' : '#c9b9a8', showVals: true });
+    } },
+  };
+  const DEFAULT_CHARTS = ['weight', 'fat', 'exWeek', 'kcal', 'steps', 'active'];
+  let chartEditing = false;
+  function chartOrder() {
+    let o = S.settings.charts;
+    if (!Array.isArray(o)) o = DEFAULT_CHARTS.slice();
+    return o.filter(k => CHARTS[k]);
+  }
+  function renderCharts(t) {
+    const order = chartOrder(), box = $('charts'); if (!box) return;
+    box.classList.toggle('editing', chartEditing);
+    box.innerHTML = order.map((k, i) => `<div class="card chart-card"><h2><span>${CHARTS[k].title}</span><span class="ctl">
+        <button onclick="App.chartMove('${k}',-1)" ${i === 0 ? 'disabled' : ''} aria-label="上移">▲</button>
+        <button onclick="App.chartMove('${k}',1)" ${i === order.length - 1 ? 'disabled' : ''} aria-label="下移">▼</button>
+        <button onclick="App.chartHide('${k}')" aria-label="隱藏">✕</button></span></h2>
+        <div class="chart">${CHARTS[k].render(t)}</div></div>`).join('') || '<p class="muted">沒有顯示任何圖表。按「✏️ 調整圖表」新增。</p>';
+    const hidden = Object.keys(CHARTS).filter(k => !order.includes(k));
+    const add = $('chart-add');
+    add.style.display = chartEditing ? 'block' : 'none';
+    add.innerHTML = `<h2>➕ 新增圖表</h2>` + (hidden.length ? hidden.map(k => `<div class="chart-add-row"><span>${CHARTS[k].title}</span><button onclick="App.chartAdd('${k}')">加入</button></div>`).join('') : '<p class="muted" style="margin:0">所有圖表都已經顯示了。</p>')
+      + `<button class="btn ghost" style="margin-top:10px" onclick="App.chartReset()">↺ 恢復預設</button>`;
+    $('chart-edit-btn').textContent = chartEditing ? '✅ 完成調整' : '✏️ 調整圖表（排序／隱藏／新增）';
+  }
+  // 點圖表看數值
+  document.addEventListener('click', e => {
+    const tip = $('chart-tip'); if (!tip) return;
+    const el = e.target.closest && e.target.closest('#charts [data-tip]');
+    if (!el) { tip.classList.remove('show'); return; }
+    tip.textContent = el.getAttribute('data-tip');
+    tip.style.left = Math.max(80, Math.min(window.innerWidth - 80, e.clientX)) + 'px';
+    tip.style.top = e.clientY + 'px';
+    tip.classList.add('show');
+    clearTimeout(tip._t); tip._t = setTimeout(() => tip.classList.remove('show'), 3000);
+  });
 
   // ---------- 計算機 ----------
   function calcEval(expr) {
@@ -2793,6 +2855,9 @@
     if (g.exMin && r.exType !== 'rest' && (num(r.exMin) || 0) >= g.exMin) sc += 10;
     if (g.water && r.water >= g.water) sc += 10;
     if (r.noSugar) sc += 5;
+    { const st = num(r.steps) || 0, ak = num(r.activeKcal) || 0;
+      if (g.stepsHigh && st >= g.stepsHigh) sc += 15; else if (g.steps && st >= g.steps) sc += 10;
+      if (g.activeHigh && ak >= g.activeHigh) sc += 10; else if (g.active && ak >= g.active) sc += 5; }
     const f = r._food;
     if (f && g.kcalMax && f.kcal >= (g.kcalMin || 0) * 0.8 && f.kcal <= g.kcalMax) sc += 10;
     if (f && g.protein && f.protein >= g.protein) sc += 10;
@@ -2961,7 +3026,7 @@
           <div class="row-label">成熟期（懶惰／普通／菁英）</div>${node('3-lazy')}${node('3-normal')}${node('3-elite')}
           <div class="row-label">完全體</div><div></div>${node('4-final')}<div></div>
         </div>
-        <p class="muted" style="margin:8px 0 0">每日紀律分：記錄飲食 20、運動 20、減脂數據 15，運動／喝水達標各 10、熱量在目標內 10、蛋白質達標 10、沒喝含糖飲料 5；熱量超標 20% 扣 10。</p>
+        <p class="muted" style="margin:8px 0 0">每日紀律分：記錄飲食 20、運動 20、減脂數據 15，運動／喝水達標各 10、熱量在目標內 10、蛋白質達標 10、沒喝含糖飲料 5；步數達標 10（非常高 15）、活動消耗達標 5（非常高 10）；熱量超標 20% 扣 10。</p>
       </div>`;
   }
   let pickedEgg = '';
@@ -3178,6 +3243,11 @@
       }
       if (!prevBody && hasBody(r) && C.reached) toast('🎉 達成目標體重！+200 分！');
     },
+    chartEdit() { chartEditing = !chartEditing; renderCharts(today()); },
+    chartMove(k, d) { const o = chartOrder(); const i = o.indexOf(k), j = i + d; if (j < 0 || j >= o.length) return; [o[i], o[j]] = [o[j], o[i]]; S.settings.charts = o; persist(); renderCharts(today()); },
+    chartHide(k) { S.settings.charts = chartOrder().filter(x => x !== k); persist(); renderCharts(today()); },
+    chartAdd(k) { S.settings.charts = [...chartOrder(), k]; persist(); renderCharts(today()); toast('已加入圖表'); },
+    chartReset() { S.settings.charts = DEFAULT_CHARTS.slice(); persist(); renderCharts(today()); },
     openGames() { $('games').classList.add('show'); mgMenu(); },
     closeGames() { if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
     gameStart(k) {
@@ -3323,7 +3393,7 @@
       g.water = Math.max(0, parseInt($('g-water').value, 10) || 0);
       g.weeklyExDays = Math.max(0, Math.min(7, parseInt($('g-week').value, 10) || 0));
       g.kcalMin = Math.max(0, parseInt($('g-kmin').value, 10) || 0); g.kcalMax = Math.max(0, parseInt($('g-kmax').value, 10) || 0); g.protein = Math.max(0, parseInt($('g-pro').value, 10) || 0); g.fatG = Math.max(0, parseInt($('g-fat').value, 10) || 0); g.carbs = Math.max(0, parseInt($('g-carb').value, 10) || 0);
-      g.steps = Math.max(0, parseInt($('g-steps').value, 10) || 0); g.sleep = Math.max(0, parseFloat($('g-sleep').value) || 0);
+      g.steps = Math.max(0, parseInt($('g-steps').value, 10) || 0); g.stepsHigh = Math.max(0, parseInt($('g-steps-hi').value, 10) || 0); g.active = Math.max(0, parseInt($('g-act').value, 10) || 0); g.activeHigh = Math.max(0, parseInt($('g-act-hi').value, 10) || 0); g.sleep = Math.max(0, parseFloat($('g-sleep').value) || 0);
       const sd = $('g-startdate').value; if (sd) S.settings.startDate = sd > today() ? today() : sd;
       persist(); toast('目標已儲存！');
     },
@@ -3735,7 +3805,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.19-4';
+  const APP_VERSION = '2026.11.20-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
