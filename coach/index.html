@@ -394,6 +394,13 @@
   .date-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .date-nav button { border: none; background: var(--card); box-shadow: var(--shadow); border-radius: 12px; padding: 7px 12px; font: inherit; font-size: .85rem; color: var(--ink); }
   .date-nav b { font-size: .95rem; }
+  #sheet .ex-date-nav, #sheet .ex-past-note { display: none; }
+  .ex-date-pick { position: relative; font-size: .95rem; padding: 4px 8px; border-radius: 10px; background: #fff6e8; }
+  .ex-date-pick input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; }
+  .ex-past-note { display: none; margin: -4px 0 10px; padding: 6px 10px; border-radius: 10px; background: #fff1c9; color: #8a5a00; font-size: .85rem; font-weight: 700; }
+  .ex-past-note.show { display: block; }
+  #ex-week > div.click { cursor: pointer; }
+  #ex-week > div.cur { background: #fff1c9; border-radius: 8px; }
 
   /* tabs */
   .view { display: none; } .view.active { display: block; }
@@ -651,7 +658,7 @@
 
   <section class="view" id="view-exercise">
     <div id="ex-home"></div>
-    <div class="card"><h2>📅 本週運動</h2><div class="breakdown" id="ex-week"></div></div>
+    <div class="card"><h2 id="ex-week-title">📅 本週運動</h2><div class="breakdown" id="ex-week"></div></div>
   </section>
 
   <section class="view" id="view-history">
@@ -887,6 +894,12 @@
     <div id="sheet-ex-slot"></div>
     <div class="card" id="ex-card">
       <h2>🏃 運動紀錄 <span class="done-chip" id="chip-ex">未記錄</span></h2>
+      <div class="date-nav ex-date-nav">
+        <button type="button" onclick="App.shiftDay(-1)">◀ 前一天</button>
+        <label class="ex-date-pick"><b id="ex-date-label"></b> 📅<input type="date" id="ex-date-input" onchange="App.setDate(this.value)"></label>
+        <button type="button" onclick="App.shiftDay(1)" id="ex-next-btn">後一天 ▶</button>
+      </div>
+      <div class="ex-past-note" id="ex-past-note"></div>
       <div class="row">
         <div>
           <label class="f">運動項目</label>
@@ -1741,11 +1754,12 @@
   function renderExList(d) {
     const el = $('ex-list'); if (!el) return;
     const list = exList(d);
-    if (!list.length) { el.innerHTML = rec(d).exType === 'rest' ? '<p class="muted" style="margin:4px 0">今天是休息日 😴</p>' : '<p class="muted" style="margin:4px 0">今天還沒有運動紀錄。選項目、填分鐘，按「➕ 加入這筆運動」。</p>'; return; }
+    const dw = d === today() ? '今天' : '這天';
+    if (!list.length) { el.innerHTML = rec(d).exType === 'rest' ? `<p class="muted" style="margin:4px 0">${dw}是休息日 😴</p>` : `<p class="muted" style="margin:4px 0">${dw}還沒有運動紀錄。選項目、填分鐘，按「➕ 加入這筆運動」。</p>`; return; }
     const total = list.reduce((a, x) => a + (num(x.min) || 0), 0);
     el.innerHTML = list.map(x => `<div class="food-item"><div class="nm">🏃 ${esc(x.type)}<small>${x.time ? esc(x.time) : '已記錄'}</small></div>
       <div class="kc">${x.min} 分鐘</div>${x.id === 'legacy' ? '' : `<button onclick="App.exDel('${x.id}')" aria-label="刪除">✕</button>`}</div>`).join('')
-      + `<div class="food-total"><span>今日運動合計</span><span>${total} 分鐘${S.settings.goals.exMin ? ' / 目標 ' + S.settings.goals.exMin : ''}</span></div>`;
+      + `<div class="food-total"><span>${d === today() ? '今日' : nice(d)}運動合計</span><span>${total} 分鐘${S.settings.goals.exMin ? ' / 目標 ' + S.settings.goals.exMin : ''}</span></div>`;
   }
   function syncExToRecord(d) {
     const list = (S.exercises || {})[d] || [];
@@ -1760,6 +1774,13 @@
     $('date-label').textContent = (curDate === today() ? '今天 ' : '') + nice(curDate);
     $('next-day-btn').disabled = curDate >= today();
     $('next-day-btn').style.opacity = curDate >= today() ? .4 : 1;
+    if ($('ex-date-label')) {
+      $('ex-date-label').textContent = (curDate === today() ? '今天 ' : '') + nice(curDate);
+      $('ex-date-input').value = curDate; $('ex-date-input').max = today();
+      $('ex-next-btn').disabled = curDate >= today(); $('ex-next-btn').style.opacity = curDate >= today() ? .4 : 1;
+      $('ex-past-note').textContent = curDate === today() ? '' : `✏️ 正在補記 ${nice(curDate)} 的運動`;
+      $('ex-past-note').classList.toggle('show', curDate !== today());
+    }
     $('m-b').value = r.meals.b; $('m-l').value = r.meals.l; $('m-d').value = r.meals.d; $('m-s').value = r.meals.s;
     $('water-val').dataset.v = r.water; $('water-val').textContent = r.water + ' 杯';
     $('no-sugar').checked = !!r.noSugar; $('kcal').value = r.kcal;
@@ -3104,14 +3125,15 @@
   // ---------- 本週運動 ----------
   function renderExWeek() {
     const el = $('ex-week'); if (!el) return;
-    const t = today(), mon = mondayOf(t), g = S.settings.goals; let total = 0, days = 0; const rows = [];
+    const t = today(), mon = mondayOf(curDate), g = S.settings.goals; let total = 0, days = 0; const rows = [];
     for (let i = 0; i < 7; i++) {
       const d = addDays(mon, i); if (d > t) break;
       const list = exList(d), m = list.reduce((a, x) => a + (num(x.min) || 0), 0);
       if (m > 0) days++; total += m;
-      rows.push(`<div><span>${nice(d)}</span><span>${m ? m + ' 分鐘・' + esc([...new Set(list.map(x => x.type))].join('、')) : (rec(d).exType === 'rest' ? '休息日' : '—')}</span></div>`);
+      rows.push(`<div class="click${d === curDate ? ' cur' : ''}" onclick="App.setDate('${d}')"><span>${nice(d)}${d === curDate ? ' ✏️' : ''}</span><span>${m ? m + ' 分鐘・' + esc([...new Set(list.map(x => x.type))].join('、')) : (rec(d).exType === 'rest' ? '休息日' : '—')}</span></div>`);
     }
-    el.innerHTML = rows.join('') + `<div><span>本週合計</span><span>${total} 分鐘・${days} / ${g.weeklyExDays || '—'} 天</span></div>`;
+    $('ex-week-title').textContent = mon === mondayOf(t) ? '📅 本週運動' : `📅 ${nice(mon)} 那週的運動`;
+    el.innerHTML = rows.join('') + `<div><span>${mon === mondayOf(t) ? '本週' : '該週'}合計</span><span>${total} 分鐘・${days} / ${g.weeklyExDays || '—'} 天</span></div>`;
   }
 
   // ---------- 和教練玩小遊戲 ----------
@@ -3297,7 +3319,12 @@
     shiftDay(n) {
       const d = addDays(curDate, n);
       if (d > today()) return;
-      curDate = d; fillForm(); renderFoodPage();
+      curDate = d; fillForm(); renderFoodPage(); renderExWeek();
+    },
+    setDate(d) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d || '')) return;
+      if (d > today()) d = today();
+      curDate = d; fillForm(); renderFoodPage(); renderExWeek();
     },
     goto(d) { App.switchTab('today'); openSheet(); curDate = d; fillForm(); },
     water(n) {
@@ -3465,16 +3492,17 @@
       arr.push({ id: 'e' + Date.now().toString(36), type: pend.type, min: pend.min, time: curDate === today() ? nowTime() : '' });
       syncExToRecord(curDate); persist();
       $('ex-type').value = ''; $('ex-min').value = '';
-      refreshStats(); renderExList(curDate); updateHints(); cloudPush([curDate]);
+      refreshStats(); renderExList(curDate); renderExWeek(); updateHints(); cloudPush([curDate]);
+      const dw = curDate === today() ? '今天' : nice(curDate);
       const total = exList(curDate).reduce((a, x) => a + (num(x.min) || 0), 0), g = S.settings.goals.exMin || 0;
-      toast(g && total >= g ? `💪 教練：${pend.type} ${pend.min} 分鐘！今天共 ${total} 分鐘，達標！` : `🏃 教練：記下來了！今天共 ${total} 分鐘${g ? '，還差 ' + (g - total) + ' 分鐘' : ''}`);
+      toast(g && total >= g ? `💪 教練：${pend.type} ${pend.min} 分鐘！${dw}共 ${total} 分鐘，達標！` : `🏃 教練：記下來了！${dw}共 ${total} 分鐘${g ? '，還差 ' + (g - total) + ' 分鐘' : ''}`);
     },
     exDel(id) {
       const arr = (S.exercises || {})[curDate] || [];
       const i = arr.findIndex(x => x.id === id); if (i < 0) return;
       if (!confirm(`刪除「${arr[i].type} ${arr[i].min} 分鐘」？`)) return;
       arr.splice(i, 1); if (!arr.length) delete S.exercises[curDate];
-      syncExToRecord(curDate); persist(); refreshStats(); renderExList(curDate); updateHints();
+      syncExToRecord(curDate); persist(); refreshStats(); renderExList(curDate); renderExWeek(); updateHints();
     },
     // ---- creator ----
     ccTab(k) { ccCat = k; renderCreators(); },
@@ -3919,7 +3947,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.20-5';
+  const APP_VERSION = '2026.11.20-6';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
