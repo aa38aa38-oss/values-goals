@@ -210,6 +210,16 @@
   .mg-big { width: 100%; font-size: 1.4rem; padding: 26px 0; background: var(--primary); color: #fff; }
   .mg-big.ready { background: var(--ok); animation: pump .4s ease-in-out infinite; }
   .mg-menu button { display: block; width: 100%; text-align: left; border: 2px solid var(--line); background: var(--card); border-radius: 14px; padding: 12px; margin-bottom: 8px; font: inherit; color: var(--ink); }
+  .tb-wrap { position: relative; height: 54px; margin: 6px 0 4px; border-radius: 14px; background: #e9e1d4; border: 3px solid var(--line); overflow: hidden; }
+  .tb-zone { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, rgba(242,177,52,.25), rgba(242,177,52,.75) 35%, #f2b134 50%, rgba(242,177,52,.75) 65%, rgba(242,177,52,.25)); border-left: 2px dashed #c98a10; border-right: 2px dashed #c98a10; }
+  .tb-core { position: absolute; top: 0; bottom: 0; background: #e8505b; opacity: .85; }
+  .tb-center { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #fff; }
+  .tb-ptr { position: absolute; top: -4px; bottom: -4px; width: 6px; margin-left: -3px; background: #2b2b38; border-radius: 3px; box-shadow: 0 0 0 2px #fff; }
+  .tb-ptr::before { content: '▼'; position: absolute; top: -2px; left: 50%; transform: translateX(-50%); font-size: 12px; color: #2b2b38; text-shadow: 0 0 2px #fff; }
+  .tb-mark { position: absolute; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: #3fa86b; }
+  .tb-info { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); margin-bottom: 8px; }
+  .tb-res { text-align: center; font-weight: 900; font-size: 1.4rem; min-height: 1.6em; }
+  .tb-res.perfect { color: #e8505b; animation: pop .4s ease-out; } .tb-res.good { color: #c98a10; } .tb-res.miss { color: var(--muted); }
   .mg-menu b { font-size: 1rem; } .mg-menu small { display: block; color: var(--muted); font-size: .78rem; }
   .guide h3 { font-size: 1rem; margin: 14px 0 6px; }
   .guide p, .guide li { font-size: .9rem; line-height: 1.6; }
@@ -3156,8 +3166,66 @@
     $('mg-body').innerHTML = `<div class="mg-menu">
       <button onclick="App.gameStart('rps')"><b>✊ 猜拳三戰兩勝</b><small>先贏 2 場就勝利${done.rps ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('box')"><b>🥊 反應拳擊</b><small>教練舉起手靶就馬上打！5 回合打中 4 次過關${done.box ? '・今天已領獎 ✅' : ''}</small></button>
+      <button onclick="App.gameStart('hit')"><b>🎯 時機打擊</b><small>指標滑進金色打擊區時按「打擊！」，越靠近中心分數越高；速度忽快忽慢！5 回合 300 分過關${done.hit ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('squat')"><b>🏋️ 10 秒深蹲挑戰</b><small>10 秒內狂按「蹲！」40 下過關${done.squat ? '・今天已領獎 ✅' : ''}</small></button>
     </div>`;
+  }
+  // ---------- 🎯 時機打擊 ----------
+  const HIT_ROUNDS = 5, HIT_PASS = 300;
+  function hitRound() {
+    if (!mg || mg.k !== 'hit') return;
+    if (mg.round >= HIT_ROUNDS) return hitEnd();
+    mg.round++;
+    const w = 14 + Math.random() * 10;                    // 打擊區寬度 14~24%
+    const c = 22 + Math.random() * 62;                    // 中心位置 22~84%
+    const sp = pick([['🐢 慢', 2600], ['🚶 普通', 1700], ['🏃 快', 1100], ['⚡ 超快', 750]]);
+    mg.zone = { c, w }; mg.x = 0; mg.dur = sp[1] * (0.85 + Math.random() * 0.3); mg.spLabel = sp[0];
+    mg.shift = Math.random() < 0.35 ? { at: 20 + Math.random() * Math.max(5, c - w / 2 - 25), f: pick([0.45, 0.6, 1.8, 2.3]) } : null; // 中途變速
+    mg.live = false; mg.last = 0;
+    mgCoach('inspect'); mgSay(`第 ${mg.round} 回合・${sp[0]}${mg.shift ? '（小心變速！）' : ''}`);
+    $('mg-body').innerHTML = `<div class="tb-info"><span>回合 ${mg.round} / ${HIT_ROUNDS}</span><span>總分 <b>${mg.score}</b> / 目標 ${HIT_PASS}</span></div>
+      <div class="tb-wrap" id="tb-wrap"><div class="tb-zone" style="left:${c - w / 2}%;width:${w}%"></div><div class="tb-core" style="left:${c - w * .12}%;width:${w * .24}%"></div><div class="tb-center" style="left:${c}%"></div><div class="tb-ptr" id="tb-ptr" style="left:0%"></div></div>
+      <div class="tb-res" id="tb-res">準備……</div>
+      <button class="mg-big" id="tb-btn" style="touch-action:manipulation" onpointerdown="event.preventDefault();App.hitStrike()">👊 打擊！</button>`;
+    const r = mg.round;
+    mg.timer = setTimeout(() => { if (!mg || mg.k !== 'hit' || mg.round !== r) return; $('tb-res').textContent = ''; mg.live = true; mg.last = performance.now(); requestAnimationFrame(hitTick); }, 700 + Math.random() * 600);
+  }
+  function hitTick(now) {
+    if (!mg || mg.k !== 'hit' || !mg.live) return;
+    const dt = now - mg.last; mg.last = now;
+    let v = 100 / mg.dur; if (mg.shift && mg.x >= mg.shift.at) v *= mg.shift.f;
+    mg.x += v * dt;
+    const ptr = $('tb-ptr'); if (!ptr) return;
+    if (mg.x >= 100) { mg.x = 100; ptr.style.left = '100%'; mg.live = false; hitResult(null); return; }
+    ptr.style.left = mg.x + '%';
+    requestAnimationFrame(hitTick);
+  }
+  function hitResult(x) {
+    const { c, w } = mg.zone; let pts = 0, cls = 'miss', txt;
+    if (x === null) txt = '😴 沒按到！0 分';
+    else {
+      const d = Math.abs(x - c), h = w / 2;
+      $('tb-wrap').insertAdjacentHTML('beforeend', `<div class="tb-mark" style="left:${x}%"></div>`);
+      if (d <= h * 0.24) { pts = 100; cls = 'perfect'; txt = '💥 PERFECT！100 分'; }
+      else if (d <= h) { pts = Math.round(90 - 60 * (d - h * .24) / (h * .76)); cls = 'good'; txt = `👍 GOOD！${pts} 分`; }
+      else txt = x < c ? '⏩ 太早了！0 分' : '⏪ 太晚了！0 分';
+    }
+    mg.score += pts;
+    const el = $('tb-res'); el.className = 'tb-res ' + cls; el.textContent = txt;
+    const btn = $('tb-btn'); if (btn) btn.disabled = true;
+    if (cls === 'perfect') { mgCoach('cry'); mgSay(pick(['好痛！這拳太準了！', '碰！正中紅心！', '呀哈！完美！'])); fxAt('boom', '💥', { x: 50, y: 30 }); monAct('attack', 1200); }
+    else if (cls === 'good') { mgCoach('cheer'); mgSay(pick(['不錯！再準一點！', '有打到！', '好！下一拳更準！'])); monAct('attack', 1000); }
+    else { mgCoach('angry'); mgSay(pick(['看清楚再打！', '節奏！節奏！', '專心！'])); }
+    const r = mg.round;
+    mg.timer = setTimeout(() => { if (mg && mg.k === 'hit' && mg.round === r) hitRound(); }, 1300);
+  }
+  function hitEnd() {
+    const ok = mg.score >= HIT_PASS;
+    S.hitBest = Math.max(S.hitBest || 0, mg.score); persist();
+    mgCoach(ok ? 'dance' : 'angry');
+    mgSay(ok ? `總分 ${mg.score}！節奏感一流！${gameAward('hit')}` : `總分 ${mg.score}……還差 ${HIT_PASS - mg.score} 分！`);
+    if (ok) monAct('win', 2600);
+    $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">本次 <b>${mg.score}</b> 分・最高紀錄 <b>${S.hitBest}</b> 分</p><button class="btn" onclick="App.gameStart('hit')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
   }
   const RPS = { r: '✊', s: '✌️', p: '✋' }, BEATS = { r: 's', s: 'p', p: 'r' };
   function rpsDuel(myHand, coHand, shaking, result) {
@@ -3222,7 +3290,7 @@
       <ul>
         <li><b>💬 問教練</b>：飲食、運動問題都可以問，教練會看你的紀錄回答（Gemini AI）</li>
         <li><b>💪 打氣</b>：教練和怪獸會有各種反應</li>
-        <li><b>🎮 和教練玩</b>：猜拳、反應拳擊、深蹲挑戰，每個遊戲每天贏一次 +${GAME_EXP} EXP</li>
+        <li><b>🎮 和教練玩</b>：猜拳、反應拳擊、時機打擊、深蹲挑戰，每個遊戲每天贏一次 +${GAME_EXP} EXP</li>
       </ul>`;
   }
 
@@ -3394,6 +3462,7 @@
     gameStart(k) {
       if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv);
       if (k === 'rps') { mg = { k, me: 0, co: 0 }; $('mg-title').textContent = '✊ 猜拳三戰兩勝'; rpsDuel('❔', '❔', false); mgSay('選一個拳，跟教練同時出拳！'); rpsDraw(); }
+      if (k === 'hit') { mg = { k, round: 0, score: 0 }; $('mg-title').textContent = '🎯 時機打擊'; hitRound(); }
       if (k === 'box') { mg = { k, round: 0, hits: 0 }; $('mg-title').textContent = '🥊 反應拳擊'; boxRound(); }
       if (k === 'squat') {
         mg = { k, n: 0, left: 10, on: false }; $('mg-title').textContent = '🏋️ 10 秒深蹲挑戰';
@@ -3427,6 +3496,11 @@
         return;
       }
       rpsDraw();
+    },
+    hitStrike() {
+      if (!mg || mg.k !== 'hit') return;
+      if (!mg.live) { if (mg.x === 0 && $('tb-res') && $('tb-res').textContent === '準備……') { mgSay('還沒開始啦！'); } return; }
+      mg.live = false; hitResult(mg.x);
     },
     boxHit() {
       if (!mg || mg.k !== 'box') return;
@@ -3947,7 +4021,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.20-6';
+  const APP_VERSION = '2026.11.21-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
