@@ -280,9 +280,19 @@
   .food-text .btn { width: auto; margin: 0; padding: 0 12px; font-size: .85rem; white-space: nowrap; }
   #food-draft { margin-top: 10px; background: #fffaf0; border: 2px solid var(--gold); border-radius: 14px; padding: 10px; display: none; }
   #food-draft.show { display: block; }
+  #food-stage { margin-top: 10px; background: #fffaf0; border: 2px solid var(--gold); border-radius: 14px; padding: 10px; display: none; }
+  #food-stage.show { display: block; }
+  #food-stage textarea { width: 100%; box-sizing: border-box; border: 2px solid var(--line); border-radius: 12px; padding: 10px; font: inherit; font-size: 1rem; background: #fff; color: var(--ink); resize: vertical; }
+  .stage-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .stage-thumbs .st { position: relative; width: 76px; height: 76px; }
+  .stage-thumbs .st img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+  .stage-thumbs .st button { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%; border: none; background: #2b2b38; color: #fff; font-size: .8rem; line-height: 24px; padding: 0; }
+  .stage-thumbs .add { width: 76px; height: 76px; border: 2px dashed var(--line); border-radius: 10px; background: #fff; font: inherit; font-size: .75rem; color: var(--muted); }
+  .note-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .note-chips button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 10px; font: inherit; font-size: .8rem; color: var(--ink); }
   .thumbs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 6px; }
   .thumbs img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; flex: none; }
-  .food-status { font-size: .82rem; color: var(--warn); font-weight: 700; margin: 4px 0; }
+  .food-status { white-space: pre-line; font-size: .82rem; color: var(--warn); font-weight: 700; margin: 4px 0; }
   .food-item { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 1.05rem; }
   .food-item .nm { flex: 1; min-width: 0; font-weight: 700; line-height: 1.35; }
   .food-item .nm small { display: block; color: var(--muted); font-size: .82rem; font-weight: 400; margin-top: 2px; }
@@ -530,6 +540,16 @@
         <button type="button" class="btn secondary" onclick="App.foodText()">🔍 AI 查詢</button>
         <button type="button" class="btn ghost" onclick="App.foodManual()">✍️</button>
       </div>
+      <div id="food-stage">
+        <div class="stage-thumbs" id="stage-thumbs"></div>
+        <label class="f">📝 補充說明（選填，AI 會照這個調整）</label>
+        <textarea id="fd-note" rows="2" placeholder="例：我只吃了 60%、照片裡的豆干沒吃、飯只吃半碗、飲料是無糖的"></textarea>
+        <div class="note-chips"><button type="button" onclick="App.noteChip('只吃了一半')">只吃一半</button><button type="button" onclick="App.noteChip('只吃了 70%')">吃 70%</button><button type="button" onclick="App.noteChip('飯只吃半碗')">飯半碗</button><button type="button" onclick="App.noteChip('飲料是無糖的')">無糖飲料</button><button type="button" onclick="App.noteChip('照片裡的＿＿沒吃')">某樣沒吃</button></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button type="button" class="btn ghost" onclick="App.foodCancel()">取消</button>
+          <button type="button" class="btn" id="fd-analyze" onclick="App.foodAnalyze()">🤖 送出分析</button>
+        </div>
+      </div>
       <div id="food-draft">
         <div class="thumbs" id="food-thumbs"></div>
         <div class="food-status" id="food-status"></div>
@@ -555,6 +575,7 @@
         </div>
         <label class="check"><input type="checkbox" id="fd-snack"> 🟣 這是零食／甜點／飲料</label>
         <div class="muted" id="fd-details" style="margin-top:6px"></div>
+        <button type="button" class="btn ghost" id="fd-reanalyze" style="margin-top:6px;display:none" onclick="App.foodReedit()">📝 修改補充說明，重新分析</button>
         <div class="btn-row" style="margin-top:8px">
           <button type="button" class="btn ghost" onclick="App.foodCancel()">取消</button>
           <button type="button" class="btn" onclick="App.foodConfirm()">✅ 加入紀錄</button>
@@ -2331,8 +2352,10 @@
   "isSnack": 布林值（點心、零食、甜點、含糖飲料、酒類為 true；一般正餐或原型食物為 false）,
   "details": "一行簡短估算依據（40 字內）"
 }`;
-  async function analyzeFoodImages(images) {
-    const prompt = `請仔細觀察這 ${images.length} 張食物照片，辨識裡面所有食物與飲品（含包裝文字），以台灣常見份量合併估算總熱量（kcal）、蛋白質、脂肪、碳水化合物（g）。\n` + FOOD_JSON_SPEC;
+  async function analyzeFoodImages(images, note) {
+    note = String(note || '').trim().slice(0, 300);
+    const noteTxt = note ? `\n使用者的補充說明（必須優先遵守）：「${note}」\n- 說沒吃的食物：不要算進營養，也不要寫進 foodName\n- 說只吃一部分或百分比：該食物（或整餐）按比例計算\n- 說份量、做法、無糖等細節：依說明修正估算\n- details 請簡短寫出你如何套用補充說明\n` : '\n';
+    const prompt = `請仔細觀察這 ${images.length} 張食物照片，辨識裡面所有食物與飲品（含包裝文字），以台灣常見份量合併估算總熱量（kcal）、蛋白質、脂肪、碳水化合物（g）。` + noteTxt + FOOD_JSON_SPEC;
     const parts = [{ text: prompt }].concat(images.map(im => ({ inlineData: { mimeType: im.mimeType, data: im.base64 } })));
     return parseJSON(await geminiCall({ contents: [{ parts }] }, true));
   }
@@ -2360,6 +2383,12 @@
   }
   function setFoodStatus(t) { $('food-status').textContent = t || ''; }
   let foodBusy = false;
+  let foodImgs = []; // 等待送出分析的照片
+  function renderFoodStage() {
+    $('stage-thumbs').innerHTML = foodImgs.map((im, i) => `<div class="st"><img src="${im.dataUrl}" alt=""><button type="button" onclick="App.foodRemoveImg(${i})" aria-label="移除">✕</button></div>`).join('')
+      + (foodImgs.length < 6 ? `<button type="button" class="add" onclick="document.getElementById('food-album').click()">➕<br>再加照片</button>` : '');
+    $('food-stage').classList.add('show');
+  }
 
   // ---------- health import (iPhone Health / Garmin) ----------
   const HK_FIELDS = { steps: 'steps', active: 'activeKcal', exmin: 'exMin', weight: 'weight', fat: 'fat', waist: 'waist', sleep: 'sleep', hr: 'restHR', floors: 'floors' };
@@ -3277,7 +3306,7 @@
       <div class="eggs">${Object.keys(MON_LINES).map(k => `<img src="${monImg(k, '0-egg', 'idle')}" alt="">`).join('')}</div>
       <h3>📋 怎麼登記</h3>
       <ul>
-        <li><b>🍱 飲食</b>：拍照、相簿多張、或打字 AI 查詢，自動算熱量、蛋白質、脂肪、碳水</li>
+        <li><b>🍱 飲食</b>：拍照或相簿多張，可加補充說明（例如只吃一半、某樣沒吃）再送出；或打字 AI 查詢，自動算熱量、蛋白質、脂肪、碳水</li>
         <li><b>🏃 運動</b>：選項目、填分鐘，按「加入這筆運動」，一天可以記好幾筆</li>
         <li><b>🏋️ 健身房 →「找教練登記」</b>：一次填喝水、運動、體重、體脂、睡眠</li>
         <li><b>⌚ 手錶資料</b>：用 iPhone 捷徑把步數、活動消耗、體重帶進來</li>
@@ -3642,26 +3671,44 @@
     cloudPull(manual) { return cloudPullMerge(manual); },
     // ---- food (photo / text / manual) ----
     async foodPick(input) {
-      const files = Array.from(input.files || []).slice(0, 6); input.value = '';
+      const files = Array.from(input.files || []); input.value = '';
       if (!files.length || foodBusy) return;
       if (!gmKey()) { toast('請先到「設定 → 🤖 Gemini AI 設定」貼上 API key'); return; }
-      foodBusy = true;
+      const room = 6 - foodImgs.length;
+      if (room <= 0) { toast('最多 6 張照片'); return; }
+      if (files.length > room) toast(`最多 6 張，只加入前 ${room} 張`);
+      const imgs = await Promise.all(files.slice(0, room).map(f => compressImage(f)));
+      foodImgs.push(...imgs);
+      $('food-draft').classList.remove('show');
+      renderFoodStage(); setFoodStatus('');
+      if (!busy) setCoach('inspect', '有什麼要補充的嗎？例如只吃一半、哪樣沒吃，寫好按「送出分析」！');
+    },
+    foodRemoveImg(i) { foodImgs.splice(i, 1); if (foodImgs.length) renderFoodStage(); else App.foodCancel(); },
+    noteChip(t) { const el = $('fd-note'); el.value = el.value.trim() ? el.value.trim() + '，' + t : t; el.focus(); },
+    foodReedit() { $('food-draft').classList.remove('show'); renderFoodStage(); setFoodStatus(''); },
+    async foodAnalyze() {
+      if (!foodImgs.length || foodBusy) return;
+      if (!gmKey()) { toast('請先到「設定 → 🤖 Gemini AI 設定」貼上 API key'); return; }
+      foodBusy = true; $('fd-analyze').disabled = true;
+      const note = $('fd-note').value.trim();
       try {
-        const imgs = await Promise.all(files.map(f => compressImage(f)));
+        $('food-stage').classList.remove('show');
         $('fd-time').value = '';
-        showDraft({}, imgs.map(i => i.dataUrl));
-        const stop = ticker(setFoodStatus, `🤖 Gemini 辨識 ${imgs.length} 張照片中……`);
+        showDraft({}, foodImgs.map(i => i.dataUrl));
+        $('fd-reanalyze').style.display = 'none';
+        const stop = ticker(setFoodStatus, `🤖 Gemini 辨識 ${foodImgs.length} 張照片中……${note ? '（含補充說明）' : ''}`);
         if (!busy) setCoach('inspect', '讓我看看你吃了什麼……');
-        let r; try { r = await analyzeFoodImages(imgs); } finally { var sec = stop(); }
-        showDraft(r); setFoodStatus(`✅ 辨識完成（${sec} 秒・${gmLast ? gmLast.model : ''}${gmLast && gmLast.tries.length ? '・先失敗：' + gmLast.tries.join('、') : ''}），可以修改數字後按「加入紀錄」`);
+        let r; try { r = await analyzeFoodImages(foodImgs, note); } finally { var sec = stop(); }
+        showDraft(r); setFoodStatus(`✅ 辨識完成（${sec} 秒・${gmLast ? gmLast.model : ''}${gmLast && gmLast.tries.length ? '・先失敗：' + gmLast.tries.join('、') : ''}）${note ? '\n📝 已依「' + note + '」調整' : ''}，可以修改數字後按「加入紀錄」`);
       } catch (e) { setFoodStatus('❌ ' + e.message); }
-      finally { foodBusy = false; }
+      finally { foodBusy = false; $('fd-analyze').disabled = false; $('fd-reanalyze').style.display = foodImgs.length ? '' : 'none'; }
     },
     async foodText() {
       const t = $('food-text').value.trim();
       if (!t) { toast('先輸入食物名稱'); return; }
       if (!gmKey()) { toast('沒有 Gemini key：可以按 ✍️ 自己填熱量'); return; }
       if (foodBusy) return; foodBusy = true;
+      foodImgs = []; $('food-stage').classList.remove('show'); $('fd-reanalyze').style.display = 'none';
       try {
         $('fd-time').value = '';
         showDraft({ foodName: t }, []);
@@ -3671,8 +3718,8 @@
       } catch (e) { setFoodStatus('❌ ' + e.message); }
       finally { foodBusy = false; }
     },
-    foodManual() { $('fd-time').value = ''; showDraft({ foodName: $('food-text').value.trim() }, []); setFoodStatus('自己填寫熱量與蛋白質'); },
-    foodCancel() { $('food-draft').classList.remove('show'); setFoodStatus(''); },
+    foodManual() { foodImgs = []; $('food-stage').classList.remove('show'); $('fd-reanalyze').style.display = 'none'; $('fd-time').value = ''; showDraft({ foodName: $('food-text').value.trim() }, []); setFoodStatus('自己填寫熱量與蛋白質'); },
+    foodCancel() { $('food-draft').classList.remove('show'); $('food-stage').classList.remove('show'); foodImgs = []; $('fd-note').value = ''; $('fd-reanalyze').style.display = 'none'; setFoodStatus(''); },
     foodConfirm() {
       const name = $('fd-name').value.trim();
       if (!name) { toast('請填食物名稱'); return; }
@@ -4021,7 +4068,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.21-1';
+  const APP_VERSION = '2026.11.21-2';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
