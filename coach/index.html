@@ -16,13 +16,15 @@
     --stage: #fffaf2; --gold: #f2b134; --navy: #2b2f4a; --shadow: 0 4px 14px rgba(120, 80, 40, .10);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
   body {
     background: var(--bg); color: var(--ink);
     font-family: -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     font-size: 15px; line-height: 1.5;
-    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; height: 100vh; height: 100dvh;
   }
+  /* 內容自己捲動，底部選單固定不動（避免 iPhone 捲動時選單跟著跑） */
+  #scroller { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding-bottom: 12px; }
   #app { max-width: 520px; margin: 0 auto; padding: 10px 16px 0; }
   .shake { animation: screenShake .45s linear 2; }
   @keyframes screenShake {
@@ -181,7 +183,7 @@
   @keyframes hop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10%); } }
   @media (prefers-reduced-motion: reduce) { .actor *, .actor { animation-duration: 0s !important; animation-iteration-count: 1 !important; } }
 
-  .gym-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 12px; }
+  .gym-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 12px; }
   .mon-wrap { width: 100%; height: 100%; transform-origin: 50% 100%; }
   #player img.mon { transform-origin: 50% 100%; }
   .p-idle { animation: mIdle 2.4s ease-in-out infinite; }
@@ -322,7 +324,8 @@
   .guide .gcoach .ci img, .guide .gcoach .ci svg { max-width: 100%; max-height: 100%; }
   .guide .eggs { display: flex; justify-content: space-around; }
   .guide .eggs img { height: 70px; }
-  .gym-actions .btn { font-size: .88rem; padding: 12px 6px; }
+  .gym-actions .btn { font-size: .78rem; padding: 8px 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.2; white-space: nowrap; }
+  .gym-actions .btn .bi { font-size: 1.35rem; line-height: 1; }
   .btn.ai { background: #4a6fd6; color: #fff; }
   #chat { position: fixed; inset: 0; z-index: 35; display: none; }
   #chat.show { display: block; }
@@ -517,7 +520,7 @@
 
   /* tabs */
   .view { display: none; } .view.active { display: block; }
-  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 20; }
+  nav.tabs { position: relative; flex: none; background: #fff; border-top: 1px solid var(--line); display: flex; justify-content: center; padding-bottom: env(safe-area-inset-bottom); z-index: 20; }
   nav.tabs button { flex: 1; max-width: 130px; border: none; background: none; padding: 8px 0 10px; font: inherit; font-size: .72rem; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; }
   nav.tabs button .ic { font-size: 1.35rem; line-height: 1.2; }
   nav.tabs button.active { color: var(--primary); font-weight: 700; }
@@ -603,6 +606,7 @@
 </style>
 </head>
 <body>
+<div id="scroller">
 <div id="app">
   <header class="top">
     <h1>🏋️ 紀律健身房</h1>
@@ -972,6 +976,7 @@
       <button class="btn ghost" onclick="App.resetAll()">🗑️ 清除全部資料</button>
     </div>
   </section>
+</div>
 </div>
 
 <!-- ===== 登記櫃台（紀錄表單） ===== -->
@@ -3963,10 +3968,10 @@
          <button class="btn secondary" onclick="App.selfReport()">📋 回報紀錄</button>
          <button class="btn ai" onclick="App.openChat()">💬 問教練</button>
          <button class="btn gold" onclick="App.petMonster()">🤚 摸摸怪獸</button>`
-      : `<button class="btn" onclick="App.goRegister()">📋 找教練登記</button>
-         <button class="btn ai" onclick="App.openChat()">💬 問教練</button>
-         <button class="btn gold" onclick="App.pokeCoach()">💪 打氣</button>
-         <button class="btn secondary" onclick="App.openGames()">🎮 和教練玩</button>`;
+      : `<button class="btn" onclick="App.goRegister()"><span class="bi">📋</span>找教練登記</button>
+         <button class="btn ai" onclick="App.openChat()"><span class="bi">💬</span>問教練</button>
+         <button class="btn gold" onclick="App.pokeCoach()"><span class="bi">💪</span>打氣</button>
+         <button class="btn secondary" onclick="App.openGames()"><span class="bi">🎮</span>和教練玩</button>`;
   }
   function applyRoom() {
     const dorm = S.room === 'dorm';
@@ -4151,7 +4156,7 @@
     switchTab(tab) {
       document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
       document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-      window.scrollTo(0, 0);
+      $('scroller').scrollTo(0, 0);
       if (tab === 'history') renderHistory();
       if (tab === 'avatar') { renderMonsterTab(); renderRewards(); }
       if (tab === 'settings') fillSettings();
@@ -4869,7 +4874,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.22-5';
+  const APP_VERSION = '2026.11.22-6';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
