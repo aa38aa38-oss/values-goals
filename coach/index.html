@@ -1713,7 +1713,7 @@
     gloves: 300 / 205, bike: 300 / 249, speaker: 300 / 171, lamp: 300 / 114, rope: 221 / 300, hang: 300 / 194, fridge: 300 / 229, scale: 193 / 300, roller: 224 / 300 };
   // 英文字母磁鐵（自己畫：圓體粗字＋深咖啡描邊）
   // 英文字母磁鐵（Gemini 圖切出來），同一個字母可以拿好幾個
-  const LTR_SIZE = {a: [211, 143], b: [206, 142], c: [206, 145], d: [209, 142], e: [192, 142], f: [173, 142], g: [213, 171], h: [207, 142], i: [128, 142], j: [161, 168], k: [204, 142], l: [142, 142], m: [261, 141], n: [205, 142], o: [217, 145], p: [202, 167], q: [215, 170], r: [185, 142], s: [189, 145], t: [179, 142], u: [206, 143], v: [203, 143], w: [270, 142], x: [206, 143], y: [197, 143], z: [194, 139]};
+  const LTR_SIZE = {a: [117, 141], b: [110, 139], c: [117, 143], d: [114, 139], e: [102, 139], f: [98, 140], g: [120, 143], h: [113, 140], i: [78, 138], j: [110, 141], k: [113, 140], l: [98, 139], m: [137, 139], n: [111, 140], o: [124, 143], p: [108, 140], q: [123, 148], r: [110, 140], s: [106, 143], t: [112, 140], u: [114, 141], v: [118, 141], w: [144, 140], x: [116, 141], y: [107, 141], z: [108, 137]};
   const isLetter = id => id.startsWith('ltr-') || id.startsWith('lt-');
   const ltrKey = id => id.split('-')[1];
   const decorAR = id => { if (isLetter(id)) { const [w, h] = LTR_SIZE[ltrKey(id)]; return h / w; } return DECOR_AR[id]; };
@@ -2635,7 +2635,7 @@
     { id: 'scale', exp: 1900, icon: '⚖️', label: '體重計', at: [60, 396, 30] },
     { id: 'fridge', exp: 2100, icon: '🧊', label: '飲料冰箱', at: [100, 270, 26] },
     // 英文字母磁鐵：10 EXP 一次全部送，預設收在箱子裡，自己挑出來排字
-    ...Array.from({ length: 26 }, (_, i) => { const k = String.fromCharCode(97 + i); return { id: 'ltr-' + k, exp: 10, icon: '🔤', label: k.toUpperCase() + k, set: 'letters', virtual: true, at: [180, 200, LTR_SIZE[k][0] * .1] }; }),
+    ...Array.from({ length: 26 }, (_, i) => { const k = String.fromCharCode(97 + i); return { id: 'ltr-' + k, exp: 10, icon: '🔤', label: k.toUpperCase(), set: 'letters', virtual: true, at: [180, 200, LTR_SIZE[k][0] * .14] }; }),
   ];
   let decorEdit = false, decorSel = null, decorDrag = null;
   const decorGot = d => curScore() >= d.exp;
@@ -2707,7 +2707,7 @@
     const show = () => {
       if (['levelup', 'night-ov', 'evolve'].some(id => $(id).classList.contains('show'))) return setTimeout(show, 800);
       $('gift-body').innerHTML = `<p style="margin:0 0 10px">經驗值累積到了，教練送你 ${fresh.filter(id => !isLetter(id)).length + (fresh.some(isLetter) ? 1 : 0)} 樣道具！已經放進健身房，可以自由移動擺設。</p>
-        <div class="gift-grid">${fresh.filter(id => !isLetter(id)).map((id, i) => { const d = DECOR.find(x => x.id === id); return `<div style="animation-delay:${i * .08}s">${decorThumb(d)}${esc(d.label)}</div>`; }).join('')}${fresh.some(isLetter) ? `<div style="grid-column:1/-1">${['ltr-a', 'ltr-b', 'ltr-c'].map(id => decorThumb(DECOR.find(x => x.id === id))).join('').replace(/<svg /g, '<svg style="display:inline-block;width:44px;height:44px" ')}<br>英文字母磁鐵 A～Z 全套（26 個）<br><small class="muted">在擺設模式拿出來排字</small></div>` : ''}</div>`;
+        <div class="gift-grid">${fresh.filter(id => !isLetter(id)).map((id, i) => { const d = DECOR.find(x => x.id === id); return `<div style="animation-delay:${i * .08}s">${decorThumb(d)}${esc(d.label)}</div>`; }).join('')}${fresh.some(isLetter) ? `<div style="grid-column:1/-1">${['ltr-a', 'ltr-b', 'ltr-c'].map(id => decorThumb(DECOR.find(x => x.id === id))).join('').replace(/<svg /g, '<svg style="display:inline-block;width:44px;height:44px" ')}<br>英文字母磁鐵 A～Z 大寫全套（26 個）<br><small class="muted">在擺設模式拿出來排字</small></div>` : ''}</div>`;
       $('gift-ov').classList.add('show');
     };
     show();
@@ -2718,7 +2718,7 @@
   function decorOn(d) { return d.inst ? true : !d.virtual && decorGot(d) && decorShown(d); }
   // 字母實體：S.ltrs = ['lt-a-xxxx', ...]，位置存在 S.decorPos
   function ltrInstances() {
-    return (S.ltrs || []).map(id => { const k = ltrKey(id), t = DECOR.find(x => x.id === 'ltr-' + k); return { id, inst: true, icon: '🔤', label: k.toUpperCase() + k, exp: t.exp, at: t.at }; }).filter(d => curScore() >= d.exp);
+    return (S.ltrs || []).map(id => { const k = ltrKey(id), t = DECOR.find(x => x.id === 'ltr-' + k); return { id, inst: true, icon: '🔤', label: k.toUpperCase(), exp: t.exp, at: t.at }; }).filter(d => curScore() >= d.exp);
   }
   const allDecor = () => DECOR.filter(d => !d.virtual).concat(ltrInstances());
   const findDecor = id => allDecor().find(x => x.id === id) || DECOR.find(x => x.id === id);
@@ -4342,7 +4342,7 @@
     ltrAdd(k, quiet) {
       S.ltrs = S.ltrs || []; S.decorPos = S.decorPos || {};
       const id = 'lt-' + k + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), n = S.ltrs.length;
-      S.ltrs.push(id); S.decorPos[id] = { x: Math.round(34 + (n % 13) * 24.5), y: Math.round(150 + (Math.floor(n / 13) % 4) * 24) };
+      S.ltrs.push(id); S.decorPos[id] = { x: Math.round(32 + (n % 14) * 22.5), y: Math.round(150 + (Math.floor(n / 14) % 4) * 26) };
       if (!quiet) { decorSel = id; persist(); renderGymBG(); renderDecorPanel(); }
     },
     lettersAll(on) {
@@ -4871,7 +4871,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.23-2';
+  const APP_VERSION = '2026.11.23-3';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
