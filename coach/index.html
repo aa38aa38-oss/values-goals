@@ -39,7 +39,14 @@
   .done-chip.on { background: var(--ok-soft); color: var(--ok); }
 
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
-  .stat { background: var(--card); border-radius: 14px; padding: 6px; text-align: center; box-shadow: var(--shadow); }
+  .stat { background: var(--card); border-radius: 14px; padding: 6px; text-align: center; box-shadow: var(--shadow); border: none; font: inherit; color: var(--ink); width: 100%; cursor: pointer; }
+  .stat:active { transform: scale(.96); }
+  .si-big { text-align: center; margin: 4px 0 10px; } .si-big b { font-size: 2rem; display: block; } .si-big span { color: var(--muted); font-size: .85rem; }
+  .si-list { list-style: none; padding: 0; margin: 0 0 12px; }
+  .si-list li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: .9rem; }
+  .si-list li b { white-space: nowrap; color: #3fa86b; } .si-list li.todo { color: var(--muted); } .si-list li.todo b { color: #c98a10; }
+  .si-h { font-size: .95rem; margin: 12px 0 4px; }
+  .si-note { background: #fff6e8; border-radius: 12px; padding: 8px 10px; font-size: .85rem; color: var(--muted); }
   .stat b { display: block; font-size: 1.15rem; }
   .stat span { font-size: .7rem; color: var(--muted); }
   .patience { margin: 2px 0 8px; }
@@ -667,11 +674,11 @@
 
   <section class="view" id="view-today">
     <div class="stats">
-      <div class="stat"><b id="st-score">0</b><span>經驗值 EXP</span></div>
-      <div class="stat"><b id="st-today">0</b><span>今日得分</span></div>
-      <div class="stat"><b id="st-streak">0</b><span>連續天數 🔥</span></div>
+      <button type="button" class="stat" onclick="App.statInfo('exp')"><b id="st-score">0</b><span>經驗值 EXP ⓘ</span></button>
+      <button type="button" class="stat" onclick="App.statInfo('today')"><b id="st-today">0</b><span>今日得分 ⓘ</span></button>
+      <button type="button" class="stat" onclick="App.statInfo('streak')"><b id="st-streak">0</b><span>連續天數 🔥 ⓘ</span></button>
     </div>
-    <div class="patience">
+    <div class="patience" onclick="App.statInfo('exp')" style="cursor:pointer">
       <div class="patience-label"><span id="exp-label">Lv.1 → Lv.2</span><span id="exp-text">0 / 300 EXP</span></div>
       <div class="bar"><i id="exp-bar" style="background:linear-gradient(90deg,#8b5bd6,#f2b134)"></i></div>
     </div>
@@ -1081,6 +1088,10 @@
   <div class="mg-coach" id="mg-coach"></div>
   <div class="mg-say" id="mg-say"></div>
   <div id="mg-body"></div>
+</div></div>
+<div class="overlay" id="stat-ov" onclick="if(event.target===this)App.closeStatInfo()"><div class="ov-box">
+  <div class="ov-head"><h2 id="stat-ov-title">說明</h2><button onclick="App.closeStatInfo()" aria-label="關閉">✕</button></div>
+  <div id="stat-ov-body"></div>
 </div></div>
 <div class="overlay" id="guide-ov" onclick="if(event.target===this)App.closeGuide()"><div class="ov-box">
   <div class="ov-head"><h2>📖 玩法說明</h2><button onclick="App.closeGuide()" aria-label="關閉">✕</button></div>
@@ -3790,6 +3801,78 @@
     busy = false; dormSay();
   }
 
+  // ---------- 點數值看說明：要做什麼才能加分 ----------
+  function earnRules() {
+    const g = S.settings.goals, R = [];
+    R.push(['記錄飲食（拍照、AI 查詢、喝水或簡易紀錄都算）', 10]);
+    R.push(['記錄運動（運動、步數或休息日）', 10]);
+    R.push(['記錄減脂數據（體重、體脂或腰圍）', 10]);
+    R.push(['上面三項全記', 15]);
+    R.push(['拍照／AI 記飲食，每筆 +5', '最多 20']);
+    if (g.kcalMax) R.push([`熱量在 ${g.kcalMin || 0}～${g.kcalMax} kcal（晚上 8 點後才結算）`, 20]);
+    if (g.protein) R.push([`蛋白質達 ${g.protein} g`, 20]);
+    if (g.exMin) R.push([`運動達 ${g.exMin} 分鐘`, 20]);
+    if (g.water) R.push([`喝水達 ${g.water} 杯`, 20]);
+    R.push(['沒喝含糖飲料（打勾）', 20]);
+    if (g.steps) R.push([`步數達 ${g.steps}${g.stepsHigh ? `（達 ${g.stepsHigh} 改 +40）` : ''}`, g.stepsHigh ? '20／40' : 20]);
+    if (g.active) R.push([`活動消耗達 ${g.active} kcal${g.activeHigh ? `（達 ${g.activeHigh} 改 +30）` : ''}`, g.activeHigh ? '15／30' : 15]);
+    if (g.sleep) R.push([`睡眠達 ${g.sleep} 小時`, 10]);
+    R.push(['連續記錄第 3 天起，每天加成', 10]);
+    R.push([`和教練玩小遊戲，每個遊戲每天第一次過關`, `每個 ${GAME_EXP}`]);
+    return R;
+  }
+  function todayTodo() {
+    const t = today(), r = rec(t), g = S.settings.goals, f = r._food, out = [];
+    if (!hasDiet(r)) out.push(['記錄飲食', 10]);
+    if (!hasEx(r)) out.push(['記錄運動', 10]);
+    if (!hasBody(r)) out.push(['記錄減脂數據（體重／體脂／腰圍）', 10]);
+    if (loggedCount(r) < 3) out.push(['三項全記', 15]);
+    if (!f || f.items.length < 4) out.push([`拍照／AI 再記 ${4 - (f ? f.items.length : 0)} 筆飲食`, `+5／筆`]);
+    if (g.protein && (!f || f.protein < g.protein)) out.push([`蛋白質還差 ${Math.round((g.protein - (f ? f.protein : 0)) * 10) / 10} g`, 20]);
+    if (g.kcalMax && !(new Date().getHours() >= 20 && f && f.kcal >= (g.kcalMin || 0) * .8 && f.kcal <= g.kcalMax)) out.push([`熱量控制在 ${g.kcalMin || 0}～${g.kcalMax} kcal（晚上 8 點後結算）`, 20]);
+    if (g.exMin && !((num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest')) out.push([`運動還差 ${g.exMin - (num(r.exMin) || 0)} 分鐘`, 20]);
+    if (g.water && r.water < g.water) out.push([`喝水還差 ${g.water - r.water} 杯`, 20]);
+    if (!r.noSugar) out.push(['沒喝含糖飲料（記得打勾）', 20]);
+    const st = num(r.steps) || 0, ak = num(r.activeKcal) || 0;
+    if (g.steps && st < g.steps) out.push([`步數還差 ${g.steps - st} 步`, 20]); else if (g.stepsHigh && st < g.stepsHigh) out.push([`步數再 ${g.stepsHigh - st} 步到「非常高」`, '再 +20']);
+    if (g.active && ak < g.active) out.push([`活動消耗還差 ${g.active - ak} kcal`, 15]); else if (g.activeHigh && ak < g.activeHigh) out.push([`活動消耗再 ${g.activeHigh - ak} kcal 到「非常高」`, '再 +15']);
+    if (g.sleep && (num(r.sleep) || 0) < g.sleep) out.push([`睡眠達 ${g.sleep} 小時`, 10]);
+    const gb = (S.gameBonus || {})[t] || {}, left = 6 - Object.keys(gb).length;
+    if (left > 0) out.push([`還有 ${left} 個小遊戲今天沒過關`, `每個 ${GAME_EXP}`]);
+    return out;
+  }
+  function statInfoHTML(kind) {
+    C = C || compute();
+    const t = today(), pd = C.perDay[t] || { items: [], pts: 0 }, li = ([a, b], todo) => `<li class="${todo === true ? 'todo' : ''}"><span>${todo === true ? '⬜' : todo === 'rule' ? '•' : '✅'} ${esc(a)}</span><b>${typeof b === 'number' ? (b >= 0 ? '+' : '') + b : esc(String(b))}</b></li>`;
+    if (kind === 'exp') {
+      const into = C.score - (C.level - 1) * LEVEL_PTS, g = S.settings.goals;
+      return [`⭐ 經驗值 EXP`, `<div class="si-big"><b>${C.score}</b><span>Lv.${C.level} ${esc(C.title)}・再 ${LEVEL_PTS - into} EXP 升 Lv.${C.level + 1}（每 ${LEVEL_PTS} EXP 升一級）</span></div>
+        <p style="margin:0 0 6px">每天的「今日得分」會加進經驗值。升級會解鎖健身房裝飾、衣服，怪獸也會跟著長大。</p>
+        <h3 class="si-h">📋 每天可以拿分的項目</h3><ul class="si-list">${earnRules().map(x => li(x, 'rule')).join('')}</ul>
+        <h3 class="si-h">🏆 額外大獎</h3><ul class="si-list">
+          ${g.weeklyExDays ? li([`一週運動 ${g.weeklyExDays} 天以上（每週結算）`, 100], 'rule') : ''}
+          ${num(g.targetWeight) !== null ? li([`體重達到目標 ${g.targetWeight} kg`, 200], 'rule') : li(['設定目標體重並達成（到設定裡填）', 200], 'rule')}
+        </ul>
+        <div class="si-note">😌 某天沒記錄<b>不會扣經驗值</b>，但教練耐心會 −35、連續天數歸零。目標數字可以在「⚙️ 設定」修改。</div>`];
+    }
+    if (kind === 'today') {
+      const todo = todayTodo();
+      return [`📅 今日得分`, `<div class="si-big"><b>${pd.pts}</b><span>${nice(t)} 已經拿到的分數</span></div>
+        <h3 class="si-h">✅ 今天已經拿到</h3>${pd.items.length ? `<ul class="si-list">${pd.items.map(x => li(x)).join('')}</ul>` : '<p class="muted">今天還沒有得分，先記一筆吧！</p>'}
+        ${todo.length ? `<h3 class="si-h">💡 今天還可以拿</h3><ul class="si-list">${todo.map(x => li(x, true)).join('')}</ul>` : '<p>🎉 今天能拿的都拿到了！</p>'}
+        <div class="si-note">補記前幾天的資料，分數會算回那一天，經驗值一樣會增加。</div>`];
+    }
+    const next = C.streak >= 2 ? '每天都有 +10 連續加成，保持下去！' : `再連續 ${3 - C.streak} 天，從第 3 天起每天多 +10！`;
+    return [`🔥 連續天數`, `<div class="si-big"><b>${C.streak} 天</b><span>${next}</span></div>
+      <ul class="si-list">
+        <li><span>📌 怎樣算一天</span><b style="color:var(--ink)">飲食、運動、減脂數據<br>任一項有記錄</b></li>
+        <li><span>🔥 第 3 天起</span><b>每天 +10 EXP</b></li>
+        <li><span>💔 某天完全沒記錄</span><b style="color:#e8505b">歸零・耐心 −35</b></li>
+        <li><span>😊 每天有記錄</span><b>教練耐心回升</b></li>
+      </ul>
+      <div class="si-note">今天還沒記也不會馬上斷，過了今天都沒記錄才會歸零。忘記的話可以到運動／飲食頁切換日期補記。</div>`];
+  }
+
   // ---------- public API ----------
   const App = {
     toast,
@@ -3950,6 +4033,8 @@
       if (!mg.live) { if (mg.x === 0 && $('tb-res') && $('tb-res').textContent === '準備……') { mgSay('還沒開始啦！'); } return; }
       mg.live = false; hitResult(mg.x);
     },
+    statInfo(kind) { const [ti, html] = statInfoHTML(kind); $('stat-ov-title').textContent = ti; $('stat-ov-body').innerHTML = html; $('stat-ov').classList.add('show'); },
+    closeStatInfo() { $('stat-ov').classList.remove('show'); },
     openGuide() { $('guide-body').innerHTML = guideHTML(); $('guide-ov').classList.add('show'); },
     closeGuide() { $('guide-ov').classList.remove('show'); },
     pokeCoach() { pokeCoach(); monAct(pick(['happy', 'attack', 'win']), 2400); },
@@ -4458,7 +4543,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.22-2';
+  const APP_VERSION = '2026.11.22-3';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
