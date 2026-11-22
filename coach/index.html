@@ -57,7 +57,8 @@
   .decor-panel .dp-list button { border: 2px solid var(--line); background: #fffaf0; border-radius: 12px; padding: 4px 2px; font: inherit; font-size: .68rem; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .decor-panel .dp-list button svg { width: 40px; height: 40px; }
   .decor-panel .dp-letters { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 4px; }
-  .decor-panel .dp-letters button { border: 2px solid var(--line); background: #fffaf0; border-radius: 10px; padding: 2px; }
+  .decor-panel .dp-letters button { position: relative; border: 2px solid var(--line); background: #fffaf0; border-radius: 10px; padding: 2px; }
+  .decor-panel .dp-letters button i { position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; border-radius: 8px; background: #e8505b; color: #fff; font-size: .62rem; font-style: normal; font-weight: 800; line-height: 16px; }
   .decor-panel .dp-letters button svg { width: 100%; height: 26px; display: block; }
   .decor-panel .dp-letters button.off { opacity: .35; } .decor-panel .dp-letters button.sel { border-color: #f2b134; background: #fff1c9; }
   .decor-panel .dp-list button.off { opacity: .4; } .decor-panel .dp-list button.sel { border-color: #f2b134; background: #fff1c9; }
@@ -1711,18 +1712,14 @@
     kb: 208 / 300, rack: 232 / 300, tread: 289 / 300, bag: 300 / 98, ball: 300 / 299, clock: 300 / 296, poster: 300 / 217, mirror: 300 / 188, rug: 135 / 300,
     gloves: 300 / 205, bike: 300 / 249, speaker: 300 / 171, lamp: 300 / 114, rope: 221 / 300, hang: 300 / 194, fridge: 300 / 229, scale: 193 / 300, roller: 224 / 300 };
   // 英文字母磁鐵（自己畫：圓體粗字＋深咖啡描邊）
-  const LETTER_COL = ['#ef5a4f', '#f5913a', '#f7c632', '#5fb562', '#5b7fd6', '#ef5a4f', '#f5913a', '#9cc83f', '#4fbfa6', '#8b6fd6', '#ef5a4f', '#f7c632', '#7cbf45', '#4a8fd6', '#a066d0', '#9cc83f', '#f7c632', '#5fb562', '#4fbfa6', '#7b74d6', '#ef5a4f', '#f5913a', '#4a7fd6', '#ef5a4f', '#c45fbf', '#ef5a4f'];
-  const isLetter = id => id.startsWith('ltr-');
-  function letterBody(id) {
-    const i = id.charCodeAt(4) - 97, L = String.fromCharCode(65 + i), c = LETTER_COL[i];
-    const t = extra => `<text x="50" y="60" text-anchor="middle" font-size="64" font-weight="900" font-family="'Arial Rounded MT Bold','Arial Rounded MT','Varela Round','Nunito','Arial Black',sans-serif" ${extra}>${L}${L.toLowerCase()}</text>`;
-    return t(`fill="${c}" stroke="#4a2a1a" stroke-width="10" stroke-linejoin="round" paint-order="stroke"`) + t(`fill="none" stroke="#fff" stroke-opacity=".38" stroke-width="2" transform="translate(-1 -1.5)"`);
-  }
-  const decorAR = id => isLetter(id) ? .72 : DECOR_AR[id];
+  // 英文字母磁鐵（Gemini 圖切出來），同一個字母可以拿好幾個
+  const LTR_SIZE = {a: [211, 143], b: [206, 142], c: [206, 145], d: [209, 142], e: [192, 142], f: [173, 142], g: [213, 171], h: [207, 142], i: [128, 142], j: [161, 168], k: [204, 142], l: [142, 142], m: [261, 141], n: [205, 142], o: [217, 145], p: [202, 167], q: [215, 170], r: [185, 142], s: [189, 145], t: [179, 142], u: [206, 143], v: [203, 143], w: [270, 142], x: [206, 143], y: [197, 143], z: [194, 139]};
+  const isLetter = id => id.startsWith('ltr-') || id.startsWith('lt-');
+  const ltrKey = id => id.split('-')[1];
+  const decorAR = id => { if (isLetter(id)) { const [w, h] = LTR_SIZE[ltrKey(id)]; return h / w; } return DECOR_AR[id]; };
   function decorPlace(d) { const p = (S.decorPos || {})[d.id] || {}; return { x: p.x ?? d.at[0], y: p.y ?? d.at[1], w: d.at[2] * (p.s || 1), f: !!p.f }; }
   function decorArt(id, X, Y, w, h) {
-    return isLetter(id) ? `<g transform="translate(${X} ${Y}) scale(${w / 100})">${letterBody(id)}</g>`
-      : `<image href="gym/decor-${id}.webp" x="${X}" y="${Y}" width="${w}" height="${h.toFixed(1)}"/>`;
+    return `<image href="gym/${isLetter(id) ? 'ltr-' + ltrKey(id) : 'decor-' + id}.webp" x="${X}" y="${Y}" width="${w}" height="${h.toFixed(1)}"/>`;
   }
   function decorMarkup(d, sel) {
     const { x, y, w, f } = decorPlace(d), h = w * decorAR(d.id), X = x - w / 2, Y = y - h;
@@ -1732,7 +1729,7 @@
   }
   let gymPeriodNow = gymPeriod();
   function gymBG() {
-    const on = DECOR.filter(decorOn); gymPeriodNow = gymPeriod();
+    const on = allDecor().filter(decorOn); gymPeriodNow = gymPeriod();
     const order = on.slice().sort((a, b) => (a.under ? -1 : 0) - (b.under ? -1 : 0) || decorPlace(a).y - decorPlace(b).y);
     const items = order.map(d => decorMarkup(d, decorEdit && decorSel === d.id)).join('');
     const hl = decorEdit ? '' : on.filter(d => (S.newDecor || []).includes(d.id) && !isLetter(d.id)).map(d => { const { x, y, w } = decorPlace(d), h = w * decorAR(d.id), cy = y - h / 2, r = Math.max(w, h) * .5;
@@ -2638,7 +2635,7 @@
     { id: 'scale', exp: 1900, icon: '⚖️', label: '體重計', at: [60, 396, 30] },
     { id: 'fridge', exp: 2100, icon: '🧊', label: '飲料冰箱', at: [100, 270, 26] },
     // 英文字母磁鐵：10 EXP 一次全部送，預設收在箱子裡，自己挑出來排字
-    ...Array.from({ length: 26 }, (_, i) => ({ id: 'ltr-' + String.fromCharCode(97 + i), exp: 10, icon: '🔤', label: String.fromCharCode(65 + i) + String.fromCharCode(97 + i), set: 'letters', defaultOff: true, at: [40 + (i % 13) * 23.5, 214 + Math.floor(i / 13) * 22, 22] })),
+    ...Array.from({ length: 26 }, (_, i) => { const k = String.fromCharCode(97 + i); return { id: 'ltr-' + k, exp: 10, icon: '🔤', label: k.toUpperCase() + k, set: 'letters', virtual: true, at: [180, 200, LTR_SIZE[k][0] * .1] }; }),
   ];
   let decorEdit = false, decorSel = null, decorDrag = null;
   const decorGot = d => curScore() >= d.exp;
@@ -2650,17 +2647,17 @@
   function renderDecorPanel() {
     const el = $('decor-panel'); if (!el) return;
     el.classList.toggle('show', decorEdit); if (!decorEdit) return;
-    const got = DECOR.filter(decorGot), d = DECOR.find(x => x.id === decorSel);
+    const got = DECOR.filter(decorGot), d = decorSel ? findDecor(decorSel) : null;
     const p = d ? (S.decorPos || {})[d.id] || {} : {};
     el.innerHTML = `<b>🪑 擺設模式</b><span class="muted" style="font-size:.8rem">　點道具選取，直接在畫面上拖曳移動</span>
-      ${d ? `<div class="dp-sel"><b>${d.icon} ${esc(d.label)}${!decorShown(d) ? '（收在箱子裡）' : ''}</b>
+      ${d ? `<div class="dp-sel"><b>${d.icon} ${esc(d.label)}${!d.inst && !decorShown(d) ? '（收在箱子裡）' : ''}</b>
         <button onclick="App.decorAdj('s',-1)">➖ 縮小</button><button onclick="App.decorAdj('s',1)">➕ 放大</button><button onclick="App.decorAdj('f')">↔️ 翻轉</button>
-        <button onclick="App.decorAdj('hide')">${!decorShown(d) ? '👁️ 擺出來' : '📦 收起'}</button><button onclick="App.decorAdj('reset')">↩️ 原位</button></div>`
+        <button onclick="App.decorAdj('hide')">${d.inst ? '🗑️ 收回箱子' : !decorShown(d) ? '👁️ 擺出來' : '📦 收起'}</button><button onclick="App.decorAdj('reset')">↩️ 原位</button></div>`
         : '<p class="muted" style="margin:6px 0">先點畫面上的道具，或從下面選一個。</p>'}
       ${got.filter(x => !x.set).length ? `<div class="dp-list">${got.filter(x => !x.set).map(x => `<button class="${!decorShown(x) ? 'off' : ''} ${x.id === decorSel ? 'sel' : ''}" onclick="App.decorPick('${x.id}')">${decorThumb(x)}${esc(x.label)}</button>`).join('')}</div>` : '<p class="muted">還沒有道具，累積經驗值就會送！</p>'}
-      ${got.some(x => x.set === 'letters') ? `<div style="margin-top:8px"><b style="font-size:.9rem">🔤 英文字母磁鐵</b><span class="muted" style="font-size:.75rem">　點字母拿出來，拖到牆上排字；灰色的還在箱子裡</span>
-        <div class="dp-letters">${got.filter(x => x.set === 'letters').map(x => `<button class="${!decorShown(x) ? 'off' : ''} ${x.id === decorSel ? 'sel' : ''}" onclick="App.decorPick('${x.id}')">${decorThumb(x)}</button>`).join('')}</div>
-        <div class="btn-row" style="margin-top:4px"><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(true)">全部拿出來</button><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(false)">全部收起</button></div></div>` : ''}
+      ${got.some(x => x.set === 'letters') ? `<div style="margin-top:8px"><b style="font-size:.9rem">🔤 英文字母磁鐵</b><span class="muted" style="font-size:.75rem">　點一下就拿出一個（同一個字母可以拿很多個），再拖到牆上排字</span>
+        <div class="dp-letters">${got.filter(x => x.set === 'letters').map(x => { const n = (S.ltrs || []).filter(id => ltrKey(id) === ltrKey(x.id)).length; return `<button onclick="App.ltrAdd('${ltrKey(x.id)}')">${decorThumb(x)}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}</div>
+        <div class="btn-row" style="margin-top:4px"><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(true)">拿出 A～Z 一整套</button><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(false)">全部收回箱子</button></div></div>` : ''}
       <div class="btn-row" style="margin-top:8px"><button class="btn ghost" onclick="App.decorResetAll()">全部回到原位</button><button class="btn" onclick="App.decorMode(false)">✅ 完成</button></div>`;
   }
   function decorPoint(e) { const r = $('gym-bg').getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 360, y: (e.clientY - r.top) / r.height * 400 }; }
@@ -2670,7 +2667,7 @@
       if (!decorEdit) return;
       const g = e.target.closest && e.target.closest('.dec'); if (!g) return;
       e.preventDefault(); e.stopPropagation();
-      const id = g.dataset.id, d = DECOR.find(x => x.id === id), pl = decorPlace(d), pt = decorPoint(e);
+      const id = g.dataset.id, d = findDecor(id), pl = decorPlace(d), pt = decorPoint(e);
       if (decorSel !== id) { decorSel = id; renderGymBG(); renderDecorPanel(); }
       const el = [...$('gym-bg').querySelectorAll('.dec')].find(n => n.dataset.id === id);
       decorDrag = { id, el, sx: pt.x, sy: pt.y, ox: pl.x, oy: pl.y, dx: 0, dy: 0 };
@@ -2718,7 +2715,20 @@
     if (!busy) setCoach('cheer', `呀哈！送你新道具：${fresh.map(id => isLetter(id) ? (id === fresh.find(isLetter) ? '英文字母磁鐵' : '') : DECOR.find(x => x.id === id).label).filter(Boolean).slice(0, 3).join('、')}${fresh.length > 3 ? '…' : ''}！${next ? `再 ${next.exp - C.score} EXP 還有下一個！` : ''}`);
   }
   const decorShown = d => S.decor[d.id] === undefined ? !d.defaultOff : S.decor[d.id] !== false;
-  function decorOn(d) { return decorGot(d) && decorShown(d); }
+  function decorOn(d) { return d.inst ? true : !d.virtual && decorGot(d) && decorShown(d); }
+  // 字母實體：S.ltrs = ['lt-a-xxxx', ...]，位置存在 S.decorPos
+  function ltrInstances() {
+    return (S.ltrs || []).map(id => { const k = ltrKey(id), t = DECOR.find(x => x.id === 'ltr-' + k); return { id, inst: true, icon: '🔤', label: k.toUpperCase() + k, exp: t.exp, at: t.at }; }).filter(d => curScore() >= d.exp);
+  }
+  const allDecor = () => DECOR.filter(d => !d.virtual).concat(ltrInstances());
+  const findDecor = id => allDecor().find(x => x.id === id) || DECOR.find(x => x.id === id);
+  function ltrMigrate() {
+    // 舊版：S.decor['ltr-a'] = true 代表有擺出來
+    Object.keys(S.decor || {}).filter(k => k.startsWith('ltr-')).forEach(k => {
+      if (S.decor[k] === true) { const id = 'lt-' + ltrKey(k) + '-m'; S.ltrs = S.ltrs || []; if (!S.ltrs.includes(id)) { S.ltrs.push(id); if (S.decorPos && S.decorPos[k]) S.decorPos[id] = S.decorPos[k]; } }
+      delete S.decor[k]; if (S.decorPos) delete S.decorPos[k];
+    });
+  }
   function renderGymBG() { const el = $('gym-bg'); if (el) el.innerHTML = S.room === 'dorm' ? dormBG() : gymBG(); }
   function unlocksAt(lv) {
     const out = [];
@@ -4328,15 +4338,25 @@
       renderGymBG(); renderDecorPanel();
       if (decorEdit) setTimeout(() => $('gym').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     },
-    decorPick(id) { decorSel = id; const d = DECOR.find(x => x.id === id); if (!decorShown(d)) { S.decor[id] = true; persist(); } renderGymBG(); renderDecorPanel(); },
-    lettersAll(on) { DECOR.filter(d => d.set === 'letters').forEach(d => { S.decor[d.id] = on; }); if (!on && decorSel && isLetter(decorSel)) decorSel = null; persist(); renderGymBG(); renderDecorPanel(); },
+    decorPick(id) { decorSel = id; const d = findDecor(id); if (!decorShown(d)) { S.decor[id] = true; persist(); } renderGymBG(); renderDecorPanel(); },
+    ltrAdd(k, quiet) {
+      S.ltrs = S.ltrs || []; S.decorPos = S.decorPos || {};
+      const id = 'lt-' + k + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), n = S.ltrs.length;
+      S.ltrs.push(id); S.decorPos[id] = { x: Math.round(34 + (n % 13) * 24.5), y: Math.round(150 + (Math.floor(n / 13) % 4) * 24) };
+      if (!quiet) { decorSel = id; persist(); renderGymBG(); renderDecorPanel(); }
+    },
+    lettersAll(on) {
+      if (on) { const have = new Set((S.ltrs || []).map(ltrKey)); 'abcdefghijklmnopqrstuvwxyz'.split('').filter(k => !have.has(k)).forEach(k => App.ltrAdd(k, true)); }
+      else { if (!confirm('把牆上的字母全部收回箱子？')) return; (S.ltrs || []).forEach(id => { if (S.decorPos) delete S.decorPos[id]; }); S.ltrs = []; if (decorSel && isLetter(decorSel)) decorSel = null; }
+      persist(); renderGymBG(); renderDecorPanel();
+    },
     decorAdj(k, v) {
       const id = decorSel; if (!id) return;
       S.decorPos = S.decorPos || {}; const p = S.decorPos[id] = S.decorPos[id] || {};
       if (k === 's') p.s = Math.max(.4, Math.min(2.5, Math.round(((p.s || 1) + v * .15) * 100) / 100));
       if (k === 'f') p.f = !p.f;
-      if (k === 'hide') S.decor[id] = !decorShown(DECOR.find(x => x.id === id));
-      if (k === 'reset') delete S.decorPos[id];
+      if (k === 'hide') { if (id.startsWith('lt-')) { S.ltrs = (S.ltrs || []).filter(x => x !== id); delete S.decorPos[id]; decorSel = null; } else S.decor[id] = !decorShown(DECOR.find(x => x.id === id)); }
+      if (k === 'reset') { if (id.startsWith('lt-')) { p.s = 1; p.f = false; } else delete S.decorPos[id]; }
       persist(); renderGymBG(); renderDecorPanel();
     },
     decorResetAll() { if (!confirm('所有道具回到預設位置與大小？')) return; S.decorPos = {}; persist(); renderGymBG(); renderDecorPanel(); },
@@ -4851,7 +4871,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.23-1';
+  const APP_VERSION = '2026.11.23-2';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
@@ -4868,6 +4888,7 @@
 
   // ---------- boot ----------
   load();
+  ltrMigrate();
   renderGymBG(); decorBind(); setTimeout(scheduleNewClear, 1000);
   $('app-ver').textContent = '目前版本：' + APP_VERSION;
   checkUpdate();
