@@ -226,21 +226,50 @@
   .mg-stat b { color: var(--ink); }
   .dn-stage { position: relative; height: 300px; background: linear-gradient(#2b2440, #3e2f5c); border-radius: 16px; overflow: hidden; touch-action: manipulation; }
   .dn-lane { position: absolute; top: 0; bottom: 0; width: 25%; border-right: 1px solid rgba(255,255,255,.08); }
-  .dn-target { position: absolute; left: 0; right: 0; bottom: 18px; height: 52px; display: flex; }
-  .dn-target span { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2rem; opacity: .35; color: #fff; filter: grayscale(1); }
-  .dn-target span.flash { opacity: 1; filter: none; transform: scale(1.15); transition: transform .05s; }
-  .dn-note { position: absolute; width: 25%; height: 52px; display: flex; align-items: center; justify-content: center; font-size: 2rem; will-change: transform; }
+  .dn-stage::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 24.6%, rgba(255,255,255,.06) 24.6% 25%), radial-gradient(circle at 50% 110%, rgba(255,80,200,.35), transparent 60%); pointer-events: none; }
+  .dn-target { position: absolute; left: 0; right: 0; bottom: 14px; height: 64px; display: flex; }
+  .dn-target span { flex: 1; display: flex; align-items: center; justify-content: center; transition: transform .08s; }
+  .dn-target span svg { width: 60px; height: 60px; opacity: .55; }
+  .dn-target span.flash { transform: scale(1.18); } .dn-target span.flash svg { opacity: 1; filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 18px var(--gl)); }
+  .dn-note { position: absolute; width: 25%; height: 64px; display: flex; align-items: center; justify-content: center; will-change: transform; }
+  .dn-note svg { width: 62px; height: 62px; filter: drop-shadow(0 0 6px var(--gl)) drop-shadow(0 0 12px var(--gl)); animation: dnGlow .5s ease-in-out infinite alternate; }
+  @keyframes dnGlow { from { filter: drop-shadow(0 0 4px var(--gl)) brightness(1); } to { filter: drop-shadow(0 0 14px var(--gl)) drop-shadow(0 0 4px #fff) brightness(1.25); } }
+  .dn-burst { position: absolute; width: 25%; height: 64px; bottom: 14px; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+  .dn-burst i { width: 70px; height: 70px; border-radius: 50%; border: 4px solid var(--gl); box-shadow: 0 0 16px var(--gl); animation: dnBurst .35s ease-out forwards; }
+  @keyframes dnBurst { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
   .dn-judge { position: absolute; left: 0; right: 0; top: 38%; text-align: center; font-weight: 900; font-size: 1.6rem; color: #fff; text-shadow: 0 2px 6px #000; pointer-events: none; }
   .dn-judge.pop { animation: pop .35s ease-out; }
   .dn-pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
-  .dn-pads button { border: none; border-radius: 14px; padding: 16px 0; font-size: 1.8rem; background: var(--card); box-shadow: var(--shadow); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-  .dn-pads button:active { transform: scale(.94); background: #ffe7a8; }
+  .dn-pads button { border: none; border-radius: 14px; padding: 8px 0; background: #2b2440; box-shadow: var(--shadow); touch-action: manipulation; user-select: none; -webkit-user-select: none; display: flex; align-items: center; justify-content: center; }
+  .dn-pads button svg { width: 52px; height: 52px; filter: drop-shadow(0 0 5px var(--gl)); }
+  .dn-pads button:active { transform: scale(.92); background: #3e2f5c; }
   .ml-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .ml-hole { position: relative; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(ellipse at 50% 70%, #3b2414 45%, #7a4a26 47%, #a8743e 70%); overflow: hidden; border: none; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-  .ml-hole .ml-m { position: absolute; left: 0; right: 0; bottom: -70%; font-size: 3rem; text-align: center; transition: bottom .12s ease-out; pointer-events: none; }
-  .ml-hole.up .ml-m { bottom: 14%; }
-  .ml-hole.hit .ml-m { filter: brightness(1.6) saturate(.3); transform: scale(.85); }
-  .ml-hole .ml-fx { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px #000; pointer-events: none; }
+  .ml-hole { position: relative; aspect-ratio: 1; border: none; padding: 0; background: none; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  .ml-pit { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(ellipse at 50% 70%, #3b2414 45%, #7a4a26 47%, #a8743e 70%); overflow: hidden; pointer-events: none; }
+  .ml-hole .ml-m { position: absolute; left: 0; right: 0; bottom: -70%; font-size: 3rem; line-height: 1; text-align: center; transition: bottom .12s ease-out; transform-origin: 50% 100%; pointer-events: none; }
+  .ml-hole.up .ml-m { bottom: 16%; }
+  .ml-hole.hit .ml-m { animation: mlSquash .5s ease-out forwards; }
+  @keyframes mlSquash { 0% { transform: scale(1.1, .45); } 30% { transform: scale(1.25, .55) rotate(-6deg); } 60% { transform: scale(1, .8) rotate(6deg); } 100% { transform: scale(1, .8) rotate(0); } }
+  .ml-ham { position: absolute; right: -6%; top: -14%; font-size: 2.8rem; line-height: 1; transform-origin: 85% 85%; transform: rotate(-70deg); opacity: 0; pointer-events: none; z-index: 2; }
+  .ml-hole.smash .ml-ham { animation: mlSmash .45s ease-out forwards; }
+  @keyframes mlSmash { 0% { opacity: 1; transform: rotate(-70deg); } 35% { opacity: 1; transform: rotate(25deg); } 60% { opacity: 1; transform: rotate(15deg); } 100% { opacity: 0; transform: rotate(-20deg); } }
+  .ml-stars { position: absolute; left: 0; right: 0; top: 8%; text-align: center; font-size: 1.3rem; opacity: 0; pointer-events: none; z-index: 1; }
+  .ml-hole.hit .ml-stars { opacity: 1; animation: mlStars .6s linear infinite; }
+  @keyframes mlStars { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  .ml-hole .ml-fx { position: absolute; left: 0; right: 0; top: -12%; text-align: center; font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px #000, 0 0 2px #000; pointer-events: none; z-index: 3; opacity: 0; }
+  .ml-hole.hit .ml-fx { animation: mlFx .7s ease-out forwards; }
+  @keyframes mlFx { 0% { opacity: 1; transform: translateY(10px) scale(.6); } 30% { opacity: 1; transform: translateY(0) scale(1.2); } 100% { opacity: 0; transform: translateY(-16px) scale(1); } }
+  .ml-hole.boom .ml-pit { animation: mlBoom .4s; } .ml-hole.boom .ml-m { animation: mlBoomM .4s forwards; }
+  @keyframes mlBoom { 0%,100% { transform: none; } 25% { transform: translate(-5px, 3px); } 50% { transform: translate(5px, -3px); } 75% { transform: translate(-3px, 2px); } }
+  @keyframes mlBoomM { to { transform: scale(2.2); opacity: 0; } }
+  .st-wrap { position: relative; }
+  .st-cv { display: block; width: 100%; border-radius: 16px; background: #1f1d2e; touch-action: none; }
+  .st-hud { display: flex; justify-content: space-between; align-items: center; font-size: .9rem; margin-bottom: 6px; }
+  .st-hp { display: flex; gap: 2px; } .st-hp i { width: 12px; height: 14px; border-radius: 3px; background: #e8505b; } .st-hp i.off { background: #d8cfc2; }
+  .st-pads { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .st-pads button { border: none; border-radius: 16px; padding: 18px 0; font-size: 1.6rem; font-weight: 900; background: var(--card); box-shadow: var(--shadow); color: var(--ink); touch-action: none; user-select: none; -webkit-user-select: none; }
+  .st-pads button.on { background: #ffe7a8; transform: scale(.96); }
+  .st-cv.shake { animation: mlBoom .3s; }
   .pn-songs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .pn-songs .pn-s { display: flex; gap: 4px; }
   .pn-songs .pn-s button:first-child { flex: 1; text-align: left; border: 2px solid var(--line); background: var(--card); border-radius: 12px; padding: 8px; font: inherit; font-size: .88rem; color: var(--ink); }
@@ -3212,7 +3241,7 @@
   }
 
   // ---------- 和教練玩小遊戲 ----------
-  const GAME_EXP = 5;
+  const GAME_EXP = 2; // 遊戲變多了，每個遊戲每天過關 +2
   function gameAward(key) {
     S.gameBonus = S.gameBonus || {};
     const g = S.gameBonus[today()] = S.gameBonus[today()] || {};
@@ -3234,6 +3263,7 @@
       <button onclick="App.gameStart('hit')"><b>🎯 時機打擊</b><small>指標滑進金色打擊區時按「打擊！」，越靠近中心分數越高；速度忽快忽慢！5 回合 300 分過關${done.hit ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('dance')"><b>💃 跳舞機</b><small>箭頭掉到線上時按對的方向！24 拍命中 18 拍過關${done.dance ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('mole')"><b>🔨 打地鼠</b><small>20 秒內打 15 隻地鼠過關；🌟 金地鼠 +3，💣 別打！${done.mole ? '・今天已領獎 ✅' : ''}</small></button>
+      <button onclick="App.gameStart('stairs')"><b>🪜 怪獸下樓梯</b><small>按住 ◀ ▶ 移動，往下跳到樓梯上；別踩尖刺、別撞天花板！到地下 ${ST_PASS} 樓過關${done.stairs ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('piano')"><b>🎹 彈鋼琴</b><small>12 首簡單歌曲，照發光的琴鍵彈；正確率 80% 過關${done.piano ? '・今天已領獎 ✅' : ''}</small></button>
     </div>`;
   }
@@ -3295,7 +3325,16 @@
     $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">本次 <b>${mg.score}</b> 分・最高紀錄 <b>${S.hitBest}</b> 分</p><button class="btn" onclick="App.gameStart('hit')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
   }
   // ---------- 💃 跳舞機 ----------
-  const DN_ARROWS = ['⬅️', '⬇️', '⬆️', '➡️'], DN_N = 24, DN_PASS = 18, DN_FALL = 1700;
+  const DN_N = 24, DN_PASS = 18, DN_FALL = 1700;
+  const DN_COL = [['#ff4fd8', '#ffb3f2'], ['#22d3ff', '#b5f3ff'], ['#3dff8a', '#c9ffdf'], ['#ffc531', '#fff0b3']];
+  const DN_ROT = [-90, 180, 0, 90];
+  const DN_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${DN_COL.map(([a, b], i) => `<linearGradient id="dng${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${b}"/><stop offset=".45" stop-color="${a}"/><stop offset="1" stop-color="${a}" stop-opacity=".85"/></linearGradient>`).join('')}</defs></svg>`;
+  const DN_PATH = 'M50 4 L94 48 L68 48 L68 94 L32 94 L32 48 L6 48 Z';
+  function dnArrow(l, outline) {
+    const tr = `rotate(${DN_ROT[l]} 50 50)`;
+    if (outline) return `<svg viewBox="0 0 100 100" style="--gl:${DN_COL[l][0]}"><path d="${DN_PATH}" transform="${tr}" fill="rgba(255,255,255,.08)" stroke="#fff" stroke-width="5" stroke-linejoin="round"/></svg>`;
+    return `<svg viewBox="0 0 100 100" style="--gl:${DN_COL[l][0]}"><g transform="${tr}"><path d="${DN_PATH}" fill="url(#dng${l})" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><path d="M50 14 L80 44 L60 44 L60 56 L40 56 L40 44 L20 44 Z" fill="#fff" opacity=".45"/><circle cx="36" cy="30" r="4" fill="#fff"/></g></svg>`;
+  }
   function danceStart() {
     mg = { k: 'dance', notes: [], score: 0, combo: 0, maxCombo: 0, hits: 0, judged: 0 };
     $('mg-title').textContent = '💃 跳舞機';
@@ -3307,12 +3346,12 @@
     }
     mgCoach('dance'); mgSay('箭頭掉到下面的框框時，按對的方向！');
     $('mg-body').innerHTML = `<div class="mg-stat"><span>分數 <b id="dn-score">0</b></span><span>Combo <b id="dn-combo">0</b></span><span>命中 <b id="dn-hits">0</b> / ${DN_N}</span></div>
-      <div class="dn-stage" id="dn-stage">${[0, 1, 2, 3].map(i => `<div class="dn-lane" style="left:${i * 25}%"></div>`).join('')}
-        <div class="dn-target">${DN_ARROWS.map((a, i) => `<span id="dn-t${i}">${a}</span>`).join('')}</div><div class="dn-judge" id="dn-judge"></div></div>
-      <div class="dn-pads">${DN_ARROWS.map((a, i) => `<button type="button" onpointerdown="event.preventDefault();App.danceTap(${i})">${a}</button>`).join('')}</div>`;
+      ${DN_DEFS}<div class="dn-stage" id="dn-stage">${[0, 1, 2, 3].map(i => `<div class="dn-lane" style="left:${i * 25}%"></div>`).join('')}
+        <div class="dn-target">${[0, 1, 2, 3].map(i => `<span id="dn-t${i}" style="--gl:${DN_COL[i][0]}">${dnArrow(i, true)}</span>`).join('')}</div><div class="dn-judge" id="dn-judge"></div></div>
+      <div class="dn-pads">${[0, 1, 2, 3].map(i => `<button type="button" style="--gl:${DN_COL[i][0]}" onpointerdown="event.preventDefault();App.danceTap(${i})">${dnArrow(i)}</button>`).join('')}</div>`;
     const me = mg; me.t0 = performance.now();
     const stage = $('dn-stage'), H = stage.clientHeight, lineY = H - 18 - 52;
-    me.notes.forEach(n => { const el = document.createElement('div'); el.className = 'dn-note'; el.textContent = DN_ARROWS[n.l]; el.style.left = n.l * 25 + '%'; el.style.top = '0'; el.style.transform = 'translateY(-60px)'; stage.appendChild(el); n.el = el; });
+    me.notes.forEach(n => { const el = document.createElement('div'); el.className = 'dn-note'; el.innerHTML = dnArrow(n.l); el.style.left = n.l * 25 + '%'; el.style.top = '0'; el.style.transform = 'translateY(-60px)'; stage.appendChild(el); n.el = el; });
     const tick = now => {
       if (me.dead || mg !== me) return;
       const t = now - me.t0;
@@ -3344,6 +3383,7 @@
     const n = me.notes.find(n => !n.done && n.l === l && Math.abs(n.t - t) <= 160);
     if (!n) return;
     n.done = true; n.el.remove(); danceJudge(t - n.t, l);
+    const st = $('dn-stage'); if (st) { const bu = document.createElement('div'); bu.className = 'dn-burst'; bu.style.left = l * 25 + '%'; bu.style.setProperty('--gl', DN_COL[l][0]); bu.innerHTML = '<i></i>'; st.appendChild(bu); setTimeout(() => bu.remove(), 400); }
   }
   function danceEnd() {
     const ok = mg.hits >= DN_PASS;
@@ -3361,7 +3401,7 @@
     $('mg-title').textContent = '🔨 打地鼠';
     mgCoach('goforit'); mgSay('按「開始」！🐹 +1、🌟 金地鼠 +3、💣 打到 −2');
     $('mg-body').innerHTML = `<div class="mg-stat"><span>⏱️ <b id="ml-left">${ML_TIME}</b> 秒</span><span>打中 <b id="ml-hits">0</b> / 目標 ${ML_PASS}</span></div>
-      <div class="ml-grid">${Array.from({ length: 9 }, (_, i) => `<button type="button" class="ml-hole" id="ml-${i}" onpointerdown="event.preventDefault();App.moleTap(${i})"><div class="ml-m"></div><div class="ml-fx"></div></button>`).join('')}</div>
+      <div class="ml-grid">${Array.from({ length: 9 }, (_, i) => `<button type="button" class="ml-hole" id="ml-${i}" onpointerdown="event.preventDefault();App.moleTap(${i})"><div class="ml-pit"><div class="ml-m"></div></div><div class="ml-stars">💫</div><div class="ml-ham">🔨</div><div class="ml-fx"></div></button>`).join('')}</div>
       <button class="btn" id="ml-go" style="margin-top:10px" onclick="App.moleTap(-1)">▶ 開始！</button>`;
   }
   function moleSpawn() {
@@ -3370,7 +3410,7 @@
     if (free.length) {
       const i = pick(free), r = Math.random(), kind = r < .12 ? 'gold' : r < .27 ? 'bomb' : 'mole';
       const prog = 1 - me.left / ML_TIME, life = (kind === 'gold' ? 650 : 1100) - prog * 400 + Math.random() * 200;
-      const el = $('ml-' + i); el.classList.remove('hit'); el.querySelector('.ml-m').textContent = kind === 'gold' ? '🌟' : kind === 'bomb' ? '💣' : '🐹'; el.querySelector('.ml-fx').textContent = '';
+      const el = $('ml-' + i); el.classList.remove('hit', 'smash', 'boom'); el.querySelector('.ml-m').textContent = kind === 'gold' ? '🌟' : kind === 'bomb' ? '💣' : '🐹'; el.querySelector('.ml-fx').textContent = '';
       el.classList.add('up');
       const h = me.holes[i] = { kind, t: setTimeout(() => { if (me.holes[i] === h) { me.holes[i] = null; el.classList.remove('up'); } }, life) };
     }
@@ -3394,9 +3434,16 @@
     const el = $('ml-' + i), fx = el.querySelector('.ml-fx');
     const d = h.kind === 'gold' ? 3 : h.kind === 'bomb' ? -2 : 1;
     me.hits = Math.max(0, me.hits + d); $('ml-hits').textContent = me.hits;
-    fx.textContent = h.kind === 'bomb' ? '💥 −2' : `+${d}`; el.classList.add('hit');
+    el.classList.remove('smash', 'hit', 'boom'); void el.offsetWidth; el.classList.add('smash');
+    try { navigator.vibrate && navigator.vibrate(h.kind === 'bomb' ? 120 : 25); } catch (e) {}
+    setTimeout(() => {
+      if (me.holes[i] !== h) return;
+      if (h.kind === 'bomb') { el.querySelector('.ml-m').textContent = '💥'; el.classList.add('boom'); fx.textContent = '−2'; el.classList.add('hit'); el.querySelector('.ml-stars').textContent = ''; }
+      else { el.querySelector('.ml-m').textContent = h.kind === 'gold' ? '😵' : '🐹'; el.querySelector('.ml-stars').textContent = h.kind === 'gold' ? '✨💫✨' : '💫'; fx.textContent = `+${d}`; el.classList.add('hit'); }
+    }, 130);
     if (h.kind === 'bomb') { mgCoach('cheer'); mgSay('噗哈哈！打到炸彈了！'); } else if (h.kind === 'gold') { mgCoach('dance'); mgSay('金地鼠！+3！'); }
-    setTimeout(() => { if (me.holes[i] === h) { me.holes[i] = null; el.classList.remove('up'); } }, 220);
+    setTimeout(() => { if (me.holes[i] === h) el.classList.remove('up'); }, 600);
+    setTimeout(() => { if (me.holes[i] === h) { me.holes[i] = null; el.classList.remove('hit', 'smash', 'boom'); fx.textContent = ''; } }, 760);
   }
   function moleEnd() {
     const ok = mg.hits >= ML_PASS;
@@ -3405,6 +3452,155 @@
     mgSay(ok ? `打中 ${mg.hits} 隻！眼明手快！${gameAward('mole')}` : `打中 ${mg.hits} 隻……還差 ${ML_PASS - mg.hits} 隻！`);
     if (ok) monAct('win', 2600);
     $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">本次 <b>${mg.hits}</b> 隻・最高紀錄 <b>${S.moleBest}</b> 隻</p><button class="btn" onclick="App.gameStart('mole')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
+  }
+
+  // ---------- 🪜 怪獸下樓梯 ----------
+  const ST_W = 300, ST_H = 420, ST_GAP = 72, ST_PASS = 25, ST_HPMAX = 10;
+  function stairsStart() {
+    const m = S.monster, poses = ['idle', 'walk', 'cry', 'happy', 'sick'], imgs = {};
+    if (m) poses.forEach(p => { const im = new Image(); im.src = monImg(m.line, m.form, m.form === '0-egg' ? (p === 'cry' || p === 'sick' ? 'wobble' : 'idle') : p); imgs[p] = im; });
+    mg = { k: 'stairs', imgs, hp: ST_HPMAX, plats: [], scroll: 0, speed: 58, px: ST_W / 2, py: 0, vy: 0, dir: 0, face: 1, stand: null, hurtT: 0, invT: 0, t: 0, on: false, pops: [] };
+    $('mg-title').textContent = '🪜 怪獸下樓梯';
+    mgCoach('goforit'); mgSay('按住 ◀ ▶ 讓怪獸往下跳！小心尖刺！');
+    $('mg-body').innerHTML = `<div class="st-hud"><span>HP <span class="st-hp" id="st-hp"></span></span><b id="st-floor">地下 0 樓</b></div>
+      <div class="st-wrap"><canvas class="st-cv" id="st-cv"></canvas></div>
+      <div class="st-pads"><button type="button" id="st-l">◀</button><button type="button" id="st-r">▶</button></div>
+      <button class="btn" id="st-go" style="margin-top:8px" onclick="App.stairsGo()">▶ 開始！</button>`;
+    const me = mg;
+    for (let y = 130; y < ST_H + ST_GAP; y += ST_GAP) me.plats.push(stairsPlat(y, y === 130 ? 'normal' : null));
+    me.plats[0].x = ST_W / 2 - 40; me.plats[0].w = 80; me.py = me.plats[0].y; me.stand = me.plats[0]; me.plats[0].touched = true;
+    const cv = $('st-cv'), dpr = window.devicePixelRatio || 1; cv.width = ST_W * dpr; cv.height = ST_H * dpr; me.ctx = cv.getContext('2d'); me.ctx.scale(dpr, dpr);
+    const bind = (id, d) => { const b = $(id); const on = e => { e.preventDefault(); App.stairsDir(d, true); b.classList.add('on'); }, off = e => { App.stairsDir(d, false); b.classList.remove('on'); };
+      b.addEventListener('pointerdown', on); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, off)); };
+    bind('st-l', -1); bind('st-r', 1);
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); const d = e.clientX - r.left < r.width / 2 ? -1 : 1; me.touchDir = d; App.stairsDir(d, true); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => cv.addEventListener(ev, () => { if (me.touchDir) App.stairsDir(me.touchDir, false); me.touchDir = 0; }));
+    if (!stairsStart._key) { stairsStart._key = true;
+      window.addEventListener('keydown', e => { if (mg && mg.k === 'stairs') { if (e.key === 'ArrowLeft') stairsDir(-1, true); if (e.key === 'ArrowRight') stairsDir(1, true); } });
+      window.addEventListener('keyup', e => { if (mg && mg.k === 'stairs') { if (e.key === 'ArrowLeft') stairsDir(-1, false); if (e.key === 'ArrowRight') stairsDir(1, false); } }); }
+    stairsHUD(); stairsDraw();
+    Object.values(imgs).forEach(im => im.onload = () => { if (mg === me && !me.on) stairsDraw(); });
+  }
+  function stairsPlat(y, type) {
+    const r = Math.random(), w = 64 + Math.random() * 26;
+    type = type || (r < .22 ? 'spike' : r < .36 ? 'fragile' : r < .46 ? 'spring' : 'normal');
+    return { x: 6 + Math.random() * (ST_W - 12 - w), y, w, type, touched: false, breakT: -1 };
+  }
+  function stairsDir(d, on) {
+    const me = mg; if (!me || me.k !== 'stairs') return;
+    me.keys = me.keys || { '-1': false, '1': false }; me.keys[d] = on;
+    me.dir = (me.keys['1'] ? 1 : 0) - (me.keys['-1'] ? 1 : 0);
+    if (me.dir) me.face = me.dir;
+  }
+  function stairsGo() {
+    const me = mg; if (!me || me.k !== 'stairs' || me.on) return;
+    me.on = true; $('st-go').style.display = 'none'; me.last = performance.now();
+    const loop = now => {
+      if (me.dead || mg !== me || !me.on) return;
+      const dt = Math.min(.05, (now - me.last) / 1000); me.last = now;
+      stairsStep(dt); stairsDraw();
+      if (me.on) requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+  function stairsHurt(n, why) {
+    const me = mg; me.hp = Math.max(0, me.hp - n); me.hurtT = .7;
+    me.pops.push({ x: me.px, y: me.py - 50, t: 0, txt: `−${n}` });
+    const cv = $('st-cv'); cv.classList.remove('shake'); void cv.offsetWidth; cv.classList.add('shake');
+    try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+    mgCoach('angry'); mgSay(why);
+    stairsHUD();
+    if (me.hp <= 0) stairsOver();
+  }
+  function stairsStep(dt) {
+    const me = mg; me.t += dt;
+    me.speed = Math.min(120, 58 + me.t * 1.4);
+    const dy = me.speed * dt; me.scroll += dy;
+    me.plats.forEach(p => { p.y -= dy; if (p.breakT >= 0) p.breakT += dt; });
+    me.plats = me.plats.filter(p => p.y > -20 && !(p.type === 'fragile' && p.breakT > .45));
+    const lastY = me.plats.length ? me.plats[me.plats.length - 1].y : ST_H;
+    if (lastY < ST_H + 10) me.plats.push(stairsPlat(lastY + ST_GAP));
+    if (me.hurtT > 0) me.hurtT -= dt; if (me.invT > 0) me.invT -= dt;
+    me.pops.forEach(p => p.t += dt); me.pops = me.pops.filter(p => p.t < .9);
+    // horizontal
+    me.px = Math.max(16, Math.min(ST_W - 16, me.px + me.dir * 165 * dt));
+    if (me.stand) {
+      const p = me.stand;
+      if (!me.plats.includes(p) || me.px < p.x - 8 || me.px > p.x + p.w + 8) me.stand = null;
+      else me.py = p.y;
+    }
+    if (!me.stand) {
+      me.vy = Math.min(520, me.vy + 1150 * dt);
+      const ny = me.py + me.vy * dt;
+      if (me.vy > 0) for (const p of me.plats) {
+        if (p.pass || me.px < p.x - 8 || me.px > p.x + p.w + 8) continue;
+        if (me.py <= p.y + dy + 1 && ny >= p.y) { stairsLand(p); break; }
+      }
+      if (!me.stand) me.py = ny;
+    }
+    // ceiling spikes
+    if (me.py - 48 < 18 && me.invT <= 0) {
+      me.invT = 1; if (me.stand) { me.stand.pass = true; me.stand = null; } me.vy = 160; me.py = Math.max(me.py, 70);
+      stairsHurt(4, '好痛！撞到天花板的針了！');
+    }
+    if (me.py - 40 > ST_H) { me.hp = 0; stairsHUD(); stairsOver(); return; }
+    const fl = Math.floor(me.scroll / ST_GAP);
+    if (fl !== me.floor) { me.floor = fl; $('st-floor').textContent = `地下 ${fl} 樓`; if (fl === ST_PASS) { mgCoach('cheer'); mgSay(`地下 ${ST_PASS} 樓！過關了！繼續挑戰紀錄！`); } else if (fl && fl % 10 === 0) mgSay(`地下 ${fl} 樓！越來越快囉！`); }
+  }
+  function stairsLand(p) {
+    const me = mg; me.py = p.y; me.vy = 0;
+    if (p.type === 'spring') { me.vy = -430; me.py = p.y - 1; if (!p.touched) { me.hp = Math.min(ST_HPMAX, me.hp + 1); stairsHUD(); } p.touched = true; p.boing = .25; return; }
+    me.stand = p;
+    if (p.type === 'spike') { if (!p.touched) stairsHurt(4, pick(['哇啊！踩到針了！', '好痛好痛！', '尖刺！快閃開！'])); }
+    else if (!p.touched) { me.hp = Math.min(ST_HPMAX, me.hp + 1); stairsHUD(); }
+    if (p.type === 'fragile' && p.breakT < 0) p.breakT = 0;
+    p.touched = true;
+  }
+  function stairsHUD() { const me = mg; if (!$('st-hp')) return; $('st-hp').innerHTML = Array.from({ length: ST_HPMAX }, (_, i) => `<i class="${i < me.hp ? '' : 'off'}"></i>`).join(''); }
+  function stairsDraw() {
+    const me = mg, c = me.ctx; if (!c) return;
+    const g = c.createLinearGradient(0, 0, 0, ST_H); g.addColorStop(0, '#3a2f55'); g.addColorStop(1, '#141221'); c.fillStyle = g; c.fillRect(0, 0, ST_W, ST_H);
+    // 背景磚牆
+    c.strokeStyle = 'rgba(255,255,255,.05)'; c.lineWidth = 1;
+    const off = me.scroll % 40;
+    for (let y = -off; y < ST_H; y += 40) { c.beginPath(); c.moveTo(0, y); c.lineTo(ST_W, y); c.stroke(); for (let x = ((y + off) / 40 % 2 ? 0 : 30); x < ST_W; x += 60) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 40); c.stroke(); } }
+    // 平台
+    for (const p of me.plats) {
+      const shake = p.breakT >= 0 ? (Math.random() - .5) * 4 : 0, x = p.x + shake, y = p.y;
+      if (p.type === 'normal') { c.fillStyle = '#7bd46a'; c.fillRect(x, y, p.w, 6); c.fillStyle = '#a0683a'; c.fillRect(x, y + 6, p.w, 8); }
+      else if (p.type === 'spike') { c.fillStyle = '#8a8fa3'; c.fillRect(x, y + 4, p.w, 10); c.fillStyle = '#e6e9f2'; for (let k = x; k < x + p.w - 4; k += 9) { c.beginPath(); c.moveTo(k, y + 4); c.lineTo(k + 4.5, y - 8); c.lineTo(k + 9, y + 4); c.fill(); } }
+      else if (p.type === 'fragile') { c.globalAlpha = p.breakT >= 0 ? Math.max(0, 1 - p.breakT * 2) : 1; c.fillStyle = '#f2b134'; c.fillRect(x, y, p.w, 10); c.strokeStyle = '#7a4a10'; c.lineWidth = 2; c.beginPath(); for (let k = x + 10; k < x + p.w; k += 18) { c.moveTo(k, y); c.lineTo(k + 5, y + 10); } c.stroke(); c.globalAlpha = 1; }
+      else { const b = p.boing > 0 ? (p.boing -= .016, 5) : 0; c.fillStyle = '#4fb6ff'; c.fillRect(x, y + b, p.w, 6); c.strokeStyle = '#d9f1ff'; c.lineWidth = 2; c.beginPath(); for (let k = x + 6; k < x + p.w - 4; k += 12) { c.moveTo(k, y + 6 + b); c.lineTo(k + 6, y + 14); c.lineTo(k + 12, y + 6 + b); } c.stroke(); }
+    }
+    // 天花板尖刺
+    c.fillStyle = '#5a5f73'; c.fillRect(0, 0, ST_W, 6); c.fillStyle = '#e6e9f2';
+    for (let x = 0; x < ST_W; x += 12) { c.beginPath(); c.moveTo(x, 6); c.lineTo(x + 6, 18); c.lineTo(x + 12, 6); c.fill(); }
+    // 怪獸
+    const hurt = me.hurtT > 0, moving = me.dir !== 0 && me.stand;
+    const pose = hurt ? 'cry' : moving ? 'walk' : me.stand ? 'idle' : 'happy';
+    const im = me.imgs[pose], sz = 54;
+    const bob = moving ? -Math.abs(Math.sin(me.t * 16)) * 4 : 0;
+    const sq = me.stand && !moving ? 1 + Math.sin(me.t * 4) * .02 : 1;
+    if (!(me.invT > 0 && Math.floor(me.t * 20) % 2)) {
+      c.save(); c.translate(me.px, me.py + bob); if (me.face < 0) c.scale(-1, 1); c.scale(1 / sq, sq);
+      if (hurt) c.rotate(Math.sin(me.t * 40) * .12);
+      if (im && im.complete && im.naturalWidth) c.drawImage(im, -sz / 2, -sz, sz, sz);
+      else { c.font = '40px serif'; c.textAlign = 'center'; c.fillText(hurt ? '😣' : '🙂', 0, -6); }
+      c.restore();
+      if (hurt) { c.save(); c.globalAlpha = Math.min(.5, me.hurtT); c.fillStyle = '#ff2a2a'; c.beginPath(); c.ellipse(me.px, me.py - sz / 2, sz / 2, sz / 2, 0, 0, 7); c.fill(); c.restore(); c.font = '22px serif'; c.textAlign = 'center'; c.fillText('💢', me.px + 22, me.py - sz + 6); }
+    }
+    for (const p of me.pops) { c.globalAlpha = 1 - p.t / .9; c.font = 'bold 22px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#ff6b6b'; c.strokeStyle = '#fff'; c.lineWidth = 4; c.strokeText(p.txt, p.x, p.y - p.t * 40); c.fillText(p.txt, p.x, p.y - p.t * 40); c.globalAlpha = 1; }
+    if (!me.on && me.hp > 0) { c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(0, ST_H / 2 - 30, ST_W, 60); c.fillStyle = '#fff'; c.font = 'bold 20px sans-serif'; c.textAlign = 'center'; c.fillText('按「開始」往下衝！', ST_W / 2, ST_H / 2 + 7); }
+  }
+  function stairsOver() {
+    const me = mg; if (!me.on) return; me.on = false;
+    const fl = Math.floor(me.scroll / ST_GAP), ok = fl >= ST_PASS;
+    S.stairsBest = Math.max(S.stairsBest || 0, fl); persist();
+    stairsDraw();
+    mgCoach(ok ? 'dance' : 'cry');
+    mgSay(ok ? `到達地下 ${fl} 樓！勇者！${gameAward('stairs')}` : `在地下 ${fl} 樓倒下了……要到 ${ST_PASS} 樓才過關！`);
+    if (ok) monAct('win', 2600); else monAct('cry', 2000);
+    $('st-go').outerHTML = `<p style="text-align:center;margin:8px 0">地下 <b>${fl}</b> 樓・最高紀錄 <b>${S.stairsBest}</b> 樓</p><button class="btn" onclick="App.gameStart('stairs')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
   }
 
   // ---------- 🎹 彈鋼琴 ----------
@@ -3536,7 +3732,7 @@
       <ul>
         <li><b>💬 問教練</b>：飲食、運動問題都可以問，教練會看你的紀錄回答（Gemini AI）</li>
         <li><b>💪 打氣</b>：教練和怪獸會有各種反應</li>
-        <li><b>🎮 和教練玩</b>：猜拳、時機打擊、跳舞機、打地鼠、彈鋼琴，每個遊戲每天贏一次 +${GAME_EXP} EXP</li>
+        <li><b>🎮 和教練玩</b>：猜拳、時機打擊、跳舞機、打地鼠、彈鋼琴、下樓梯，每個遊戲每天贏一次 +${GAME_EXP} EXP</li>
       </ul>`;
   }
 
@@ -3707,7 +3903,8 @@
     closeGames() { if (mg) mg.dead = true; $('games').classList.remove('compact'); if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
     gameStart(k) {
       if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); if (mg) mg.dead = true;
-      $('games').classList.toggle('compact', ['dance', 'mole', 'piano'].includes(k));
+      $('games').classList.toggle('compact', ['dance', 'mole', 'piano', 'stairs'].includes(k));
+      if (k === 'stairs') stairsStart();
       if (k === 'dance') danceStart();
       if (k === 'mole') moleStart();
       if (k === 'piano') pianoMenu();
@@ -3715,6 +3912,8 @@
       if (k === 'hit') { mg = { k, round: 0, score: 0 }; $('mg-title').textContent = '🎯 時機打擊'; hitRound(); }
     },
     danceTap(l) { danceTap(l); },
+    stairsDir(d, on) { stairsDir(d, on); },
+    stairsGo() { stairsGo(); },
     moleTap(i) { moleTap(i); },
     pianoPlay(i) { pianoStart(i); },
     pianoKey(n) { pianoKey(n); },
@@ -4259,7 +4458,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.22-1';
+  const APP_VERSION = '2026.11.22-2';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
