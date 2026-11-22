@@ -43,6 +43,9 @@
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
   .stat { background: var(--card); border-radius: 14px; padding: 6px; text-align: center; box-shadow: var(--shadow); border: none; font: inherit; color: var(--ink); width: 100%; cursor: pointer; }
   .stat:active { transform: scale(.96); }
+  .sheet-links { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .sheet-links .sheet-link { display: flex; flex-direction: column; align-items: center; text-decoration: none; background: #2f7d4f; color: #fff; margin: 0; padding: 10px 8px; }
+  .sheet-links .sheet-link small { font-size: .75rem; font-weight: 600; opacity: .85; }
   .mon-subtabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
   .mon-subtabs button { border: 2px solid var(--line); background: var(--card); border-radius: 14px; padding: 9px 4px; font: inherit; font-weight: 800; color: var(--muted); }
   .mon-subtabs button.on { border-color: var(--primary); color: var(--primary); background: #fff1f1; }
@@ -717,6 +720,7 @@
         <button class="btn" onclick="App.syncBoth('food')">☁️ 同步登記：飲食（健康26）＋記帳</button>
         <div class="sync-status" id="food-sync-status"></div>
         <div class="sync-status" id="both-sync-food"></div>
+        <div class="sheet-links" id="sheet-links-food"></div>
       </div>
     </div>
     <div class="card">
@@ -819,6 +823,7 @@
         <button class="btn" onclick="App.syncBoth('money')">☁️ 同步登記：記帳＋飲食（健康26）</button>
         <div class="sync-status" id="money-sync-status"></div>
         <div class="sync-status" id="both-sync-money"></div>
+        <div class="sheet-links" id="sheet-links-money"></div>
       </div>
     </div>
   </section>
@@ -2997,7 +3002,12 @@
     if (!cloudOn()) { st.textContent = '請先到「⚙️ 設定 → ☁️ 試算表連線」填好網址和暗號'; st.className = 'sync-status err'; return; }
     const from = addDays(today(), -13), store = kind === 'food' ? S.foods : S.expenses, items = [];
     Object.entries(store || {}).forEach(([d, arr]) => { if (d >= from && d <= today()) arr.forEach(x => { if (!x.synced) items.push(Object.assign({ date: d }, x)); }); });
-    if (!items.length) { st.textContent = '✅ 近 14 天都已經登記過了'; st.className = 'sync-status ok'; return; }
+    if (!items.length) {
+      st.textContent = '✅ 近 14 天都已經登記過了'; st.className = 'sync-status ok';
+      // 沒有新項目也取得一個連結（今天那一列），方便直接打開檢查
+      if (!(S.sheetLast && S.sheetLast[kind])) cloudCall('locate', { kind, date: today() }).then(d => { if (d.link) { S.sheetLast = S.sheetLast || {}; S.sheetLast[kind] = { link: d.link, date: today(), name: '', at: Date.now() }; persist(); renderSheetLinks(); } }).catch(() => {});
+      return;
+    }
     if (syncBusy[kind]) { st.textContent = '還在登記中，請稍等……'; return; }
     syncBusy[kind] = true;
     const toPayload = x => kind === 'food'
@@ -3024,6 +3034,7 @@
         (data.results || []).forEach(r => {
           const it = batch.find(x => x.id === r.id); if (!it) return;
           const orig = (store[it.date] || []).find(x => x.id === r.id); if (!orig) return;
+          if (r.link) { orig.sheetLink = r.link; S.sheetLast = S.sheetLast || {}; S.sheetLast[kind] = { link: r.link, date: it.date, name: it.name || it.cat || '', at: Date.now() }; }
           if (r.ok) { orig.synced = true; delete orig.syncErr; ok++; } else { orig.syncErr = r.error; errs.push(`${it.date} ${it.name || it.cat}：${r.error}`); }
         });
         persist();
@@ -3035,7 +3046,18 @@
       + (fatal ? `${ok ? '；' : ''}❌ ${fatal}${ok ? '（剩下的再按一次即可，不會重複）' : ''}` : '');
     st.className = 'sync-status ' + (errs.length || fatal ? 'err' : 'ok');
     if (ok) toast(`☁️ 已登記 ${ok} 筆到試算表`);
+    renderSheetLinks();
   }
+  // 「打開試算表看剛登記的」按鈕
+  function renderSheetLinks() {
+    const L = S.sheetLast || {}, md = d => d ? d.slice(5).replace('-', '/') : '';
+    const a = (k, icon, label) => L[k] && L[k].link
+      ? `<a class="btn sheet-link" href="${esc(L[k].link)}" target="_blank" rel="noopener">${icon} 打開${label}看剛登記的<small>${md(L[k].date)}${L[k].name ? '・' + esc(L[k].name) : ''}</small></a>` : '';
+    const html = a('expense', '💰', '記帳（' + expenseTab(today()) + '）') + a('food', '🍱', '健康26');
+    const hint = cloudOn() && !html && (S.expenses && Object.values(S.expenses).flat().some(x => x.synced)) ? '<p class="muted" style="margin:6px 0 0;font-size:.78rem">按一次「同步登記」就會出現直接打開試算表的按鈕（Apps Script 要更新成新版 Sync.gs）</p>' : '';
+    ['sheet-links-money', 'sheet-links-food'].forEach(id => { const el = $(id); if (el) el.innerHTML = html + hint; });
+  }
+  const expenseTab = d => { const p = d.split('-').map(Number); return (p[0] % 100) + 'H' + (p[1] <= 6 ? 1 : 2); };
 
   // ---------- cloud (Google Apps Script) ----------
   const cloudCfg = () => ({ url: (S.settings.cloudUrl || '').trim(), token: (S.settings.cloudToken || '').trim() });
@@ -4320,7 +4342,8 @@
       if (tab !== 'today' && decorEdit) { decorEdit = false; decorSel = null; $('gym').classList.remove('editing'); $('decor-btn').textContent = '🪑 擺設'; $('tap-hint').textContent = '點地板，讓怪獸走過去'; renderGymBG(); renderDecorPanel(); }
       if (tab === 'food') { fillForm(); }
       if (tab === 'exercise') { fillForm(); renderExWeek(); }
-      if (tab === 'money') { renderMoney(); }
+      if (tab === 'money') { renderMoney(); renderSheetLinks(); }
+      if (tab === 'food') renderSheetLinks();
     },
     async goRegister() {
       if (busy) return;
@@ -5089,7 +5112,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.23-7';
+  const APP_VERSION = '2026.11.23-8';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
@@ -5112,7 +5135,7 @@
   load();
   monMigrate();
   ltrMigrate();
-  renderGymBG(); decorBind(); paintBind(); paintUI(); setTimeout(scheduleNewClear, 1000);
+  renderGymBG(); decorBind(); paintBind(); paintUI(); renderSheetLinks(); setTimeout(scheduleNewClear, 1000);
   $('app-ver').textContent = '目前版本：' + APP_VERSION;
   checkUpdate();
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
