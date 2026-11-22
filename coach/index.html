@@ -1713,7 +1713,7 @@
     gloves: 300 / 205, bike: 300 / 249, speaker: 300 / 171, lamp: 300 / 114, rope: 221 / 300, hang: 300 / 194, fridge: 300 / 229, scale: 193 / 300, roller: 224 / 300 };
   // 英文字母磁鐵（自己畫：圓體粗字＋深咖啡描邊）
   // 英文字母磁鐵（Gemini 圖切出來），同一個字母可以拿好幾個
-  const LTR_SIZE = {a: [117, 141], b: [110, 139], c: [117, 143], d: [114, 139], e: [102, 139], f: [98, 140], g: [120, 143], h: [113, 140], i: [78, 138], j: [110, 141], k: [113, 140], l: [98, 139], m: [137, 139], n: [111, 140], o: [124, 143], p: [108, 140], q: [123, 148], r: [110, 140], s: [106, 143], t: [112, 140], u: [114, 141], v: [118, 141], w: [144, 140], x: [116, 141], y: [107, 141], z: [108, 137]};
+  const LTR_SIZE = {a: [117, 141], b: [110, 139], c: [117, 143], d: [114, 139], e: [102, 139], f: [98, 140], g: [120, 143], h: [113, 140], i: [78, 138], j: [110, 141], k: [113, 140], l: [98, 139], m: [137, 139], n: [111, 140], o: [124, 143], p: [108, 140], q: [123, 148], r: [110, 140], s: [106, 143], t: [112, 140], u: [114, 141], v: [118, 141], w: [144, 140], x: [116, 141], y: [107, 141], z: [108, 137], n0: [119, 154], n1: [80, 151], n2: [112, 152], n3: [114, 154], n4: [120, 151], n5: [112, 151], n6: [113, 154], n7: [109, 148], n8: [115, 154], n9: [113, 154], dot: [51, 51], sl: [90, 152], bs: [91, 151], st: [112, 116], mi: [108, 44], pl: [119, 123], eq: [118, 90], pc: [136, 141], qu: [106, 156], ex: [52, 154]};
   const isLetter = id => id.startsWith('ltr-') || id.startsWith('lt-');
   const ltrKey = id => id.split('-')[1];
   const decorAR = id => { if (isLetter(id)) { const [w, h] = LTR_SIZE[ltrKey(id)]; return h / w; } return DECOR_AR[id]; };
@@ -2636,6 +2636,8 @@
     { id: 'fridge', exp: 2100, icon: '🧊', label: '飲料冰箱', at: [100, 270, 26] },
     // 英文字母磁鐵：10 EXP 一次全部送，預設收在箱子裡，自己挑出來排字
     ...Array.from({ length: 26 }, (_, i) => { const k = String.fromCharCode(97 + i); return { id: 'ltr-' + k, exp: 10, icon: '🔤', label: k.toUpperCase(), set: 'letters', virtual: true, at: [180, 200, LTR_SIZE[k][0] * .14] }; }),
+    // 數字與符號磁鐵
+    ...[['n0', '0'], ['n1', '1'], ['n2', '2'], ['n3', '3'], ['n4', '4'], ['n5', '5'], ['n6', '6'], ['n7', '7'], ['n8', '8'], ['n9', '9'], ['dot', '.'], ['sl', '/'], ['bs', '\\'], ['st', '*'], ['mi', '−'], ['pl', '+'], ['eq', '='], ['pc', '%'], ['qu', '?'], ['ex', '!']].map(([k, c]) => ({ id: 'ltr-' + k, exp: 10, icon: '🔢', label: c, set: 'letters', sym: true, virtual: true, at: [180, 200, LTR_SIZE[k][0] * .14] })),
   ];
   let decorEdit = false, decorSel = null, decorDrag = null;
   const decorGot = d => curScore() >= d.exp;
@@ -2655,8 +2657,9 @@
         <button onclick="App.decorAdj('hide')">${d.inst ? '🗑️ 收回箱子' : !decorShown(d) ? '👁️ 擺出來' : '📦 收起'}</button><button onclick="App.decorAdj('reset')">↩️ 原位</button></div>`
         : '<p class="muted" style="margin:6px 0">先點畫面上的道具，或從下面選一個。</p>'}
       ${got.filter(x => !x.set).length ? `<div class="dp-list">${got.filter(x => !x.set).map(x => `<button class="${!decorShown(x) ? 'off' : ''} ${x.id === decorSel ? 'sel' : ''}" onclick="App.decorPick('${x.id}')">${decorThumb(x)}${esc(x.label)}</button>`).join('')}</div>` : '<p class="muted">還沒有道具，累積經驗值就會送！</p>'}
-      ${got.some(x => x.set === 'letters') ? `<div style="margin-top:8px"><b style="font-size:.9rem">🔤 英文字母磁鐵</b><span class="muted" style="font-size:.75rem">　點一下就拿出一個（同一個字母可以拿很多個），再拖到牆上排字</span>
-        <div class="dp-letters">${got.filter(x => x.set === 'letters').map(x => { const n = (S.ltrs || []).filter(id => ltrKey(id) === ltrKey(x.id)).length; return `<button onclick="App.ltrAdd('${ltrKey(x.id)}')">${decorThumb(x)}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}</div>
+      ${got.some(x => x.set === 'letters') ? `<div style="margin-top:8px"><b style="font-size:.9rem">🔤 字母・數字・符號磁鐵</b><span class="muted" style="font-size:.75rem">　點一下就拿出一個（同一個字母可以拿很多個），再拖到牆上排字</span>
+        <div class="dp-letters">${got.filter(x => x.set === 'letters' && !x.sym).map(x => { const n = (S.ltrs || []).filter(id => ltrKey(id) === ltrKey(x.id)).length; return `<button onclick="App.ltrAdd('${ltrKey(x.id)}')">${decorThumb(x)}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}</div>
+        <div style="margin-top:6px;font-size:.8rem;font-weight:800">🔢 數字與符號</div><div class="dp-letters">${got.filter(x => x.set === 'letters' && x.sym).map(x => { const n = (S.ltrs || []).filter(id => ltrKey(id) === ltrKey(x.id)).length; return `<button onclick="App.ltrAdd('${ltrKey(x.id)}')">${decorThumb(x)}${n ? `<i>${n}</i>` : ''}</button>`; }).join('')}</div>
         <div class="btn-row" style="margin-top:4px"><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(true)">拿出 A～Z 一整套</button><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(false)">全部收回箱子</button></div></div>` : ''}
       <div class="btn-row" style="margin-top:8px"><button class="btn ghost" onclick="App.decorResetAll()">全部回到原位</button><button class="btn" onclick="App.decorMode(false)">✅ 完成</button></div>`;
   }
@@ -2707,18 +2710,18 @@
     const show = () => {
       if (['levelup', 'night-ov', 'evolve'].some(id => $(id).classList.contains('show'))) return setTimeout(show, 800);
       $('gift-body').innerHTML = `<p style="margin:0 0 10px">經驗值累積到了，教練送你 ${fresh.filter(id => !isLetter(id)).length + (fresh.some(isLetter) ? 1 : 0)} 樣道具！已經放進健身房，可以自由移動擺設。</p>
-        <div class="gift-grid">${fresh.filter(id => !isLetter(id)).map((id, i) => { const d = DECOR.find(x => x.id === id); return `<div style="animation-delay:${i * .08}s">${decorThumb(d)}${esc(d.label)}</div>`; }).join('')}${fresh.some(isLetter) ? `<div style="grid-column:1/-1">${['ltr-a', 'ltr-b', 'ltr-c'].map(id => decorThumb(DECOR.find(x => x.id === id))).join('').replace(/<svg /g, '<svg style="display:inline-block;width:44px;height:44px" ')}<br>英文字母磁鐵 A～Z 大寫全套（26 個）<br><small class="muted">在擺設模式拿出來排字</small></div>` : ''}</div>`;
+        <div class="gift-grid">${fresh.filter(id => !isLetter(id)).map((id, i) => { const d = DECOR.find(x => x.id === id); return `<div style="animation-delay:${i * .08}s">${decorThumb(d)}${esc(d.label)}</div>`; }).join('')}${fresh.some(isLetter) ? `<div style="grid-column:1/-1">${fresh.filter(isLetter).slice(0, 3).map(id => decorThumb(DECOR.find(x => x.id === id))).join('').replace(/<svg /g, '<svg style="display:inline-block;width:44px;height:44px" ')}<br>${fresh.includes('ltr-a') ? '英文字母磁鐵 A～Z 大寫全套（26 個）' : ''}${fresh.includes('ltr-a') && fresh.includes('ltr-n0') ? '＋' : ''}${fresh.includes('ltr-n0') ? '數字 0～9 與符號磁鐵（20 個）' : ''}<br><small class="muted">在擺設模式拿出來排字</small></div>` : ''}</div>`;
       $('gift-ov').classList.add('show');
     };
     show();
     const next = DECOR.find(d => C.score < d.exp);
-    if (!busy) setCoach('cheer', `呀哈！送你新道具：${fresh.map(id => isLetter(id) ? (id === fresh.find(isLetter) ? '英文字母磁鐵' : '') : DECOR.find(x => x.id === id).label).filter(Boolean).slice(0, 3).join('、')}${fresh.length > 3 ? '…' : ''}！${next ? `再 ${next.exp - C.score} EXP 還有下一個！` : ''}`);
+    if (!busy) setCoach('cheer', `呀哈！送你新道具：${fresh.map(id => isLetter(id) ? (id === fresh.find(isLetter) ? (fresh.includes('ltr-a') ? '英文字母磁鐵' : '數字符號磁鐵') : '') : DECOR.find(x => x.id === id).label).filter(Boolean).slice(0, 3).join('、')}${fresh.length > 3 ? '…' : ''}！${next ? `再 ${next.exp - C.score} EXP 還有下一個！` : ''}`);
   }
   const decorShown = d => S.decor[d.id] === undefined ? !d.defaultOff : S.decor[d.id] !== false;
   function decorOn(d) { return d.inst ? true : !d.virtual && decorGot(d) && decorShown(d); }
   // 字母實體：S.ltrs = ['lt-a-xxxx', ...]，位置存在 S.decorPos
   function ltrInstances() {
-    return (S.ltrs || []).map(id => { const k = ltrKey(id), t = DECOR.find(x => x.id === 'ltr-' + k); return { id, inst: true, icon: '🔤', label: k.toUpperCase(), exp: t.exp, at: t.at }; }).filter(d => curScore() >= d.exp);
+    return (S.ltrs || []).map(id => { const k = ltrKey(id), t = DECOR.find(x => x.id === 'ltr-' + k); return { id, inst: true, icon: t.icon, label: t.label, exp: t.exp, at: t.at }; }).filter(d => curScore() >= d.exp);
   }
   const allDecor = () => DECOR.filter(d => !d.virtual).concat(ltrInstances());
   const findDecor = id => allDecor().find(x => x.id === id) || DECOR.find(x => x.id === id);
@@ -4871,7 +4874,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.23-4';
+  const APP_VERSION = '2026.11.23-5';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
