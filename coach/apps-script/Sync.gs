@@ -20,6 +20,7 @@ function doPost(e) {
       case 'ping': return syncJson_({ ok: true, message: 'pong', hasGemini: true, sheets: true });
       case 'syncFood': return syncJson_({ ok: true, results: syncFood_(body.items || []) });
       case 'syncExpense': return syncJson_({ ok: true, results: syncExpense_(body.items || []) });
+      case 'locate': return syncJson_({ ok: true, link: locate_(body.kind, body.date) });
       case 'save': return syncJson_({ ok: true, saved: gameSave_(body.records || []) });
       case 'list': return syncJson_({ ok: true, records: gameList_() });
       case 'ask': return syncJson_({ ok: true, answer: gameAsk_(body) });
@@ -39,6 +40,27 @@ function rememberIds_(ids) {
   PropertiesService.getScriptProperties().setProperty('SYNCED_IDS', JSON.stringify(all.slice(-400)));
 }
 
+// ---------- 直接連到試算表某一格的網址（遊戲裡按一下就打開） ----------
+function sheetLink_(sheet, a1) {
+  const url = SpreadsheetApp.getActiveSpreadsheet().getUrl().replace(/\/edit.*$/, '');
+  return url + '/edit#gid=' + sheet.getSheetId() + (a1 ? '&range=' + a1 : '');
+}
+function foodSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName('健康26') || ss.getSheets()[0];
+}
+// 找某天在哪一列，回傳那一列的連結（找不到就連到分頁本身）
+function locate_(kind, dateStr) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = kind === 'food' ? foodSheet_() : ss.getSheetByName(expenseSheetName_(dateStr));
+  if (!sheet) return '';
+  try {
+    const found = findTargetRow(sheet, dateStr);
+    if (found.targetRow > 0) return sheetLink_(sheet, 'A' + found.targetRow + ':' + columnToLetter(Math.min(sheet.getLastColumn(), 26)) + (found.targetRow + (kind === 'food' ? 0 : 1)));
+  } catch (e) {}
+  return sheetLink_(sheet, '');
+}
+
 // ---------- 1. 飲食 → 「健康26」：直接用健康26 原本的 saveFoodRecord（同一套欄位規則） ----------
 function syncFood_(items) {
   const lock = LockService.getScriptLock(); lock.waitLock(30000);
@@ -46,14 +68,20 @@ function syncFood_(items) {
     const done = syncedIds_(), newIds = [], results = [];
     items.forEach(it => {
       if (!it || !it.id) return;
-      if (done.indexOf(it.id) >= 0) { results.push({ id: it.id, ok: true, dup: true }); return; }
+      if (done.indexOf(it.id) >= 0) { results.push({ id: it.id, ok: true, dup: true, link: locate_('food', it.date) }); return; }
       try {
         const r = saveFoodRecord({
           dateStr: it.date, timeStr: it.time || '12:00', slotMode: it.slot || 'auto',
           isSnack: !!it.snack, foodName: it.name, calories: it.kcal, protein: it.protein,
         });
         newIds.push(it.id);
-        results.push({ id: it.id, ok: true, where: r.savedRange });
+        let link = '';
+        try {
+          const sr = String(r && r.savedRange || '');
+          if (sr.indexOf('!') > 0) { const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sr.split('!')[0].replace(/'/g, '')); if (sh) link = sheetLink_(sh, sr.split('!')[1]); }
+          else if (sr) link = sheetLink_(foodSheet_(), sr);
+        } catch (e) {}
+        results.push({ id: it.id, ok: true, where: r.savedRange, link: link || locate_('food', it.date) });
       } catch (e) { results.push({ id: it.id, ok: false, error: String(e.message || e) }); }
     });
     if (newIds.length) rememberIds_(newIds);
@@ -85,7 +113,7 @@ function syncExpense_(items) {
     const done = syncedIds_(), newIds = [], results = [];
     items.forEach(it => {
       if (!it || !it.id) return;
-      if (done.indexOf(it.id) >= 0) { results.push({ id: it.id, ok: true, dup: true }); return; }
+      if (done.indexOf(it.id) >= 0) { results.push({ id: it.id, ok: true, dup: true, link: locate_('expense', it.date) }); return; }
       try {
         const name = expenseSheetName_(it.date);
         const sheet = ss.getSheetByName(name);
@@ -107,7 +135,7 @@ function syncExpense_(items) {
           sheet.getRange(row, col, 2, 1).setValues([[oldName ? oldName + '、' + label : label], [(Number(vals[1][col - 1]) || 0) + amt]]);
         }
         newIds.push(it.id);
-        results.push({ id: it.id, ok: true, where: name + '!' + columnToLetter(col) + row });
+        results.push({ id: it.id, ok: true, where: name + '!' + columnToLetter(col) + row, link: sheetLink_(sheet, columnToLetter(col) + row + ':' + columnToLetter(col) + (row + 1)) });
       } catch (e) { results.push({ id: it.id, ok: false, error: String(e.message || e) }); }
     });
     SpreadsheetApp.flush();
