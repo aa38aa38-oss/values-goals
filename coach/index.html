@@ -1778,7 +1778,7 @@
     const { x, y, w, f } = decorPlace(d), h = w * decorAR(d.id), X = x - w / 2, Y = y - h;
     const flip = f ? ` transform="translate(${2 * x} 0) scale(-1 1)"` : '';
     const body = DECOR_SVG[d.id]
-      ? `<svg x="${X}" y="${Y}" width="${w}" height="${h}" viewBox="0 0 100 ${DECOR_SVG[d.id][0]}" overflow="visible">${DECOR_SVG[d.id][1]}</svg>`
+      ? `<g transform="translate(${X} ${Y}) scale(${w / 100})">${DECOR_SVG[d.id][1]}</g>`
       : `<image href="gym/decor-${d.id}.webp" x="${X}" y="${Y}" width="${w}" height="${h.toFixed(1)}"/>`;
     const box = sel ? `<rect x="${X - 3}" y="${Y - 3}" width="${w + 6}" height="${h + 6}" rx="6" fill="none" stroke="#ffd36a" stroke-width="2.5" stroke-dasharray="6 4"/>` : '';
     return `<g class="dec" data-id="${d.id}"><g${flip}>${body}</g><rect class="hit" x="${X}" y="${Y}" width="${w}" height="${h}" fill="transparent"/>${box}</g>`;
@@ -4874,7 +4874,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.22-6';
+  const APP_VERSION = '2026.11.22-7';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
