@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="紀律教練">
@@ -15,7 +15,7 @@
     --primary: #e8505b; --primary-soft: #fde3e4; --ok: #3fa86b; --ok-soft: #dcf3e5; --warn: #f0a32b;
     --stage: #fffaf2; --gold: #f2b134; --navy: #2b2f4a; --shadow: 0 4px 14px rgba(120, 80, 40, .10);
   }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; } /* manipulation：關掉連點兩下放大 */
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
   body {
     background: var(--bg); color: var(--ink);
@@ -4871,7 +4871,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.23-3';
+  const APP_VERSION = '2026.11.23-4';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
@@ -4885,6 +4885,10 @@
       }
     } catch (e) {}
   }
+
+  // ---------- 防止手機連點兩下／雙指放大畫面 ----------
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+  ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
 
   // ---------- boot ----------
   load();
