@@ -257,9 +257,10 @@
   .ml-hole.up .ml-m { bottom: 16%; }
   .ml-hole.hit .ml-m { animation: mlSquash .5s ease-out forwards; }
   @keyframes mlSquash { 0% { transform: scale(1.1, .45); } 30% { transform: scale(1.25, .55) rotate(-6deg); } 60% { transform: scale(1, .8) rotate(6deg); } 100% { transform: scale(1, .8) rotate(0); } }
-  .ml-ham { position: absolute; right: -6%; top: -14%; font-size: 2.8rem; line-height: 1; transform-origin: 85% 85%; transform: rotate(-70deg); opacity: 0; pointer-events: none; z-index: 2; }
-  .ml-hole.smash .ml-ham { animation: mlSmash .45s ease-out forwards; }
-  @keyframes mlSmash { 0% { opacity: 1; transform: rotate(-70deg); } 35% { opacity: 1; transform: rotate(25deg); } 60% { opacity: 1; transform: rotate(15deg); } 100% { opacity: 0; transform: rotate(-20deg); } }
+  .ml-ham { position: absolute; left: 30%; top: -6%; width: 100%; pointer-events: none; z-index: 2; opacity: 0; transform-origin: 96% 49%; transform: rotate(60deg); }
+  .ml-ham svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 3px rgba(0,0,0,.35)); }
+  .ml-hole.smash .ml-ham { animation: mlSmash .5s cubic-bezier(.5,0,.6,1) forwards; }
+  @keyframes mlSmash { 0% { opacity: 1; transform: rotate(60deg); } 28% { opacity: 1; transform: rotate(-4deg); } 40% { opacity: 1; transform: rotate(3deg); } 75% { opacity: 1; transform: rotate(0deg); } 100% { opacity: 0; transform: rotate(35deg); } }
   .ml-stars { position: absolute; left: 0; right: 0; top: 8%; text-align: center; font-size: 1.3rem; opacity: 0; pointer-events: none; z-index: 1; }
   .ml-hole.hit .ml-stars { opacity: 1; animation: mlStars .6s linear infinite; }
   @keyframes mlStars { from { transform: rotate(0); } to { transform: rotate(360deg); } }
@@ -834,11 +835,20 @@
         <div><label class="f">活動消耗：非常高 kcal</label><input type="number" inputmode="numeric" id="g-act-hi"></div>
       </div>
       <div class="row">
-        <div><label class="f">每晚睡眠目標（小時）</label><input type="number" inputmode="decimal" step="0.5" id="g-sleep"></div>
+        <div><label class="f">睡眠目標（小時，只畫圖表，不計分）</label><input type="number" inputmode="decimal" step="0.5" id="g-sleep"></div>
         <div><label class="f">開始日期</label><input type="date" id="g-startdate"></div>
       </div>
       <p class="muted">開始日期之後，整天沒有任何紀錄會扣 30 分。</p>
       <button class="btn" onclick="App.saveGoals()">儲存目標</button>
+    </div>
+
+    <div class="card">
+      <h2>🌙 晚間登記提醒</h2>
+      <label class="check"><input type="checkbox" id="night-on"> 晚上打開 app 時，如果今天還沒記完，先跳出快速登記</label>
+      <label class="f">幾點以後提醒</label>
+      <input type="time" id="night-time" value="21:00">
+      <button class="btn secondary" onclick="App.saveNight()">儲存提醒設定</button>
+      <button class="btn ghost" onclick="App.nightOpen(true)">👀 現在打開快速登記看看</button>
     </div>
 
     <div class="card">
@@ -990,7 +1000,7 @@
         <button type="button" onclick="App.water(1)">＋</button>
       </div>
       <div class="goal-hint" id="hint-water"></div>
-      <label class="check"><input type="checkbox" id="no-sugar"> 今天沒有喝含糖飲料 🥤❌</label>
+      <label class="check"><input type="checkbox" id="no-sugar"> 今天沒吃零食（甜食、含糖飲料都算）🍰🥤❌</label>
       <button type="button" class="btn card-save" onclick="App.saveDay()">📮 交給教練</button>
     </div>
 
@@ -1088,6 +1098,10 @@
   <div class="mg-coach" id="mg-coach"></div>
   <div class="mg-say" id="mg-say"></div>
   <div id="mg-body"></div>
+</div></div>
+<div class="overlay" id="night-ov" onclick="if(event.target===this)App.nightClose()"><div class="ov-box">
+  <div class="ov-head"><h2>🌙 睡前快速登記</h2><button onclick="App.nightClose()" aria-label="關閉">✕</button></div>
+  <div id="night-body"></div>
 </div></div>
 <div class="overlay" id="stat-ov" onclick="if(event.target===this)App.closeStatInfo()"><div class="ov-box">
   <div class="ov-head"><h2 id="stat-ov-title">說明</h2><button onclick="App.closeStatInfo()" aria-label="關閉">✕</button></div>
@@ -1263,6 +1277,7 @@
     return { kcal, protein, fat, carbs, snackKcal, items: arr.map(x => Object.assign({}, x, { slotKey: x.slot, slot: SLOT_LABEL[x.slot] || x.slot })) };
   };
   const rec = d => Object.assign(S.records[d] ? Object.assign(emptyRec(), S.records[d], { meals: Object.assign(emptyRec().meals, S.records[d].meals || {}) }) : emptyRec(), { _food: foodOf(d) });
+  const noSnack = r => !!r.noSugar && !(r._food && r._food.items.some(x => x.snack));
   const hasDiet = r => !!r._food || Object.values(r.meals).some(v => v && v.trim()) || r.water > 0 || r.noSugar || num(r.kcal) !== null;
   const hasEx = r => r.exType === 'rest' || (num(r.exMin) || 0) > 0 || (num(r.steps) || 0) > 0;
   const hasBody = r => num(r.weight) !== null || num(r.fat) !== null || num(r.waist) !== null;
@@ -1275,7 +1290,7 @@
     if (hasDiet(r)) items.push(['記錄飲食', 10]);
     if (hasEx(r)) items.push(['記錄運動', 10]);
     if (hasBody(r)) items.push(['記錄減脂數據', 10]);
-    if (n === 3) items.push(['三項全記獎勵', 15]);
+    if (n === 3) items.push(['三項全記獎勵', 25]);
     if (g.exMin && (num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest') items.push([`達成運動 ${g.exMin} 分鐘`, 20]);
     if (g.water && r.water >= g.water) items.push([`達成喝水 ${g.water} 杯`, 20]);
     { const st = num(r.steps) || 0, ak = num(r.activeKcal) || 0;
@@ -1283,8 +1298,7 @@
       else if (g.steps && st >= g.steps) items.push([`運動表現：步數 ${st}（達標）`, 20]);
       if (g.activeHigh && ak >= g.activeHigh) items.push([`運動表現：活動消耗 ${ak} kcal（非常高）`, 30]);
       else if (g.active && ak >= g.active) items.push([`運動表現：活動消耗 ${ak} kcal（達標）`, 15]); }
-    if (g.sleep && (num(r.sleep) || 0) >= g.sleep) items.push([`達成睡眠 ${g.sleep} 小時`, 10]);
-    if (r.noSugar) items.push(['沒喝含糖飲料', 20]);
+    if (noSnack(r)) items.push(['沒吃零食（甜食、含糖飲料）', 20]);
     const f = r._food;
     if (f) {
       items.push([`拍照／AI 記了 ${f.items.length} 筆飲食`, Math.min(20, f.items.length * 5)]);
@@ -1313,7 +1327,7 @@
       const pts = items.reduce((a, [, p]) => a + p, 0);
       perDay[d] = { items, pts, n };
       score += pts;
-      const goalsHit = items.filter(([l]) => l.startsWith('達成') || l === '沒喝含糖飲料').length;
+      const goalsHit = items.filter(([l]) => l.startsWith('達成') || l.startsWith('沒吃零食')).length;
       if (n === 0) { if (d < t) { patience -= 35; missed++; streak = 0; } }
       else { patience += 5 * n + 3 * goalsHit; streak++; }
       const ff = rec(d)._food, gk = S.settings.goals.kcalMax;
@@ -2191,6 +2205,7 @@
     $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
     $('g-ex').value = g.exMin; $('g-water').value = g.water; $('g-week').value = g.weeklyExDays;
     $('g-kmin').value = g.kcalMin ?? ''; $('g-kmax').value = g.kcalMax ?? ''; $('g-pro').value = g.protein ?? ''; $('g-fat').value = g.fatG ?? ''; $('g-carb').value = g.carbs ?? '';
+    { const na = S.settings.nightAsk || { on: true, time: '21:00' }; $('night-on').checked = na.on !== false; $('night-time').value = na.time || '21:00'; }
     $('g-steps').value = g.steps ?? ''; $('g-steps-hi').value = g.stepsHigh ?? ''; $('g-act').value = g.active ?? ''; $('g-act-hi').value = g.activeHigh ?? ''; $('g-sleep').value = g.sleep ?? '';
     $('g-startdate').value = S.settings.startDate;
     $('coach-name').value = S.settings.coachName;
@@ -2878,7 +2893,7 @@
       if (!loggedCount(r)) { lines.push(`- ${d}：沒有紀錄`); continue; }
       let meals = ['b', 'l', 'd', 's'].map((k, j) => r.meals[k] ? ['早', '午', '晚', '點心'][j] + ':' + r.meals[k] : '').filter(Boolean).join('、');
       if (r._food) meals = `共 ${r._food.kcal} kcal、蛋白質 ${r._food.protein} g、脂肪 ${r._food.fat} g、碳水 ${r._food.carbs} g：` + r._food.items.map(x => `${x.slot || x.col}${x.snack ? '(零食)' : ''} ${x.name} ${x.kcal}kcal/蛋${x.protein}脂${x.fat || 0}碳${x.carbs || 0}g`).join('；') + (meals ? '；另記：' + meals : '');
-      lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${r.noSugar ? '，無含糖飲料' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.activeKcal ? '；活動消耗 ' + r.activeKcal + ' kcal' : ''}${r.sleep ? '；睡眠 ' + r.sleep + ' 小時' : ''}${r.restHR ? '；靜止心率 ' + r.restHR : ''}${r.floors ? '；爬 ' + r.floors + ' 樓' : ''}${r.note ? '；心得：' + r.note : ''}`);
+      lines.push(`- ${d}：飲食[${meals || '未記'}]，水 ${r.water} 杯${noSnack(r) ? '，沒吃零食' : r.snackAns === 'yes' ? '，有吃零食' : ''}${r.kcal ? '，' + r.kcal + ' 大卡' : ''}；運動[${r.exType === 'rest' ? '休息日' : (r.exType || '未記') + ' ' + (r.exMin || 0) + ' 分鐘'}${r.steps ? '，' + r.steps + ' 步' : ''}]；體重 ${r.weight || '未記'}${r.fat ? '，體脂 ' + r.fat + '%' : ''}${r.waist ? '，腰圍 ' + r.waist : ''}${r.activeKcal ? '；活動消耗 ' + r.activeKcal + ' kcal' : ''}${r.sleep ? '；睡眠 ' + r.sleep + ' 小時' : ''}${r.restHR ? '；靜止心率 ' + r.restHR : ''}${r.floors ? '；爬 ' + r.floors + ' 樓' : ''}${r.note ? '；心得：' + r.note : ''}`);
     }
     return lines.join('\n');
   }
@@ -3029,7 +3044,7 @@
     if (hasDiet(r)) sc += 20; if (hasEx(r)) sc += 20; if (hasBody(r)) sc += 15;
     if (g.exMin && r.exType !== 'rest' && (num(r.exMin) || 0) >= g.exMin) sc += 10;
     if (g.water && r.water >= g.water) sc += 10;
-    if (r.noSugar) sc += 5;
+    if (noSnack(r)) sc += 5;
     { const st = num(r.steps) || 0, ak = num(r.activeKcal) || 0;
       if (g.stepsHigh && st >= g.stepsHigh) sc += 15; else if (g.steps && st >= g.steps) sc += 10;
       if (g.activeHigh && ak >= g.activeHigh) sc += 10; else if (g.active && ak >= g.active) sc += 5; }
@@ -3201,7 +3216,7 @@
           <div class="row-label">成熟期（懶惰／普通／菁英）</div>${node('3-lazy')}${node('3-normal')}${node('3-elite')}
           <div class="row-label">完全體</div><div></div>${node('4-final')}<div></div>
         </div>
-        <p class="muted" style="margin:8px 0 0">每日紀律分：記錄飲食 20、運動 20、減脂數據 15，運動／喝水達標各 10、熱量在目標內 10、蛋白質達標 10、沒喝含糖飲料 5；步數達標 10（非常高 15）、活動消耗達標 5（非常高 10）；熱量超標 20% 扣 10。</p>
+        <p class="muted" style="margin:8px 0 0">每日紀律分：記錄飲食 20、運動 20、減脂數據 15，運動／喝水達標各 10、熱量在目標內 10、蛋白質達標 10、沒吃零食 5；步數達標 10（非常高 15）、活動消耗達標 5（非常高 10）；熱量超標 20% 扣 10。</p>
       </div>`;
   }
   let pickedEgg = '';
@@ -3412,7 +3427,7 @@
     $('mg-title').textContent = '🔨 打地鼠';
     mgCoach('goforit'); mgSay('按「開始」！🐹 +1、🌟 金地鼠 +3、💣 打到 −2');
     $('mg-body').innerHTML = `<div class="mg-stat"><span>⏱️ <b id="ml-left">${ML_TIME}</b> 秒</span><span>打中 <b id="ml-hits">0</b> / 目標 ${ML_PASS}</span></div>
-      <div class="ml-grid">${Array.from({ length: 9 }, (_, i) => `<button type="button" class="ml-hole" id="ml-${i}" onpointerdown="event.preventDefault();App.moleTap(${i})"><div class="ml-pit"><div class="ml-m"></div></div><div class="ml-stars">💫</div><div class="ml-ham">🔨</div><div class="ml-fx"></div></button>`).join('')}</div>
+      <div class="ml-grid">${Array.from({ length: 9 }, (_, i) => `<button type="button" class="ml-hole" id="ml-${i}" onpointerdown="event.preventDefault();App.moleTap(${i})"><div class="ml-pit"><div class="ml-m"></div></div><div class="ml-stars">💫</div><div class="ml-ham"><svg viewBox="0 0 120 80"><rect x="44" y="34" width="72" height="10" rx="5" fill="#c98a4b" stroke="#5a3418" stroke-width="3"/><rect x="104" y="32" width="14" height="14" rx="4" fill="#8e5a35" stroke="#5a3418" stroke-width="3"/><rect x="4" y="8" width="44" height="62" rx="10" fill="#d9a46a" stroke="#5a3418" stroke-width="4"/><path d="M4 22 h44 M4 56 h44" stroke="#a8743e" stroke-width="5"/><rect x="10" y="12" width="8" height="54" rx="4" fill="#fff" opacity=".3"/></svg></div><div class="ml-fx"></div></button>`).join('')}</div>
       <button class="btn" id="ml-go" style="margin-top:10px" onclick="App.moleTap(-1)">▶ 開始！</button>`;
   }
   function moleSpawn() {
@@ -3589,13 +3604,13 @@
     // 怪獸
     const hurt = me.hurtT > 0, moving = me.dir !== 0 && me.stand;
     const pose = hurt ? 'cry' : moving ? 'walk' : me.stand ? 'idle' : 'happy';
-    const im = me.imgs[pose], sz = 54;
+    const im = me.imgs[pose], sz = 58;
     const bob = moving ? -Math.abs(Math.sin(me.t * 16)) * 4 : 0;
-    const sq = me.stand && !moving ? 1 + Math.sin(me.t * 4) * .02 : 1;
+    const sq = 1;
     if (!(me.invT > 0 && Math.floor(me.t * 20) % 2)) {
       c.save(); c.translate(me.px, me.py + bob); if (me.face < 0) c.scale(-1, 1); c.scale(1 / sq, sq);
       if (hurt) c.rotate(Math.sin(me.t * 40) * .12);
-      if (im && im.complete && im.naturalWidth) c.drawImage(im, -sz / 2, -sz, sz, sz);
+      if (im && im.complete && im.naturalWidth) { const ar = im.naturalWidth / im.naturalHeight, w = ar >= 1 ? sz : sz * ar, h = ar >= 1 ? sz / ar : sz; c.drawImage(im, -w / 2, -h, w, h); }
       else { c.font = '40px serif'; c.textAlign = 'center'; c.fillText(hurt ? '😣' : '🙂', 0, -6); }
       c.restore();
       if (hurt) { c.save(); c.globalAlpha = Math.min(.5, me.hurtT); c.fillStyle = '#ff2a2a'; c.beginPath(); c.ellipse(me.px, me.py - sz / 2, sz / 2, sz / 2, 0, 0, 7); c.fill(); c.restore(); c.font = '22px serif'; c.textAlign = 'center'; c.fillText('💢', me.px + 22, me.py - sz + 6); }
@@ -3738,7 +3753,7 @@
         <li><b>☁️ 同步</b>：一鍵登記到你的 Google 試算表（健康26、26H2）</li>
       </ul>
       <h3>📊 每日紀律分（決定進化型態）</h3>
-      <p>記錄飲食 20、運動 20、減脂數據 15；運動達標 10、喝水達標 10、熱量在目標內 10、蛋白質達標 10、沒喝含糖飲料 5；熱量超標 20% 扣 10。</p>
+      <p>記錄飲食 20、運動 20、減脂數據 15；運動達標 10、喝水達標 10、熱量在目標內 10、蛋白質達標 10、沒吃零食 5；熱量超標 20% 扣 10。</p>
       <h3>🧑‍🏫 和教練互動</h3>
       <ul>
         <li><b>💬 問教練</b>：飲食、運動問題都可以問，教練會看你的紀錄回答（Gemini AI）</li>
@@ -3801,22 +3816,58 @@
     busy = false; dormSay();
   }
 
+  // ---------- 🌙 晚間快速登記 ----------
+  const nightCfg = () => Object.assign({ on: true, time: '21:00' }, S.settings.nightAsk || {});
+  function nightMissing(d) {
+    const r = rec(d), miss = [];
+    if (!(r.water > 0)) miss.push('water');
+    if (!r.noSugar && r.snackAns !== 'yes') miss.push('snack');
+    if (!hasEx(r)) miss.push('ex');
+    if (!hasBody(r)) miss.push('body');
+    return miss;
+  }
+  function nightShouldAsk() {
+    const cfg = nightCfg(); if (!cfg.on || !S.onboarded) return false;
+    const [h, m] = String(cfg.time || '21:00').split(':').map(Number), now = new Date();
+    if (now.getHours() * 60 + now.getMinutes() < (h || 0) * 60 + (m || 0)) return false;
+    if (S.nightSnooze && Date.now() - S.nightSnooze < 60 * 60 * 1000) return false;
+    if ($('night-ov').classList.contains('show') || $('levelup').classList.contains('show')) return false;
+    return nightMissing(today()).length > 0;
+  }
+  let nightDraft = null;
+  function nightRender() {
+    const t = today(), r = rec(t), g = S.settings.goals, d = nightDraft;
+    const exs = exList(t), exMin = exs.reduce((a, x) => a + (num(x.min) || 0), 0);
+    const opts = ['快走', '慢跑', '重訓', '騎車', '游泳', '瑜伽／伸展', '球類', '跳繩', 'HIIT', '爬山', '其他'];
+    $('night-body').innerHTML = `<p class="muted" style="margin:0 0 10px">今天還有幾項沒記，花 10 秒填完就能拿分！不想填可以按右上角 ✕。</p>
+      <div class="card" style="margin-bottom:10px"><h2 style="font-size:1rem">💧 今天喝了幾杯水？<small class="muted">（每杯 250ml${g.water ? `，目標 ${g.water} 杯` : ''}）</small></h2>
+        <div class="stepper"><button type="button" onclick="App.nightSet('water',-1)">−</button><b id="nt-water">${d.water} 杯</b><button type="button" onclick="App.nightSet('water',1)">＋</button></div></div>
+      <div class="card" style="margin-bottom:10px"><h2 style="font-size:1rem">🍰 今天有吃零食嗎？<small class="muted">（甜食、含糖飲料都算）</small></h2>
+        <div class="btn-row"><button type="button" class="btn ${d.snack === 'no' ? '' : 'ghost'}" onclick="App.nightSet('snack','no')">😇 沒吃</button><button type="button" class="btn ${d.snack === 'yes' ? 'secondary' : 'ghost'}" onclick="App.nightSet('snack','yes')">😋 有吃</button></div></div>
+      <div class="card" style="margin-bottom:10px"><h2 style="font-size:1rem">🏃 今天運動多久？${exMin ? `<small class="muted">（已記 ${exMin} 分鐘，可以再加）</small>` : ''}</h2>
+        <div class="row"><div><select id="nt-extype"><option value="">— 項目 —</option>${opts.map(o => `<option ${d.exType === o ? 'selected' : ''}>${o}</option>`).join('')}<option value="rest" ${d.exType === 'rest' ? 'selected' : ''}>今天休息日</option></select></div>
+        <div><input type="number" inputmode="numeric" id="nt-exmin" placeholder="分鐘" value="${d.exMin || ''}"></div></div>
+        <div class="btn-row" style="margin-top:6px">${[15, 30, 45, 60].map(m => `<button type="button" class="btn ghost" style="padding:8px 0" onclick="document.getElementById('nt-exmin').value=${m}">${m} 分</button>`).join('')}</div></div>
+      <div class="card" style="margin-bottom:10px"><h2 style="font-size:1rem">⚖️ 體重／體脂（選填）</h2>
+        <div class="row"><div><input type="number" inputmode="decimal" step="0.1" id="nt-weight" placeholder="體重 kg" value="${r.weight || ''}"></div><div><input type="number" inputmode="decimal" step="0.1" id="nt-fat" placeholder="體脂 %" value="${r.fat || ''}"></div></div></div>
+      <button class="btn" onclick="App.nightSave()">📮 交給教練</button>`;
+  }
+
   // ---------- 點數值看說明：要做什麼才能加分 ----------
   function earnRules() {
     const g = S.settings.goals, R = [];
     R.push(['記錄飲食（拍照、AI 查詢、喝水或簡易紀錄都算）', 10]);
     R.push(['記錄運動（運動、步數或休息日）', 10]);
     R.push(['記錄減脂數據（體重、體脂或腰圍）', 10]);
-    R.push(['上面三項全記', 15]);
+    R.push(['上面三項全記', 25]);
     R.push(['拍照／AI 記飲食，每筆 +5', '最多 20']);
     if (g.kcalMax) R.push([`熱量在 ${g.kcalMin || 0}～${g.kcalMax} kcal（晚上 8 點後才結算）`, 20]);
     if (g.protein) R.push([`蛋白質達 ${g.protein} g`, 20]);
     if (g.exMin) R.push([`運動達 ${g.exMin} 分鐘`, 20]);
     if (g.water) R.push([`喝水達 ${g.water} 杯`, 20]);
-    R.push(['沒喝含糖飲料（打勾）', 20]);
+    R.push(['沒吃零食（甜食、含糖飲料；打勾，且當天飲食紀錄沒有零食）', 20]);
     if (g.steps) R.push([`步數達 ${g.steps}${g.stepsHigh ? `（達 ${g.stepsHigh} 改 +40）` : ''}`, g.stepsHigh ? '20／40' : 20]);
     if (g.active) R.push([`活動消耗達 ${g.active} kcal${g.activeHigh ? `（達 ${g.activeHigh} 改 +30）` : ''}`, g.activeHigh ? '15／30' : 15]);
-    if (g.sleep) R.push([`睡眠達 ${g.sleep} 小時`, 10]);
     R.push(['連續記錄第 3 天起，每天加成', 10]);
     R.push([`和教練玩小遊戲，每個遊戲每天第一次過關`, `每個 ${GAME_EXP}`]);
     return R;
@@ -3826,17 +3877,16 @@
     if (!hasDiet(r)) out.push(['記錄飲食', 10]);
     if (!hasEx(r)) out.push(['記錄運動', 10]);
     if (!hasBody(r)) out.push(['記錄減脂數據（體重／體脂／腰圍）', 10]);
-    if (loggedCount(r) < 3) out.push(['三項全記', 15]);
+    if (loggedCount(r) < 3) out.push(['三項全記', 25]);
     if (!f || f.items.length < 4) out.push([`拍照／AI 再記 ${4 - (f ? f.items.length : 0)} 筆飲食`, `+5／筆`]);
     if (g.protein && (!f || f.protein < g.protein)) out.push([`蛋白質還差 ${Math.round((g.protein - (f ? f.protein : 0)) * 10) / 10} g`, 20]);
     if (g.kcalMax && !(new Date().getHours() >= 20 && f && f.kcal >= (g.kcalMin || 0) * .8 && f.kcal <= g.kcalMax)) out.push([`熱量控制在 ${g.kcalMin || 0}～${g.kcalMax} kcal（晚上 8 點後結算）`, 20]);
     if (g.exMin && !((num(r.exMin) || 0) >= g.exMin && r.exType !== 'rest')) out.push([`運動還差 ${g.exMin - (num(r.exMin) || 0)} 分鐘`, 20]);
     if (g.water && r.water < g.water) out.push([`喝水還差 ${g.water - r.water} 杯`, 20]);
-    if (!r.noSugar) out.push(['沒喝含糖飲料（記得打勾）', 20]);
+    if (!noSnack(r)) out.push([r._food && r._food.items.some(x => x.snack) ? '今天記了零食，「沒吃零食」拿不到了' : '沒吃零食（甜食、含糖飲料；記得打勾）', 20]);
     const st = num(r.steps) || 0, ak = num(r.activeKcal) || 0;
     if (g.steps && st < g.steps) out.push([`步數還差 ${g.steps - st} 步`, 20]); else if (g.stepsHigh && st < g.stepsHigh) out.push([`步數再 ${g.stepsHigh - st} 步到「非常高」`, '再 +20']);
     if (g.active && ak < g.active) out.push([`活動消耗還差 ${g.active - ak} kcal`, 15]); else if (g.activeHigh && ak < g.activeHigh) out.push([`活動消耗再 ${g.activeHigh - ak} kcal 到「非常高」`, '再 +15']);
-    if (g.sleep && (num(r.sleep) || 0) < g.sleep) out.push([`睡眠達 ${g.sleep} 小時`, 10]);
     const gb = (S.gameBonus || {})[t] || {}, left = 6 - Object.keys(gb).length;
     if (left > 0) out.push([`還有 ${left} 個小遊戲今天沒過關`, `每個 ${GAME_EXP}`]);
     return out;
@@ -3860,6 +3910,21 @@
       return [`📅 今日得分`, `<div class="si-big"><b>${pd.pts}</b><span>${nice(t)} 已經拿到的分數</span></div>
         <h3 class="si-h">✅ 今天已經拿到</h3>${pd.items.length ? `<ul class="si-list">${pd.items.map(x => li(x)).join('')}</ul>` : '<p class="muted">今天還沒有得分，先記一筆吧！</p>'}
         ${todo.length ? `<h3 class="si-h">💡 今天還可以拿</h3><ul class="si-list">${todo.map(x => li(x, true)).join('')}</ul>` : '<p>🎉 今天能拿的都拿到了！</p>'}
+        <h3 class="si-h">📈 每日得分會影響什麼？</h3>
+        <ul class="si-list">
+          <li><span>⭐ 經驗值與等級</span><b style="color:var(--ink)">每天得分全部加進 EXP<br>每 ${LEVEL_PTS} EXP 升一級</b></li>
+          <li><span>🎁 升級解鎖</span><b style="color:var(--ink)">健身房擺設、改裝、衣服</b></li>
+          <li><span>🥚 怪獸成長</span><b style="color:var(--ink)">怪獸跟著等級長大進化</b></li>
+        </ul>
+        <h3 class="si-h">🧬 另外還有「紀律分」（0～100）</h3>
+        <p style="margin:0 0 6px;font-size:.9rem">今天的紀律分：<b>${dailyScore(t)}</b> / 100。它不加 EXP，但決定怪獸的樣子：</p>
+        <ul class="si-list">
+          <li><span>🦸 進化時平均 80 分以上</span><b>菁英型</b></li>
+          <li><span>🙂 平均 50～79 分</span><b style="color:var(--ink)">普通型</b></li>
+          <li><span>🛋️ 平均 50 分以下</span><b style="color:#e8505b">懶惰型</b></li>
+          <li><span>🤒 最近 3 天有 2 天低於 30 分</span><b style="color:#e8505b">怪獸生病</b></li>
+          <li><span>🍽️ 11 點後還沒記飲食</span><b style="color:#e8505b">怪獸肚子餓</b></li>
+        </ul>
         <div class="si-note">補記前幾天的資料，分數會算回那一天，經驗值一樣會增加。</div>`];
     }
     const next = C.streak >= 2 ? '每天都有 +10 連續加成，保持下去！' : `再連續 ${3 - C.streak} 天，從第 3 天起每天多 +10！`;
@@ -3870,7 +3935,21 @@
         <li><span>💔 某天完全沒記錄</span><b style="color:#e8505b">歸零・耐心 −35</b></li>
         <li><span>😊 每天有記錄</span><b>教練耐心回升</b></li>
       </ul>
-      <div class="si-note">今天還沒記也不會馬上斷，過了今天都沒記錄才會歸零。忘記的話可以到運動／飲食頁切換日期補記。</div>`];
+      <div class="si-note">今天還沒記也不會馬上斷，過了今天都沒記錄才會歸零。忘記的話可以到運動／飲食頁切換日期補記。</div>
+      <h3 class="si-h">😤 教練耐心值（現在 ${C.patience} / 100）</h3>
+      <p style="margin:0 0 6px;font-size:.9rem">耐心值代表教練對你有多滿意。它<b>不會扣經驗值</b>，但會改變教練對你的態度：</p>
+      <ul class="si-list">
+        <li><span>⬆️ 每記一項（飲食／運動／減脂）</span><b>+5</b></li>
+        <li><span>⬆️ 每達成一個目標（喝水、運動、蛋白質、熱量、沒吃零食…）</span><b>+3</b></li>
+        <li><span>⬇️ 某天完全沒記錄</span><b style="color:#e8505b">−35</b></li>
+        <li><span>⬇️ 熱量超過上限 20%</span><b style="color:#e8505b">−15</b></li>
+        <li><span>⬇️ 晚上 9 點還沒記任何東西</span><b style="color:#e8505b">−15</b></li>
+      </ul>
+      <ul class="si-list">
+        <li><span>🟢 60 以上</span><b style="color:var(--ink)">教練心情好，常幫你打氣</b></li>
+        <li><span>🟡 30～59</span><b style="color:var(--ink)">今天還沒記錄，教練會生氣碎念</b></li>
+        <li><span>🔴 30 以下</span><b style="color:#e8505b">教練很火大，快把三項記完！</b></li>
+      </ul>`];
   }
 
   // ---------- public API ----------
@@ -4033,6 +4112,37 @@
       if (!mg.live) { if (mg.x === 0 && $('tb-res') && $('tb-res').textContent === '準備……') { mgSay('還沒開始啦！'); } return; }
       mg.live = false; hitResult(mg.x);
     },
+    nightOpen(force) {
+      if (!force && !nightShouldAsk()) return;
+      const r = rec(today());
+      nightDraft = { water: r.water || 0, snack: r.noSugar ? 'no' : r.snackAns === 'yes' ? 'yes' : '', exType: '', exMin: '' };
+      if (force) App.switchTab('today');
+      nightRender(); $('night-ov').classList.add('show');
+      if (!busy) setCoach('inspect', '睡前登記一下！喝水、零食、運動，快快填完！');
+    },
+    nightClose() { $('night-ov').classList.remove('show'); S.nightSnooze = Date.now(); persist(); },
+    nightSet(k, v) {
+      if (k === 'water') { nightDraft.water = Math.max(0, Math.min(30, nightDraft.water + v)); $('nt-water').textContent = nightDraft.water + ' 杯'; return; }
+      nightDraft.exType = $('nt-extype').value; nightDraft.exMin = $('nt-exmin').value;
+      nightDraft.snack = v; nightRender();
+    },
+    nightSave() {
+      const t = today(), before = C && C.perDay[t] ? C.perDay[t].pts : 0;
+      const r = Object.assign(emptyRec(), S.records[t] || {});
+      r.water = nightDraft.water;
+      if (nightDraft.snack === 'no') { r.noSugar = true; r.snackAns = 'no'; } else if (nightDraft.snack === 'yes') { r.noSugar = false; r.snackAns = 'yes'; }
+      const w = $('nt-weight').value.trim(), f = $('nt-fat').value.trim(); if (w) r.weight = w; if (f) r.fat = f;
+      r.updatedAt = new Date().toISOString(); S.records[t] = r;
+      const ty = $('nt-extype').value, mn = parseInt($('nt-exmin').value, 10) || 0;
+      if (ty === 'rest') { if (!exList(t).length) { r.exType = 'rest'; r.exMin = ''; } }
+      else if (mn > 0) { S.exercises = S.exercises || {}; (S.exercises[t] = S.exercises[t] || []).push({ id: 'e' + Date.now().toString(36), type: ty || '其他', min: mn, time: nowTime() }); syncExToRecord(t); }
+      persist(); $('night-ov').classList.remove('show');
+      refreshStats(); if (curDate === t) fillForm(); cloudPush([t]);
+      const after = C.perDay[t] ? C.perDay[t].pts : 0;
+      toast(`💪 教練：收到！${after > before ? `今天又拿到 +${after - before} 分！` : '記下來了！'}早點睡！`);
+      if (!busy) setCoach('cheer', '睡前也有乖乖登記，呀哈！晚安！');
+    },
+    saveNight() { S.settings.nightAsk = { on: $('night-on').checked, time: $('night-time').value || '21:00' }; persist(); toast('🌙 晚間提醒已儲存'); },
     statInfo(kind) { const [ti, html] = statInfoHTML(kind); $('stat-ov-title').textContent = ti; $('stat-ov-body').innerHTML = html; $('stat-ov').classList.add('show'); },
     closeStatInfo() { $('stat-ov').classList.remove('show'); },
     openGuide() { $('guide-body').innerHTML = guideHTML(); $('guide-ov').classList.add('show'); },
@@ -4543,7 +4653,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.22-3';
+  const APP_VERSION = '2026.11.22-4';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
@@ -4617,6 +4727,7 @@
     setCoach('inspect', '同步紀錄中……');
     Promise.race([cloudPullMerge(false), new Promise(r => setTimeout(r, 6000))]).then(startScene);
   } else startScene();
+  setTimeout(() => App.nightOpen(), 2500);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     if (S.awaitHealth && Date.now() - S.awaitHealth < 10 * 60 * 1000) { toast('👉 按「📋 貼上匯入」把手錶數據帶進來'); }
@@ -4624,6 +4735,7 @@
     if (curDate > today()) curDate = today();
     refreshStats(); renderPlayer();
     if ($('view-today').classList.contains('active')) sceneMood();
+    setTimeout(() => App.nightOpen(), 1200);
   });
 })();
 </script>
