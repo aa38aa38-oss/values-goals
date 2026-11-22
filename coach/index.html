@@ -56,6 +56,10 @@
   .decor-panel .dp-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-height: 190px; overflow-y: auto; }
   .decor-panel .dp-list button { border: 2px solid var(--line); background: #fffaf0; border-radius: 12px; padding: 4px 2px; font: inherit; font-size: .68rem; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .decor-panel .dp-list button svg { width: 40px; height: 40px; }
+  .decor-panel .dp-letters { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 4px; }
+  .decor-panel .dp-letters button { border: 2px solid var(--line); background: #fffaf0; border-radius: 10px; padding: 2px; }
+  .decor-panel .dp-letters button svg { width: 100%; height: 26px; display: block; }
+  .decor-panel .dp-letters button.off { opacity: .35; } .decor-panel .dp-letters button.sel { border-color: #f2b134; background: #fff1c9; }
   .decor-panel .dp-list button.off { opacity: .4; } .decor-panel .dp-list button.sel { border-color: #f2b134; background: #fff1c9; }
   .gift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
   .gift-grid div { background: #fffaf0; border: 2px solid var(--gold); border-radius: 14px; padding: 6px; text-align: center; font-size: .8rem; font-weight: 800; animation: pop .5s ease-out both; }
@@ -1700,98 +1704,42 @@
 
   // ---------- gym background ----------
   // 健身房依等級改裝：Lv1 木頭館 → Lv6 都會館 → Lv11 黃金殿堂（背景只有空房間，擺設靠自己拿）
-  const gymTier = lv => (lv >= 11 ? 3 : lv >= 6 ? 2 : 1);
-  const GYM_TIER_NAME = { 1: '陽光木頭健身房', 2: '都會夜景健身房', 3: '黃金冠軍殿堂' };
-  // ---------- 健身房背景（自己畫的空房間，留空間給玩家擺設） ----------
-  const ROOM_PAL = {
-    1: { wallT: '#fbefd9', wallB: '#f3dfbd', side: '#ecd3a8', trim: '#8a5a35', wains: '#e2c08f', floorA: '#e3aa6c', floorB: '#d09156', plank: '#b97a43', ceil: '#f7e6c6', glass: ['#8fd3ff', '#d6f0ff'], frame: '#8a5a35', light: '#fff4c8', sign: '#2f6e8f', desk: ['#d9a06b', '#b5764a'], view: 'day' },
-    2: { wallT: '#3a4766', wallB: '#2c3752', side: '#27304a', trim: '#151b2c', wains: '#222a40', floorA: '#454b5e', floorB: '#363b4c', plank: '#2a2e3c', ceil: '#1f2638', glass: ['#1b2550', '#46407a'], frame: '#151b2c', light: '#9fe6ff', sign: '#e8505b', desk: ['#5b6478', '#3b4254'], view: 'city' },
-    3: { wallT: '#fff3dc', wallB: '#f7e2b8', side: '#efd29a', trim: '#c99a2e', wains: '#e9c77e', floorA: '#efc488', floorB: '#d9a35c', plank: '#c08440', ceil: '#fbecc9', glass: ['#ffb36b', '#ffe3a1'], frame: '#c99a2e', light: '#fff1b8', sign: '#b8860b', desk: ['#f4ece0', '#d8cbb6'], view: 'sunset' },
-  };
-  function roomSVG(tier) {
-    const P = ROOM_PAL[tier] || ROOM_PAL[1], L = '#4a2f1f', VX = 180, VY = 120, FY = 212;
-    let planks = '';
-    for (let i = -9; i <= 9; i++) planks += `<path d="M${VX + i * 26} ${FY} L${VX + i * 95} 400" stroke="${P.plank}" stroke-width="1.6" opacity=".55"/>`;
-    for (let k = 1; k < 9; k++) { const y = FY + Math.pow(k / 9, 1.7) * (400 - FY); planks += `<path d="M0 ${y.toFixed(1)} H360" stroke="${P.plank}" stroke-width="1.2" opacity=".35"/>`; }
-    const win = (x, w) => {
-      const y = 52, h = 112, g = `g${tier}${x}`;
-      let view = '';
-      if (P.view === 'day') view = `<circle cx="${x + w * .75}" cy="${y + 28}" r="11" fill="#ffe27a"/><path d="M${x + 8} ${y + 60} q14 -12 28 0 q12 -9 24 0" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M${x} ${y + h - 22} q${w * .25} -26 ${w * .5} -6 q${w * .25} -22 ${w * .5} 0 V${y + h} H${x}z" fill="#7cc576"/><path d="M${x} ${y + h - 10} q${w * .3} -14 ${w * .6} 0 q${w * .2} -10 ${w * .4} -2 V${y + h} H${x}z" fill="#5fae5c"/>`;
-      else if (P.view === 'city') { for (let i = 0; i < 6; i++) { const bx = x + 4 + i * (w - 8) / 6, bh = 30 + ((i * 37) % 50); view += `<rect x="${bx}" y="${y + h - bh}" width="${(w - 8) / 6 - 2}" height="${bh}" fill="#141a33"/>`; for (let j = 0; j < 4; j++) view += `<rect x="${bx + 3}" y="${y + h - bh + 6 + j * 9}" width="3" height="3" fill="${(i + j) % 3 ? '#ffd36a' : '#3a4470'}"/>`; } view += `<circle cx="${x + w * .78}" cy="${y + 20}" r="7" fill="#fff6c9"/><circle cx="${x + 12}" cy="${y + 14}" r="1.2" fill="#fff"/><circle cx="${x + 40}" cy="${y + 28}" r="1.2" fill="#fff"/>`; }
-      else view = `<circle cx="${x + w / 2}" cy="${y + h - 20}" r="22" fill="#ffd36a" opacity=".9"/><path d="M${x} ${y + h - 14} q${w / 2} -10 ${w} 0 V${y + h} H${x}z" fill="#e0804a"/><path d="M${x + 6} ${y + 30} q16 -8 30 0" stroke="#fff3d6" stroke-width="5" fill="none" stroke-linecap="round" opacity=".8"/>`;
-      const arch = P.view === 'sunset' ? `M${x} ${y + 30} Q${x} ${y - 6} ${x + w / 2} ${y - 6} Q${x + w} ${y - 6} ${x + w} ${y + 30} V${y + h} H${x}Z` : `M${x} ${y} H${x + w} V${y + h} H${x}Z`;
-      return `<defs><linearGradient id="${g}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${P.glass[0]}"/><stop offset="1" stop-color="${P.glass[1]}"/></linearGradient><clipPath id="c${g}"><path d="${arch}"/></clipPath></defs>
-        <path d="${arch}" fill="url(#${g})"/><g clip-path="url(#c${g})">${view}</g>
-        <path d="${arch}" fill="none" stroke="${P.frame}" stroke-width="6"/><path d="M${x + w / 2} ${y - 4} V${y + h} M${x} ${y + h * .5} H${x + w}" stroke="${P.frame}" stroke-width="4"/>
-        <rect x="${x - 6}" y="${y + h}" width="${w + 12}" height="7" rx="2" fill="${P.frame}"/>
-        <path d="M${x + 6} ${y + h + 7} L${x - 30} 400 L${x + w + 60} 400 L${x + w - 6} ${y + h + 7}Z" fill="${P.light}" opacity="${P.view === 'city' ? .06 : .16}"/>`;
-    };
-    const lamp = x => `<path d="M${x} 20 V38" stroke="${L}" stroke-width="2"/><path d="M${x - 14} 50 q14 -18 28 0z" fill="${P.trim}" stroke="${L}" stroke-width="2"/><ellipse cx="${x}" cy="51" rx="7" ry="3" fill="${P.light}"/><path d="M${x - 14} 52 L${x - 46} 150 L${x + 46} 150 L${x + 14} 52Z" fill="${P.light}" opacity=".12"/>`;
-    return `<defs>
-        <linearGradient id="rw${tier}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${P.wallT}"/><stop offset="1" stop-color="${P.wallB}"/></linearGradient>
-        <linearGradient id="rf${tier}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${P.floorB}"/><stop offset="1" stop-color="${P.floorA}"/></linearGradient>
-        <radialGradient id="rv${tier}" cx=".5" cy=".45" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></radialGradient>
-      </defs>
-      <rect width="360" height="400" fill="url(#rw${tier})"/>
-      <rect width="360" height="20" fill="${P.ceil}"/><path d="M0 20 H360" stroke="${P.trim}" stroke-width="3"/>
-      <path d="M0 0 L28 20 L28 ${FY} L0 ${FY + 30}Z" fill="${P.side}"/><path d="M360 0 L332 20 L332 ${FY} L360 ${FY + 30}Z" fill="${P.side}"/>
-      <path d="M28 20 V${FY} M332 20 V${FY}" stroke="${P.trim}" stroke-width="2" opacity=".6"/>
-      <rect x="28" y="168" width="304" height="${FY - 168}" fill="${P.wains}"/><path d="M28 168 H332" stroke="${P.trim}" stroke-width="3"/>
-      ${tier === 3 ? `<path d="M28 30 H332" stroke="${P.trim}" stroke-width="2" opacity=".7"/>${[60, 300].map(x => `<rect x="${x - 6}" y="20" width="12" height="148" fill="${P.wains}" opacity=".7"/>`).join('')}` : ''}
-      ${win(72, 76)}${win(212, 76)}
-      ${lamp(120)}${lamp(240)}
-      <path d="M0 ${FY + 30} L28 ${FY} H332 L360 ${FY + 30} V400 H0Z" fill="url(#rf${tier})"/>${planks}
-      <path d="M28 ${FY} H332" stroke="${P.trim}" stroke-width="4"/><path d="M0 ${FY + 30} L28 ${FY} M360 ${FY + 30} L332 ${FY}" stroke="${P.trim}" stroke-width="3"/>
-      <g>
-        <rect x="6" y="236" width="104" height="14" rx="4" fill="${P.desk[0]}" stroke="${L}" stroke-width="3"/>
-        <rect x="12" y="250" width="92" height="50" fill="${P.desk[1]}" stroke="${L}" stroke-width="3"/>
-        <path d="M12 272 H104" stroke="${L}" stroke-width="1.5" opacity=".35"/>
-        <rect x="22" y="220" width="20" height="17" rx="2" fill="#fff" stroke="${L}" stroke-width="2.5" transform="rotate(-8 32 228)"/>
-        <rect x="82" y="219" width="9" height="18" rx="3" fill="#7fd3ff" stroke="${L}" stroke-width="2.5"/>
-        <text x="58" y="292" text-anchor="middle" font-size="11" font-weight="800" fill="#fff6e8" font-family="-apple-system,'PingFang TC',sans-serif">📋 登記處</text>
-      </g>
-      <rect width="360" height="400" fill="url(#rv${tier})"/>`;
+  // 背景依時間自動切換：白天 05–13、下午 13–19、晚上 19–05（三張配置相同，只有光影不同）
+  const gymPeriod = (h = new Date().getHours()) => (h >= 5 && h < 13 ? 'day' : h >= 13 && h < 19 ? 'noon' : 'night');
+  const PERIOD_NAME = { day: '☀️ 白天', noon: '🌇 下午', night: '🌙 晚上' };
+  const DECOR_AR = { plant: 300 / 231, mats: 173 / 300, trophies: 297 / 252, barbell: 285 / 280, neon: 255 / 230, cooler: 300 / 146, statue: 299 / 207, bunting: 200 / 300, belt: 178 / 278,
+    kb: 208 / 300, rack: 232 / 300, tread: 289 / 300, bag: 300 / 98, ball: 300 / 299, clock: 300 / 296, poster: 300 / 217, mirror: 300 / 188, rug: 135 / 300,
+    gloves: 300 / 205, bike: 300 / 249, speaker: 300 / 171, lamp: 300 / 114, rope: 221 / 300, hang: 300 / 194, fridge: 300 / 229, scale: 193 / 300, roller: 224 / 300 };
+  // 英文字母磁鐵（自己畫：圓體粗字＋深咖啡描邊）
+  const LETTER_COL = ['#ef5a4f', '#f5913a', '#f7c632', '#5fb562', '#5b7fd6', '#ef5a4f', '#f5913a', '#9cc83f', '#4fbfa6', '#8b6fd6', '#ef5a4f', '#f7c632', '#7cbf45', '#4a8fd6', '#a066d0', '#9cc83f', '#f7c632', '#5fb562', '#4fbfa6', '#7b74d6', '#ef5a4f', '#f5913a', '#4a7fd6', '#ef5a4f', '#c45fbf', '#ef5a4f'];
+  const isLetter = id => id.startsWith('ltr-');
+  function letterBody(id) {
+    const i = id.charCodeAt(4) - 97, L = String.fromCharCode(65 + i), c = LETTER_COL[i];
+    const t = extra => `<text x="50" y="60" text-anchor="middle" font-size="64" font-weight="900" font-family="'Arial Rounded MT Bold','Arial Rounded MT','Varela Round','Nunito','Arial Black',sans-serif" ${extra}>${L}${L.toLowerCase()}</text>`;
+    return t(`fill="${c}" stroke="#4a2a1a" stroke-width="10" stroke-linejoin="round" paint-order="stroke"`) + t(`fill="none" stroke="#fff" stroke-opacity=".38" stroke-width="2" transform="translate(-1 -1.5)"`);
   }
-  // ---------- 自己畫的擺設（viewBox 0 0 100 h） ----------
-  const OL = 'stroke="#3b2a20" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
-  const DECOR_SVG = {
-    kb: [70, `<path d="M14 34 q0 -22 16 -22 q16 0 16 22" fill="none" ${OL} stroke-width="7"/><path d="M14 34 q0 -22 16 -22 q16 0 16 22" fill="none" stroke="#5b616e" stroke-width="3"/><circle cx="30" cy="48" r="19" fill="#3b3f4a" ${OL}/><ellipse cx="24" cy="42" rx="5" ry="7" fill="#fff" opacity=".25"/><path d="M58 40 q0 -18 13 -18 q13 0 13 18" fill="none" ${OL} stroke-width="6"/><path d="M58 40 q0 -18 13 -18 q13 0 13 18" fill="none" stroke="#f06b6b" stroke-width="2.5"/><circle cx="71" cy="52" r="15" fill="#e8505b" ${OL}/><ellipse cx="66" cy="47" rx="4" ry="5" fill="#fff" opacity=".3"/><text x="30" y="54" text-anchor="middle" font-size="12" font-weight="900" fill="#fff" font-family="Arial">12</text>`],
-    rack: [80, `<rect x="8" y="22" width="84" height="8" rx="3" fill="#7a4a26" ${OL}/><rect x="8" y="48" width="84" height="8" rx="3" fill="#7a4a26" ${OL}/><rect x="12" y="30" width="6" height="48" fill="#5a3418" ${OL}/><rect x="82" y="30" width="6" height="48" fill="#5a3418" ${OL}/>${[20, 44, 68].map((x, i) => `<rect x="${x}" y="14" width="14" height="4" fill="#999"/><rect x="${x - 4}" y="10" width="6" height="12" rx="2" fill="${['#e8505b', '#4a8fd6', '#3fa86b'][i]}" ${OL} stroke-width="2"/><rect x="${x + 12}" y="10" width="6" height="12" rx="2" fill="${['#e8505b', '#4a8fd6', '#3fa86b'][i]}" ${OL} stroke-width="2"/><rect x="${x}" y="40" width="14" height="4" fill="#999"/><rect x="${x - 5}" y="35" width="7" height="14" rx="2" fill="#3b3f4a" ${OL} stroke-width="2"/><rect x="${x + 12}" y="35" width="7" height="14" rx="2" fill="#3b3f4a" ${OL} stroke-width="2"/>`).join('')}`],
-    tread: [85, `<path d="M8 70 L78 70 L92 80 L14 80Z" fill="#3b3f4a" ${OL}/><path d="M14 66 L80 66 L88 72 L12 72Z" fill="#5b616e" ${OL} stroke-width="2"/><path d="M70 66 L78 18" stroke="#5b616e" stroke-width="7" stroke-linecap="round"/><path d="M70 66 L78 18" fill="none" ${OL} stroke-width="1.5"/><rect x="62" y="8" width="32" height="16" rx="4" fill="#5b616e" ${OL}/><rect x="67" y="11" width="14" height="8" rx="2" fill="#7fe0ff"/><circle cx="87" cy="15" r="2.5" fill="#e8505b"/><path d="M62 26 L40 30" ${OL} stroke-width="4" stroke="#3b3f4a"/>`],
-    bag: [220, `<path d="M50 0 V40 M50 40 L36 56 M50 40 L64 56" stroke="#777" stroke-width="3"/><rect x="30" y="54" width="40" height="150" rx="18" fill="#c43d3d" ${OL}/><path d="M30 80 h40 M30 178 h40" stroke="#8e2a2a" stroke-width="5"/><rect x="36" y="60" width="8" height="130" rx="4" fill="#fff" opacity=".2"/><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="900" fill="#fff" font-family="Arial Black,Arial" transform="rotate(-90 50 130)">PUNCH</text>`],
-    ball: [100, `<circle cx="50" cy="52" r="44" fill="#a37be8" ${OL}/><path d="M10 40 q40 18 80 0" stroke="#c9b0ff" stroke-width="6" fill="none"/><path d="M14 70 q36 14 72 0" stroke="#8a5fd6" stroke-width="5" fill="none"/><ellipse cx="34" cy="28" rx="12" ry="7" fill="#fff" opacity=".35" transform="rotate(-25 34 28)"/><ellipse cx="50" cy="97" rx="30" ry="3" fill="#000" opacity=".15"/>`],
-    clock: [100, `<circle cx="50" cy="50" r="44" fill="#fff" ${OL} stroke-width="5"/><circle cx="50" cy="50" r="44" fill="none" stroke="#e8505b" stroke-width="3" opacity=".6"/>${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return `<circle cx="${50 + Math.sin(a) * 34}" cy="${50 - Math.cos(a) * 34}" r="${i % 3 ? 2 : 3.5}" fill="#3b2a20"/>`; }).join('')}<path d="M50 50 L50 24 M50 50 L68 58" ${OL} stroke-width="5"/><circle cx="50" cy="50" r="4" fill="#e8505b"/>`],
-    poster: [130, `<rect x="6" y="6" width="88" height="118" rx="4" fill="#fff6e8" ${OL}/><rect x="6" y="6" width="88" height="30" fill="#e8505b"/><text x="50" y="27" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" font-family="Arial Black,Arial">NO PAIN</text><text x="50" y="52" text-anchor="middle" font-size="15" font-weight="900" fill="#e8505b" font-family="Arial Black,Arial">NO GAIN</text><text x="50" y="98" text-anchor="middle" font-size="34">💪🔥</text><circle cx="14" cy="12" r="3" fill="#c9a227"/><circle cx="86" cy="12" r="3" fill="#c9a227"/>`],
-    mirror: [160, `<rect x="10" y="4" width="80" height="152" rx="40" fill="#c9a26b" ${OL}/><rect x="18" y="12" width="64" height="136" rx="32" fill="#cfe9f7"/><path d="M30 40 L52 20 M30 64 L66 30" stroke="#fff" stroke-width="5" opacity=".7" stroke-linecap="round"/>`],
-    rug: [36, `<ellipse cx="50" cy="18" rx="48" ry="16" fill="#e8505b" ${OL}/><ellipse cx="50" cy="18" rx="38" ry="11" fill="#f2b134"/><ellipse cx="50" cy="18" rx="26" ry="7" fill="#3fa86b"/><ellipse cx="50" cy="18" rx="12" ry="3" fill="#fff6e8"/>`],
-    gloves: [100, `<path d="M50 4 V18" stroke="#777" stroke-width="3"/><circle cx="50" cy="20" r="4" fill="#999" ${OL} stroke-width="2"/><path d="M50 22 L30 40 M50 22 L70 40" stroke="#ddd" stroke-width="2.5"/><path d="M14 52 q0 -20 18 -20 q18 0 18 22 q0 22 -14 30 h-10 q-12 -8 -12 -32z" fill="#e8505b" ${OL}/><rect x="22" y="82" width="20" height="12" rx="3" fill="#fff" ${OL} stroke-width="2"/><path d="M50 54 q0 -22 18 -22 q18 0 18 20 q0 24 -12 32 h-10 q-14 -8 -14 -30z" fill="#4a8fd6" ${OL}/><rect x="58" y="82" width="20" height="12" rx="3" fill="#fff" ${OL} stroke-width="2"/><ellipse cx="26" cy="46" rx="5" ry="7" fill="#fff" opacity=".35"/><ellipse cx="62" cy="46" rx="5" ry="7" fill="#fff" opacity=".35"/>`],
-    bike: [90, `<path d="M20 84 H84" ${OL} stroke-width="6" stroke="#3b3f4a"/><path d="M28 84 L44 44 L70 44 L76 84" fill="none" stroke="#e8505b" stroke-width="7" stroke-linejoin="round"/><path d="M28 84 L44 44 L70 44 L76 84" fill="none" ${OL} stroke-width="1.5"/><circle cx="74" cy="62" r="16" fill="#5b616e" ${OL}/><circle cx="74" cy="62" r="6" fill="#ccc"/><rect x="34" y="34" width="22" height="9" rx="4" fill="#3b3f4a" ${OL} stroke-width="2"/><path d="M70 44 L78 18 L90 16" fill="none" ${OL} stroke-width="5" stroke="#3b3f4a"/><rect x="74" y="20" width="16" height="10" rx="3" fill="#3b3f4a"/><rect x="77" y="22" width="9" height="5" fill="#7fe0ff"/>`],
-    speaker: [140, `<rect x="14" y="6" width="72" height="128" rx="10" fill="#2b2b38" ${OL}/><circle cx="50" cy="40" r="18" fill="#4a4a5e" ${OL} stroke-width="2"/><circle cx="50" cy="40" r="8" fill="#1a1a24"/><circle cx="50" cy="92" r="28" fill="#4a4a5e" ${OL} stroke-width="2"/><circle cx="50" cy="92" r="12" fill="#1a1a24"/><circle cx="50" cy="92" r="31" fill="none" stroke="#ff4fd8" stroke-width="2" opacity=".7"/><text x="80" y="22" font-size="14">🎵</text>`],
-    lamp: [260, `<path d="M30 6 L70 6 L84 54 L16 54Z" fill="#ffe9a8" ${OL}/><path d="M16 54 L-20 240 L120 240 L84 54Z" fill="#fff4c8" opacity=".18"/><rect x="47" y="54" width="6" height="190" fill="#5a3418" ${OL} stroke-width="2"/><ellipse cx="50" cy="248" rx="24" ry="8" fill="#3b2a20"/>`],
-    rope: [80, `<path d="M18 60 q-14 -40 22 -44 q34 -4 30 26 q-4 26 -30 22 q-22 -4 -14 -22 q8 -14 24 -8" fill="none" stroke="#f2b134" stroke-width="5" stroke-linecap="round"/><rect x="8" y="58" width="10" height="20" rx="4" fill="#e8505b" ${OL} stroke-width="2"/><rect x="76" y="36" width="10" height="20" rx="4" fill="#e8505b" ${OL} stroke-width="2" transform="rotate(30 81 46)"/><path d="M18 66 Q50 82 78 50" fill="none" stroke="#f2b134" stroke-width="5" stroke-linecap="round"/>`],
-    hang: [160, `<path d="M50 0 V40 M50 40 L28 70 M50 40 L72 70" stroke="#8a6a4a" stroke-width="2.5"/><path d="M22 70 h56 l-8 28 h-40z" fill="#c9774a" ${OL}/>${[[30, 96, -30], [42, 104, -10], [58, 104, 10], [70, 96, 30], [50, 110, 0]].map(([x, y, r]) => `<path d="M${x} ${y} q-6 22 0 46" stroke="#3fa86b" stroke-width="4" fill="none" transform="rotate(${r} ${x} ${y})"/><ellipse cx="${x + r * .4}" cy="${y + 36}" rx="7" ry="11" fill="#5cbf7a" ${OL} stroke-width="1.5" transform="rotate(${r} ${x} ${y})"/>`).join('')}<path d="M28 70 q-10 -26 10 -34 q10 12 -2 34 M72 70 q10 -26 -10 -34 q-10 12 2 34 M50 70 q-6 -30 0 -40 q6 10 0 40" fill="#4fae6c" ${OL} stroke-width="2"/>`],
-  };
-
-  const DECOR_AR = { plant: 300 / 231, mats: 173 / 300, trophies: 297 / 252, barbell: 285 / 280, neon: 255 / 230, cooler: 300 / 146, statue: 299 / 207, bunting: 200 / 300, belt: 178 / 278 };
-  const decorAR = id => DECOR_SVG[id] ? DECOR_SVG[id][0] / 100 : DECOR_AR[id];
+  const decorAR = id => isLetter(id) ? .72 : DECOR_AR[id];
   function decorPlace(d) { const p = (S.decorPos || {})[d.id] || {}; return { x: p.x ?? d.at[0], y: p.y ?? d.at[1], w: d.at[2] * (p.s || 1), f: !!p.f }; }
+  function decorArt(id, X, Y, w, h) {
+    return isLetter(id) ? `<g transform="translate(${X} ${Y}) scale(${w / 100})">${letterBody(id)}</g>`
+      : `<image href="gym/decor-${id}.webp" x="${X}" y="${Y}" width="${w}" height="${h.toFixed(1)}"/>`;
+  }
   function decorMarkup(d, sel) {
     const { x, y, w, f } = decorPlace(d), h = w * decorAR(d.id), X = x - w / 2, Y = y - h;
     const flip = f ? ` transform="translate(${2 * x} 0) scale(-1 1)"` : '';
-    const body = DECOR_SVG[d.id]
-      ? `<g transform="translate(${X} ${Y}) scale(${w / 100})">${DECOR_SVG[d.id][1]}</g>`
-      : `<image href="gym/decor-${d.id}.webp" x="${X}" y="${Y}" width="${w}" height="${h.toFixed(1)}"/>`;
     const box = sel ? `<rect x="${X - 3}" y="${Y - 3}" width="${w + 6}" height="${h + 6}" rx="6" fill="none" stroke="#ffd36a" stroke-width="2.5" stroke-dasharray="6 4"/>` : '';
-    return `<g class="dec" data-id="${d.id}"><g${flip}>${body}</g><rect class="hit" x="${X}" y="${Y}" width="${w}" height="${h}" fill="transparent"/>${box}</g>`;
+    return `<g class="dec" data-id="${d.id}"><g${flip}>${decorArt(d.id, X, Y, w, h)}</g><rect class="hit" x="${X}" y="${Y}" width="${w}" height="${h}" fill="transparent"/>${box}</g>`;
   }
+  let gymPeriodNow = gymPeriod();
   function gymBG() {
-    const tier = gymTier(curLevel()), on = DECOR.filter(decorOn);
+    const on = DECOR.filter(decorOn); gymPeriodNow = gymPeriod();
     const order = on.slice().sort((a, b) => (a.under ? -1 : 0) - (b.under ? -1 : 0) || decorPlace(a).y - decorPlace(b).y);
     const items = order.map(d => decorMarkup(d, decorEdit && decorSel === d.id)).join('');
-    const hl = decorEdit ? '' : on.filter(d => (S.newDecor || []).includes(d.id)).map(d => { const { x, y, w } = decorPlace(d), h = w * decorAR(d.id), cy = y - h / 2, r = Math.max(w, h) * .5;
+    const hl = decorEdit ? '' : on.filter(d => (S.newDecor || []).includes(d.id) && !isLetter(d.id)).map(d => { const { x, y, w } = decorPlace(d), h = w * decorAR(d.id), cy = y - h / 2, r = Math.max(w, h) * .5;
       return `<g pointer-events="none"><circle cx="${x}" cy="${cy}" r="${r}" fill="none" stroke="#ffd36a" stroke-width="3"><animate attributeName="r" values="${r * .8};${r * 1.15};${r * .8}" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.3;1" dur="1.2s" repeatCount="indefinite"/></circle><text x="${x}" y="${Math.max(16, cy - r - 4)}" text-anchor="middle" font-size="13" font-weight="900" fill="#e8505b" stroke="#fff" stroke-width="3" paint-order="stroke">NEW!</text></g>`; }).join('');
-    return roomSVG(tier) + items + hl;
+    return `<image href="gym/room-${gymPeriodNow}.webp" x="0" y="0" width="360" height="400" preserveAspectRatio="xMidYMid slice"/>` + items + hl;
   }
+  setInterval(() => { if (gymPeriod() !== gymPeriodNow) renderGymBG(); }, 60 * 1000);
   function dormBG() {
     const L = '#4a2f1f';
     let planks = '';
@@ -1865,7 +1813,7 @@
   }
 
   // ----- actors & movement -----
-  const COACH_HOME = { x: 20, y: 24 };
+  const COACH_HOME = { x: 20, y: 17 };
   const pos = { player: { x: 74, y: 9 }, coach: { ...COACH_HOME } };
   function place(id, p, ms = 0) {
     const el = $(id);
@@ -1890,7 +1838,7 @@
     place(id, pos[id], ms);
     return new Promise(res => setTimeout(res, ms + 30));
   }
-  const clampPos = p => ({ x: Math.max(10, Math.min(90, p.x)), y: Math.max(3, Math.min(40, p.y)) });
+  const clampPos = p => ({ x: Math.max(10, Math.min(90, p.x)), y: Math.max(3, Math.min(33, p.y)) });
 
   let walkToken = 0;
   async function walkPlayer(target) {
@@ -2662,36 +2610,41 @@
   const L_ = '#4a2f1f';
   // 道具：經驗值到了就送（不用等升級）。at = 預設位置 [中心x, 底部y, 寬]
   const DECOR = [
-    { id: 'mats', exp: 20, icon: '🧘', label: '彩色瑜伽墊', at: [292, 300, 56] },
-    { id: 'plant', exp: 50, icon: '🪴', label: '龜背芋盆栽', at: [345, 302, 40] },
-    { id: 'poster', exp: 80, icon: '📜', label: '熱血海報', at: [318, 124, 28] },
-    { id: 'clock', exp: 110, icon: '🕒', label: '紅框時鐘', at: [180, 52, 24] },
-    { id: 'kb', exp: 150, icon: '🔔', label: '壺鈴組', at: [242, 292, 34] },
-    { id: 'ball', exp: 190, icon: '🟣', label: '瑜伽球', at: [140, 302, 34] },
-    { id: 'rope', exp: 230, icon: '➰', label: '跳繩', at: [204, 342, 32] },
-    { id: 'rack', exp: 280, icon: '🏋️', label: '啞鈴架', at: [282, 236, 50] },
-    { id: 'cooler', exp: 330, icon: '🚰', label: '飲水機', at: [120, 230, 16] },
-    { id: 'rug', exp: 380, icon: '🟠', label: '圓形地毯', at: [190, 336, 130], under: true },
-    { id: 'tread', exp: 440, icon: '🏃', label: '跑步機', at: [214, 236, 58] },
-    { id: 'bag', exp: 500, icon: '🥊', label: '沙袋', at: [322, 206, 28] },
-    { id: 'gloves', exp: 560, icon: '🧤', label: '拳擊手套', at: [46, 98, 26] },
-    { id: 'mirror', exp: 620, icon: '🪞', label: '落地鏡', at: [46, 200, 24] },
-    { id: 'barbell', exp: 690, icon: '🏋️', label: '槓鈴臥推架', at: [258, 374, 56] },
-    { id: 'speaker', exp: 760, icon: '🔊', label: '音響', at: [160, 230, 18] },
-    { id: 'lamp', exp: 830, icon: '💡', label: '立燈', at: [342, 238, 20] },
-    { id: 'bike', exp: 900, icon: '🚲', label: '飛輪車', at: [150, 252, 44] },
-    { id: 'trophies', exp: 980, icon: '🏆', label: '獎盃櫃', at: [180, 212, 40] },
-    { id: 'neon', exp: 1060, icon: '💪', label: '霓虹肌肉招牌', at: [180, 108, 30] },
-    { id: 'hang', exp: 1140, icon: '🌿', label: '吊掛盆栽', at: [110, 74, 22] },
-    { id: 'statue', exp: 1250, icon: '🥇', label: '黃金啞鈴雕像', at: [306, 392, 42] },
-    { id: 'bunting', exp: 1400, icon: '🎏', label: '冠軍彩旗', at: [250, 100, 90] },
-    { id: 'belt', exp: 1600, icon: '🏅', label: '冠軍金腰帶', at: [180, 152, 36] },
+    { id: 'mats', exp: 20, icon: '🧘', label: '彩色瑜伽墊', at: [292, 318, 58] },
+    { id: 'plant', exp: 50, icon: '🪴', label: '龜背芋盆栽', at: [344, 340, 40] },
+    { id: 'poster', exp: 80, icon: '🖼️', label: '肌肉海報', at: [173, 182, 30] },
+    { id: 'clock', exp: 110, icon: '🕒', label: '紅框時鐘', at: [173, 112, 24] },
+    { id: 'kb', exp: 150, icon: '🔔', label: '壺鈴組', at: [246, 312, 36] },
+    { id: 'ball', exp: 190, icon: '🟣', label: '瑜伽球', at: [150, 316, 32] },
+    { id: 'rope', exp: 230, icon: '➰', label: '跳繩', at: [214, 362, 36] },
+    { id: 'rack', exp: 280, icon: '🏋️', label: '啞鈴架', at: [298, 272, 56] },
+    { id: 'cooler', exp: 330, icon: '🚰', label: '飲水機', at: [150, 266, 15] },
+    { id: 'rug', exp: 380, icon: '🟠', label: '圓形地毯', at: [196, 352, 120], under: true },
+    { id: 'tread', exp: 440, icon: '🏃', label: '跑步機', at: [226, 276, 66] },
+    { id: 'bag', exp: 500, icon: '🥊', label: '沙袋', at: [342, 196, 24] },
+    { id: 'gloves', exp: 560, icon: '🧤', label: '拳擊手套', at: [12, 190, 22] },
+    { id: 'mirror', exp: 620, icon: '🪞', label: '落地鏡', at: [126, 268, 24] },
+    { id: 'barbell', exp: 690, icon: '🏋️', label: '槓鈴臥推架', at: [262, 394, 58] },
+    { id: 'speaker', exp: 760, icon: '🔊', label: '音響', at: [196, 266, 18] },
+    { id: 'lamp', exp: 830, icon: '💡', label: '立燈', at: [346, 270, 16] },
+    { id: 'bike', exp: 900, icon: '🚲', label: '飛輪車', at: [330, 396, 46] },
+    { id: 'trophies', exp: 980, icon: '🏆', label: '獎盃櫃', at: [173, 252, 34] },
+    { id: 'neon', exp: 1060, icon: '💪', label: '霓虹肌肉招牌', at: [266, 62, 28] },
+    { id: 'hang', exp: 1140, icon: '🌿', label: '吊掛盆栽', at: [346, 92, 22] },
+    { id: 'statue', exp: 1250, icon: '🥇', label: '黃金啞鈴雕像', at: [140, 398, 40] },
+    { id: 'bunting', exp: 1400, icon: '🎏', label: '冠軍彩旗', at: [173, 56, 82] },
+    { id: 'belt', exp: 1600, icon: '🏅', label: '冠軍金腰帶', at: [80, 62, 34] },
+    { id: 'roller', exp: 1750, icon: '🧻', label: '按摩滾筒', at: [96, 380, 34] },
+    { id: 'scale', exp: 1900, icon: '⚖️', label: '體重計', at: [60, 396, 30] },
+    { id: 'fridge', exp: 2100, icon: '🧊', label: '飲料冰箱', at: [100, 270, 26] },
+    // 英文字母磁鐵：10 EXP 一次全部送，預設收在箱子裡，自己挑出來排字
+    ...Array.from({ length: 26 }, (_, i) => ({ id: 'ltr-' + String.fromCharCode(97 + i), exp: 10, icon: '🔤', label: String.fromCharCode(65 + i) + String.fromCharCode(97 + i), set: 'letters', defaultOff: true, at: [40 + (i % 13) * 23.5, 214 + Math.floor(i / 13) * 22, 22] })),
   ];
   let decorEdit = false, decorSel = null, decorDrag = null;
   const decorGot = d => curScore() >= d.exp;
   function decorThumb(d) {
     const ar = decorAR(d.id), w = 100, h = w * ar, sz = Math.max(w, h);
-    const body = DECOR_SVG[d.id] ? `<svg x="${(sz - w) / 2}" y="${(sz - h) / 2}" width="${w}" height="${h}" viewBox="0 0 100 ${DECOR_SVG[d.id][0]}" overflow="visible">${DECOR_SVG[d.id][1]}</svg>` : `<image href="gym/decor-${d.id}.webp" x="${(sz - w) / 2}" y="${(sz - h) / 2}" width="${w}" height="${h}"/>`;
+    const body = decorArt(d.id, (sz - w) / 2, (sz - h) / 2, w, h);
     return `<svg viewBox="0 0 ${sz} ${sz}">${body}</svg>`;
   }
   function renderDecorPanel() {
@@ -2700,11 +2653,14 @@
     const got = DECOR.filter(decorGot), d = DECOR.find(x => x.id === decorSel);
     const p = d ? (S.decorPos || {})[d.id] || {} : {};
     el.innerHTML = `<b>🪑 擺設模式</b><span class="muted" style="font-size:.8rem">　點道具選取，直接在畫面上拖曳移動</span>
-      ${d ? `<div class="dp-sel"><b>${d.icon} ${esc(d.label)}${S.decor[d.id] === false ? '（已收起）' : ''}</b>
+      ${d ? `<div class="dp-sel"><b>${d.icon} ${esc(d.label)}${!decorShown(d) ? '（收在箱子裡）' : ''}</b>
         <button onclick="App.decorAdj('s',-1)">➖ 縮小</button><button onclick="App.decorAdj('s',1)">➕ 放大</button><button onclick="App.decorAdj('f')">↔️ 翻轉</button>
-        <button onclick="App.decorAdj('hide')">${S.decor[d.id] === false ? '👁️ 擺出來' : '📦 收起'}</button><button onclick="App.decorAdj('reset')">↩️ 原位</button></div>`
+        <button onclick="App.decorAdj('hide')">${!decorShown(d) ? '👁️ 擺出來' : '📦 收起'}</button><button onclick="App.decorAdj('reset')">↩️ 原位</button></div>`
         : '<p class="muted" style="margin:6px 0">先點畫面上的道具，或從下面選一個。</p>'}
-      ${got.length ? `<div class="dp-list">${got.map(x => `<button class="${S.decor[x.id] === false ? 'off' : ''} ${x.id === decorSel ? 'sel' : ''}" onclick="App.decorPick('${x.id}')">${decorThumb(x)}${esc(x.label)}</button>`).join('')}</div>` : '<p class="muted">還沒有道具，累積經驗值就會送！</p>'}
+      ${got.filter(x => !x.set).length ? `<div class="dp-list">${got.filter(x => !x.set).map(x => `<button class="${!decorShown(x) ? 'off' : ''} ${x.id === decorSel ? 'sel' : ''}" onclick="App.decorPick('${x.id}')">${decorThumb(x)}${esc(x.label)}</button>`).join('')}</div>` : '<p class="muted">還沒有道具，累積經驗值就會送！</p>'}
+      ${got.some(x => x.set === 'letters') ? `<div style="margin-top:8px"><b style="font-size:.9rem">🔤 英文字母磁鐵</b><span class="muted" style="font-size:.75rem">　點字母拿出來，拖到牆上排字；灰色的還在箱子裡</span>
+        <div class="dp-letters">${got.filter(x => x.set === 'letters').map(x => `<button class="${!decorShown(x) ? 'off' : ''} ${x.id === decorSel ? 'sel' : ''}" onclick="App.decorPick('${x.id}')">${decorThumb(x)}</button>`).join('')}</div>
+        <div class="btn-row" style="margin-top:4px"><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(true)">全部拿出來</button><button class="btn ghost" style="padding:6px 0;font-size:.8rem" onclick="App.lettersAll(false)">全部收起</button></div></div>` : ''}
       <div class="btn-row" style="margin-top:8px"><button class="btn ghost" onclick="App.decorResetAll()">全部回到原位</button><button class="btn" onclick="App.decorMode(false)">✅ 完成</button></div>`;
   }
   function decorPoint(e) { const r = $('gym-bg').getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 360, y: (e.clientY - r.top) / r.height * 400 }; }
@@ -2753,19 +2709,19 @@
     S.newDecor = [...new Set([...(S.newDecor || []), ...fresh])]; persist(); renderGymBG();
     const show = () => {
       if (['levelup', 'night-ov', 'evolve'].some(id => $(id).classList.contains('show'))) return setTimeout(show, 800);
-      $('gift-body').innerHTML = `<p style="margin:0 0 10px">經驗值累積到了，教練送你 ${fresh.length} 個道具！已經放進健身房，可以自由移動擺設。</p>
-        <div class="gift-grid">${fresh.map((id, i) => { const d = DECOR.find(x => x.id === id); return `<div style="animation-delay:${i * .08}s">${decorThumb(d)}${esc(d.label)}</div>`; }).join('')}</div>`;
+      $('gift-body').innerHTML = `<p style="margin:0 0 10px">經驗值累積到了，教練送你 ${fresh.filter(id => !isLetter(id)).length + (fresh.some(isLetter) ? 1 : 0)} 樣道具！已經放進健身房，可以自由移動擺設。</p>
+        <div class="gift-grid">${fresh.filter(id => !isLetter(id)).map((id, i) => { const d = DECOR.find(x => x.id === id); return `<div style="animation-delay:${i * .08}s">${decorThumb(d)}${esc(d.label)}</div>`; }).join('')}${fresh.some(isLetter) ? `<div style="grid-column:1/-1">${['ltr-a', 'ltr-b', 'ltr-c'].map(id => decorThumb(DECOR.find(x => x.id === id))).join('').replace(/<svg /g, '<svg style="display:inline-block;width:44px;height:44px" ')}<br>英文字母磁鐵 A～Z 全套（26 個）<br><small class="muted">在擺設模式拿出來排字</small></div>` : ''}</div>`;
       $('gift-ov').classList.add('show');
     };
     show();
     const next = DECOR.find(d => C.score < d.exp);
-    if (!busy) setCoach('cheer', `呀哈！送你新道具：${fresh.map(id => DECOR.find(x => x.id === id).label).slice(0, 3).join('、')}${fresh.length > 3 ? '…' : ''}！${next ? `再 ${next.exp - C.score} EXP 還有下一個！` : ''}`);
+    if (!busy) setCoach('cheer', `呀哈！送你新道具：${fresh.map(id => isLetter(id) ? (id === fresh.find(isLetter) ? '英文字母磁鐵' : '') : DECOR.find(x => x.id === id).label).filter(Boolean).slice(0, 3).join('、')}${fresh.length > 3 ? '…' : ''}！${next ? `再 ${next.exp - C.score} EXP 還有下一個！` : ''}`);
   }
-  function decorOn(d) { return decorGot(d) && S.decor[d.id] !== false; }
+  const decorShown = d => S.decor[d.id] === undefined ? !d.defaultOff : S.decor[d.id] !== false;
+  function decorOn(d) { return decorGot(d) && decorShown(d); }
   function renderGymBG() { const el = $('gym-bg'); if (el) el.innerHTML = S.room === 'dorm' ? dormBG() : gymBG(); }
   function unlocksAt(lv) {
     const out = [];
-    if (lv > 1 && gymTier(lv) !== gymTier(lv - 1)) out.unshift(`🏟️ 健身房大改裝：${GYM_TIER_NAME[gymTier(lv)]}`);
     const CAT = { top: '上衣', legs: '下身', feet: '鞋子', acc: '眼鏡', hat: '帽子', hair: '髮型' };
     Object.entries(LOCKS).forEach(([slot, m]) => Object.entries(m).forEach(([id, l]) => {
       if (l !== lv) return; const p = findPart(slot, id); if (p) out.push(`👕 ${CAT[slot]}：${p.label}`);
@@ -2779,10 +2735,11 @@
       <div class="patience-label" style="margin-top:6px"><span>距離 Lv.${lv + 1}</span><span>${Math.max(0, into)} / ${LEVEL_PTS} EXP</span></div>
       <div class="bar"><i style="width:${Math.max(0, Math.min(100, into / LEVEL_PTS * 100))}%;background:linear-gradient(90deg,#8b5bd6,#f2b134)"></i></div>
       <p class="muted" style="margin:8px 0 0">下一級解鎖：${unlocksAt(lv + 1).join('、') || '更多稱號'}</p>`;
-    $('rw-decor').innerHTML = `<p class="muted" style="margin:0 0 6px">經驗值到了就送道具！到健身房按「🪑 擺設」可以自由移動。</p>` + DECOR.map(d => {
+    $('rw-decor').innerHTML = `<p class="muted" style="margin:0 0 6px">經驗值到了就送道具！到健身房按「🪑 擺設」可以自由移動。</p>` + DECOR.filter(d => !d.set || d.id === 'ltr-a').map(d => {
+      if (d.set === 'letters') d = { id: 'ltr-a', exp: d.exp, icon: '🔤', label: '英文字母磁鐵組（26 個）', setRow: true };
       const open = C.score >= d.exp;
       return `<div class="unlock-row ${open ? '' : 'locked'}"><div class="ic">${d.icon}</div><div class="nm">${d.label}<small>${open ? '已獲得' : `🔒 ${d.exp} EXP 獲得（還差 ${d.exp - C.score}）`}</small></div>
-        ${open ? `<label class="switch"><input type="checkbox" ${S.decor[d.id] !== false ? 'checked' : ''} onchange="App.toggleDecor('${d.id}', this.checked)"><span></span></label>` : ''}</div>`;
+        ${open && !d.setRow ? `<label class="switch"><input type="checkbox" ${decorShown(d) ? 'checked' : ''} onchange="App.toggleDecor('${d.id}', this.checked)"><span></span></label>` : ''}</div>`;
     }).join('');
     const rows = [];
     Object.entries(LOCKS).forEach(([slot, m]) => Object.entries(m).forEach(([id, l]) => { const p = findPart(slot, id); if (p) rows.push([l, slot, p.label]); }));
@@ -2824,8 +2781,8 @@
     $('lu-title').textContent = `升級！Lv.${C.level}`;
     $('lu-sub').textContent = `稱號：${C.title}`;
     const newDec = [];
-    const tierUp = gymTier(C.level) > gymTier(S._prevSeen || 1);
-    $('lu-new').innerHTML = (tierUp ? `<div class="lu-new"><svg viewBox="0 0 360 400" style="width:100%;height:auto;border-radius:10px;animation:pop .5s ease-out">${roomSVG(gymTier(C.level))}</svg><b>🏟️ 健身房大改裝！</b><span>升級成「${GYM_TIER_NAME[gymTier(C.level)]}」了！</span></div>` : '') + newDec.map(d => `<div class="lu-new"><div class="big">${d.icon}</div><b>🆕 新擺設：${d.label}</b><span>已經放進健身房了！</span></div>`).join('')
+    const tierUp = false;
+    $('lu-new').innerHTML = (tierUp ? `<div class="lu-new"><b>🏟️</b></div>` : '') + newDec.map(d => `<div class="lu-new"><div class="big">${d.icon}</div><b>🆕 新擺設：${d.label}</b><span>已經放進健身房了！</span></div>`).join('')
       + (newDec.length || tierUp ? `<button class="btn secondary" style="margin-bottom:8px" onclick="App.seeNewDecor()">👀 去健身房看看</button>` : '');
     $('lu-list').innerHTML = (gained.length ? gained : ['新的稱號！繼續保持紀律！']).map(x => `<li>${esc(x)}</li>`).join('');
     $('levelup').classList.add('show');
@@ -4371,13 +4328,14 @@
       renderGymBG(); renderDecorPanel();
       if (decorEdit) setTimeout(() => $('gym').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     },
-    decorPick(id) { decorSel = id; if (S.decor[id] === false) { S.decor[id] = true; persist(); } renderGymBG(); renderDecorPanel(); },
+    decorPick(id) { decorSel = id; const d = DECOR.find(x => x.id === id); if (!decorShown(d)) { S.decor[id] = true; persist(); } renderGymBG(); renderDecorPanel(); },
+    lettersAll(on) { DECOR.filter(d => d.set === 'letters').forEach(d => { S.decor[d.id] = on; }); if (!on && decorSel && isLetter(decorSel)) decorSel = null; persist(); renderGymBG(); renderDecorPanel(); },
     decorAdj(k, v) {
       const id = decorSel; if (!id) return;
       S.decorPos = S.decorPos || {}; const p = S.decorPos[id] = S.decorPos[id] || {};
       if (k === 's') p.s = Math.max(.4, Math.min(2.5, Math.round(((p.s || 1) + v * .15) * 100) / 100));
       if (k === 'f') p.f = !p.f;
-      if (k === 'hide') S.decor[id] = S.decor[id] === false;
+      if (k === 'hide') S.decor[id] = !decorShown(DECOR.find(x => x.id === id));
       if (k === 'reset') delete S.decorPos[id];
       persist(); renderGymBG(); renderDecorPanel();
     },
@@ -4893,7 +4851,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.22-8';
+  const APP_VERSION = '2026.11.23-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
@@ -4935,7 +4893,7 @@
     const r = $('gym').getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width * 100;
     const y = (r.bottom - e.clientY) / r.height * 100;
-    if (y > 46) return; // wall
+    if (y > 38) return; // wall
     const dot = document.createElement('div'); dot.className = 'walk-dot';
     const c = clampPos({ x, y }); dot.style.left = c.x + '%'; dot.style.bottom = c.y + '%';
     $('gym').appendChild(dot); setTimeout(() => dot.remove(), 700);
