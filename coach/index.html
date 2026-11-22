@@ -220,6 +220,42 @@
   .tb-info { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); margin-bottom: 8px; }
   .tb-res { text-align: center; font-weight: 900; font-size: 1.4rem; min-height: 1.6em; }
   .tb-res.perfect { color: #e8505b; animation: pop .4s ease-out; } .tb-res.good { color: #c98a10; } .tb-res.miss { color: var(--muted); }
+  #games.compact .mg-coach { height: 84px; } #games.compact .mg-coach img, #games.compact .mg-coach svg { max-height: 78px; }
+  #games.compact .mg-say { margin: 6px 0; font-size: .95rem; }
+  .mg-stat { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+  .mg-stat b { color: var(--ink); }
+  .dn-stage { position: relative; height: 300px; background: linear-gradient(#2b2440, #3e2f5c); border-radius: 16px; overflow: hidden; touch-action: manipulation; }
+  .dn-lane { position: absolute; top: 0; bottom: 0; width: 25%; border-right: 1px solid rgba(255,255,255,.08); }
+  .dn-target { position: absolute; left: 0; right: 0; bottom: 18px; height: 52px; display: flex; }
+  .dn-target span { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 2rem; opacity: .35; color: #fff; filter: grayscale(1); }
+  .dn-target span.flash { opacity: 1; filter: none; transform: scale(1.15); transition: transform .05s; }
+  .dn-note { position: absolute; width: 25%; height: 52px; display: flex; align-items: center; justify-content: center; font-size: 2rem; will-change: transform; }
+  .dn-judge { position: absolute; left: 0; right: 0; top: 38%; text-align: center; font-weight: 900; font-size: 1.6rem; color: #fff; text-shadow: 0 2px 6px #000; pointer-events: none; }
+  .dn-judge.pop { animation: pop .35s ease-out; }
+  .dn-pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+  .dn-pads button { border: none; border-radius: 14px; padding: 16px 0; font-size: 1.8rem; background: var(--card); box-shadow: var(--shadow); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  .dn-pads button:active { transform: scale(.94); background: #ffe7a8; }
+  .ml-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .ml-hole { position: relative; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(ellipse at 50% 70%, #3b2414 45%, #7a4a26 47%, #a8743e 70%); overflow: hidden; border: none; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  .ml-hole .ml-m { position: absolute; left: 0; right: 0; bottom: -70%; font-size: 3rem; text-align: center; transition: bottom .12s ease-out; pointer-events: none; }
+  .ml-hole.up .ml-m { bottom: 14%; }
+  .ml-hole.hit .ml-m { filter: brightness(1.6) saturate(.3); transform: scale(.85); }
+  .ml-hole .ml-fx { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 2px 4px #000; pointer-events: none; }
+  .pn-songs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .pn-songs .pn-s { display: flex; gap: 4px; }
+  .pn-songs .pn-s button:first-child { flex: 1; text-align: left; border: 2px solid var(--line); background: var(--card); border-radius: 12px; padding: 8px; font: inherit; font-size: .88rem; color: var(--ink); }
+  .pn-songs .pn-s button:last-child { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 0 8px; font-size: 1rem; }
+  .pn-songs small { display: block; color: var(--muted); font-size: .72rem; }
+  .pn-seq { display: flex; gap: 4px; overflow: hidden; margin-bottom: 8px; min-height: 44px; align-items: center; }
+  .pn-seq span { flex: none; min-width: 40px; padding: 6px 4px; text-align: center; border-radius: 10px; background: var(--card); border: 2px solid var(--line); font-weight: 800; font-size: .9rem; }
+  .pn-seq span.cur { background: #ffd36a; border-color: #c98a10; transform: scale(1.12); }
+  .pn-seq span.done { opacity: .35; }
+  .pn-kb { position: relative; display: flex; gap: 2px; height: 150px; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  .pn-kb button { flex: 1; min-width: 0; border: 1px solid #b9aa95; border-radius: 0 0 8px 8px; background: linear-gradient(#fff, #f1ebe0); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 0 6px; font: inherit; font-size: .62rem; color: var(--muted); touch-action: manipulation; }
+  .pn-kb button b { font-size: .7rem; color: var(--ink); }
+  .pn-kb button.target { background: linear-gradient(#fff3c4, #ffd36a); border-color: #c98a10; box-shadow: 0 0 10px #ffd36a; }
+  .pn-kb button.ok { background: #bff0cf; } .pn-kb button.bad { background: #ffc9cd; animation: shake .25s; }
+  @keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
   .mg-menu b { font-size: 1rem; } .mg-menu small { display: block; color: var(--muted); font-size: .78rem; }
   .guide h3 { font-size: 1rem; margin: 14px 0 6px; }
   .guide p, .guide li { font-size: .9rem; line-height: 1.6; }
@@ -3188,15 +3224,17 @@
   function mgCoach(state) { $('mg-coach').innerHTML = coachMarkup(state); const el = $('mg-coach').firstElementChild; if (el) el.classList.add('a-' + state); }
   function mgSay(t) { $('mg-say').textContent = t; }
   function mgMenu() {
+    $('games').classList.remove('compact'); if (mg) mg.dead = true;
     if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null;
     $('mg-title').textContent = '🎮 和教練玩';
     mgCoach('goforit'); mgSay(`${S.settings.coachName || '教練'}：來比一場吧！每個遊戲每天贏一次 +${GAME_EXP} EXP`);
     const done = (S.gameBonus || {})[today()] || {};
     $('mg-body').innerHTML = `<div class="mg-menu">
       <button onclick="App.gameStart('rps')"><b>✊ 猜拳三戰兩勝</b><small>先贏 2 場就勝利${done.rps ? '・今天已領獎 ✅' : ''}</small></button>
-      <button onclick="App.gameStart('box')"><b>🥊 反應拳擊</b><small>教練舉起手靶就馬上打！5 回合打中 4 次過關${done.box ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('hit')"><b>🎯 時機打擊</b><small>指標滑進金色打擊區時按「打擊！」，越靠近中心分數越高；速度忽快忽慢！5 回合 300 分過關${done.hit ? '・今天已領獎 ✅' : ''}</small></button>
-      <button onclick="App.gameStart('squat')"><b>🏋️ 10 秒深蹲挑戰</b><small>10 秒內狂按「蹲！」40 下過關${done.squat ? '・今天已領獎 ✅' : ''}</small></button>
+      <button onclick="App.gameStart('dance')"><b>💃 跳舞機</b><small>箭頭掉到線上時按對的方向！24 拍命中 18 拍過關${done.dance ? '・今天已領獎 ✅' : ''}</small></button>
+      <button onclick="App.gameStart('mole')"><b>🔨 打地鼠</b><small>20 秒內打 15 隻地鼠過關；🌟 金地鼠 +3，💣 別打！${done.mole ? '・今天已領獎 ✅' : ''}</small></button>
+      <button onclick="App.gameStart('piano')"><b>🎹 彈鋼琴</b><small>12 首簡單歌曲，照發光的琴鍵彈；正確率 80% 過關${done.piano ? '・今天已領獎 ✅' : ''}</small></button>
     </div>`;
   }
   // ---------- 🎯 時機打擊 ----------
@@ -3256,6 +3294,203 @@
     if (ok) monAct('win', 2600);
     $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">本次 <b>${mg.score}</b> 分・最高紀錄 <b>${S.hitBest}</b> 分</p><button class="btn" onclick="App.gameStart('hit')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
   }
+  // ---------- 💃 跳舞機 ----------
+  const DN_ARROWS = ['⬅️', '⬇️', '⬆️', '➡️'], DN_N = 24, DN_PASS = 18, DN_FALL = 1700;
+  function danceStart() {
+    mg = { k: 'dance', notes: [], score: 0, combo: 0, maxCombo: 0, hits: 0, judged: 0 };
+    $('mg-title').textContent = '💃 跳舞機';
+    let t = 2200, last = -1;
+    for (let i = 0; i < DN_N; i++) {
+      let l = Math.floor(Math.random() * 4); if (l === last && Math.random() < .6) l = (l + 1 + Math.floor(Math.random() * 3)) % 4; last = l;
+      mg.notes.push({ l, t, done: false });
+      t += i < 8 ? 650 + Math.random() * 250 : i < 16 ? 480 + Math.random() * 260 : 360 + Math.random() * 260;
+    }
+    mgCoach('dance'); mgSay('箭頭掉到下面的框框時，按對的方向！');
+    $('mg-body').innerHTML = `<div class="mg-stat"><span>分數 <b id="dn-score">0</b></span><span>Combo <b id="dn-combo">0</b></span><span>命中 <b id="dn-hits">0</b> / ${DN_N}</span></div>
+      <div class="dn-stage" id="dn-stage">${[0, 1, 2, 3].map(i => `<div class="dn-lane" style="left:${i * 25}%"></div>`).join('')}
+        <div class="dn-target">${DN_ARROWS.map((a, i) => `<span id="dn-t${i}">${a}</span>`).join('')}</div><div class="dn-judge" id="dn-judge"></div></div>
+      <div class="dn-pads">${DN_ARROWS.map((a, i) => `<button type="button" onpointerdown="event.preventDefault();App.danceTap(${i})">${a}</button>`).join('')}</div>`;
+    const me = mg; me.t0 = performance.now();
+    const stage = $('dn-stage'), H = stage.clientHeight, lineY = H - 18 - 52;
+    me.notes.forEach(n => { const el = document.createElement('div'); el.className = 'dn-note'; el.textContent = DN_ARROWS[n.l]; el.style.left = n.l * 25 + '%'; el.style.top = '0'; el.style.transform = 'translateY(-60px)'; stage.appendChild(el); n.el = el; });
+    const tick = now => {
+      if (me.dead || mg !== me) return;
+      const t = now - me.t0;
+      for (const n of me.notes) {
+        if (n.done) continue;
+        const y = lineY - (n.t - t) / DN_FALL * (lineY + 60);
+        n.el.style.transform = `translateY(${y}px)`;
+        if (t - n.t > 160) { n.done = true; n.el.remove(); danceJudge(null); }
+      }
+      if (me.judged >= DN_N) return setTimeout(() => mg === me && danceEnd(), 500);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function danceJudge(dt, lane) {
+    const me = mg; me.judged++;
+    let txt, pts = 0;
+    if (dt === null) { txt = 'MISS'; me.combo = 0; }
+    else { const a = Math.abs(dt); if (a <= 60) { txt = 'PERFECT'; pts = 100; } else if (a <= 110) { txt = 'GREAT'; pts = 70; } else { txt = 'GOOD'; pts = 40; } me.combo++; me.hits++; me.maxCombo = Math.max(me.maxCombo, me.combo); }
+    me.score += pts + (pts ? Math.min(me.combo, 20) * 2 : 0);
+    const j = $('dn-judge'); j.textContent = txt + (me.combo >= 3 ? ` ×${me.combo}` : ''); j.style.color = { PERFECT: '#ffd36a', GREAT: '#7fe0ff', GOOD: '#bff0cf', MISS: '#ff8a8a' }[txt]; j.classList.remove('pop'); void j.offsetWidth; j.classList.add('pop');
+    $('dn-score').textContent = me.score; $('dn-combo').textContent = me.combo; $('dn-hits').textContent = me.hits;
+    if (me.combo && me.combo % 8 === 0) { mgSay(pick(['呀哈！節奏感超好！', '跳起來！', `${me.combo} Combo！`])); monAct('happy', 900); }
+  }
+  function danceTap(l) {
+    const me = mg; if (!me || me.k !== 'dance' || me.dead) return;
+    const t = performance.now() - me.t0;
+    const tg = $('dn-t' + l); if (tg) { tg.classList.add('flash'); setTimeout(() => tg.classList.remove('flash'), 120); }
+    const n = me.notes.find(n => !n.done && n.l === l && Math.abs(n.t - t) <= 160);
+    if (!n) return;
+    n.done = true; n.el.remove(); danceJudge(t - n.t, l);
+  }
+  function danceEnd() {
+    const ok = mg.hits >= DN_PASS;
+    S.danceBest = Math.max(S.danceBest || 0, mg.score); persist();
+    mgCoach(ok ? 'dance' : 'angry');
+    mgSay(ok ? `命中 ${mg.hits} 拍、最高 ${mg.maxCombo} Combo！舞王！${gameAward('dance')}` : `命中 ${mg.hits} 拍……還差 ${DN_PASS - mg.hits} 拍！`);
+    if (ok) monAct('win', 2600);
+    $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">分數 <b>${mg.score}</b>・最高紀錄 <b>${S.danceBest}</b></p><button class="btn" onclick="App.gameStart('dance')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
+  }
+
+  // ---------- 🔨 打地鼠 ----------
+  const ML_TIME = 20, ML_PASS = 15;
+  function moleStart() {
+    mg = { k: 'mole', hits: 0, left: ML_TIME, holes: Array(9).fill(null), on: false };
+    $('mg-title').textContent = '🔨 打地鼠';
+    mgCoach('goforit'); mgSay('按「開始」！🐹 +1、🌟 金地鼠 +3、💣 打到 −2');
+    $('mg-body').innerHTML = `<div class="mg-stat"><span>⏱️ <b id="ml-left">${ML_TIME}</b> 秒</span><span>打中 <b id="ml-hits">0</b> / 目標 ${ML_PASS}</span></div>
+      <div class="ml-grid">${Array.from({ length: 9 }, (_, i) => `<button type="button" class="ml-hole" id="ml-${i}" onpointerdown="event.preventDefault();App.moleTap(${i})"><div class="ml-m"></div><div class="ml-fx"></div></button>`).join('')}</div>
+      <button class="btn" id="ml-go" style="margin-top:10px" onclick="App.moleTap(-1)">▶ 開始！</button>`;
+  }
+  function moleSpawn() {
+    const me = mg; if (!me || me.dead || me.k !== 'mole' || !me.on) return;
+    const free = me.holes.map((h, i) => h ? -1 : i).filter(i => i >= 0);
+    if (free.length) {
+      const i = pick(free), r = Math.random(), kind = r < .12 ? 'gold' : r < .27 ? 'bomb' : 'mole';
+      const prog = 1 - me.left / ML_TIME, life = (kind === 'gold' ? 650 : 1100) - prog * 400 + Math.random() * 200;
+      const el = $('ml-' + i); el.classList.remove('hit'); el.querySelector('.ml-m').textContent = kind === 'gold' ? '🌟' : kind === 'bomb' ? '💣' : '🐹'; el.querySelector('.ml-fx').textContent = '';
+      el.classList.add('up');
+      const h = me.holes[i] = { kind, t: setTimeout(() => { if (me.holes[i] === h) { me.holes[i] = null; el.classList.remove('up'); } }, life) };
+    }
+    const prog = 1 - me.left / ML_TIME;
+    me.timer = setTimeout(moleSpawn, 520 - prog * 220 + Math.random() * 260);
+  }
+  function moleTap(i) {
+    const me = mg; if (!me || me.k !== 'mole' || me.dead) return;
+    if (i === -1) {
+      if (me.on || me.left <= 0) return;
+      me.on = true; $('ml-go').style.display = 'none'; mgSay('打！打！打！'); moleSpawn();
+      me.iv = setInterval(() => {
+        me.left--; $('ml-left').textContent = me.left;
+        if (me.left <= 0) { clearInterval(me.iv); clearTimeout(me.timer); me.on = false; me.holes.forEach((h, k) => { if (h) clearTimeout(h.t); $('ml-' + k).classList.remove('up'); }); setTimeout(() => mg === me && moleEnd(), 400); }
+      }, 1000);
+      return;
+    }
+    if (!me.on) return;
+    const h = me.holes[i]; if (!h || h.whacked) return;
+    h.whacked = true; clearTimeout(h.t);
+    const el = $('ml-' + i), fx = el.querySelector('.ml-fx');
+    const d = h.kind === 'gold' ? 3 : h.kind === 'bomb' ? -2 : 1;
+    me.hits = Math.max(0, me.hits + d); $('ml-hits').textContent = me.hits;
+    fx.textContent = h.kind === 'bomb' ? '💥 −2' : `+${d}`; el.classList.add('hit');
+    if (h.kind === 'bomb') { mgCoach('cheer'); mgSay('噗哈哈！打到炸彈了！'); } else if (h.kind === 'gold') { mgCoach('dance'); mgSay('金地鼠！+3！'); }
+    setTimeout(() => { if (me.holes[i] === h) { me.holes[i] = null; el.classList.remove('up'); } }, 220);
+  }
+  function moleEnd() {
+    const ok = mg.hits >= ML_PASS;
+    S.moleBest = Math.max(S.moleBest || 0, mg.hits); persist();
+    mgCoach(ok ? 'cheer' : 'angry');
+    mgSay(ok ? `打中 ${mg.hits} 隻！眼明手快！${gameAward('mole')}` : `打中 ${mg.hits} 隻……還差 ${ML_PASS - mg.hits} 隻！`);
+    if (ok) monAct('win', 2600);
+    $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">本次 <b>${mg.hits}</b> 隻・最高紀錄 <b>${S.moleBest}</b> 隻</p><button class="btn" onclick="App.gameStart('mole')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
+  }
+
+  // ---------- 🎹 彈鋼琴 ----------
+  const PN_KEYS = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5'];
+  const PN_SOL = { C: 'Do', D: 'Re', E: 'Mi', F: 'Fa', G: 'Sol', A: 'La', B: 'Si' };
+  const PN_FREQ = n => 440 * Math.pow(2, ({ C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 }[n[0]] + (+n[1] - 4) * 12) / 12);
+  const pnLabel = n => PN_SOL[n[0]] + (n[1] === '5' ? '˙' : '');
+  const PN_SONGS = [
+    ['🎂 生日快樂', 'G4:.75 G4:.25 A4 G4 C5 B4:2 G4:.75 G4:.25 A4 G4 D5 C5:2 G4:.75 G4:.25 G5 E5 C5 B4 A4:2 F5:.75 F5:.25 E5 C5 D5 C5:2'],
+    ['⭐ 小星星', 'C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2 G4 G4 F4 F4 E4 E4 D4:2 G4 G4 F4 F4 E4 E4 D4:2 C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2'],
+    ['🐯 兩隻老虎', 'C5 D5 E5 C5 C5 D5 E5 C5 E5 F5 G5:2 E5 F5 G5:2 G5:.5 A5:.5 G5:.5 F5:.5 E5 C5 G5:.5 A5:.5 G5:.5 F5:.5 E5 C5 C5 G4 C5:2 C5 G4 C5:2'],
+    ['🐑 瑪莉有隻小綿羊', 'E4 D4 C4 D4 E4 E4 E4:2 D4 D4 D4:2 E4 G4 G4:2 E4 D4 C4 D4 E4 E4 E4 E4 D4 D4 E4 D4 C4:4'],
+    ['🎶 歡樂頌', 'E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4:1.5 D4:.5 D4:2 E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:.5 C4:2'],
+    ['🌉 倫敦鐵橋垮下來', 'G4:1.5 A4:.5 G4 F4 E4 F4 G4:2 D4 E4 F4:2 E4 F4 G4:2 G4:1.5 A4:.5 G4 F4 E4 F4 G4:2 D4:2 G4:2 E4 C4:2'],
+    ['🐝 小蜜蜂', 'G4 E4 E4:2 F4 D4 D4:2 C4 D4 E4 F4 G4 G4 G4:2 G4 E4 E4:2 F4 D4 D4:2 C4 E4 G4 G4 C4:4'],
+    ['🐮 王老先生有塊地', 'C5 C5 C5 G4 A4 A4 G4:2 E5 E5 D5 D5 C5:3 G4 C5 C5 C5 G4 A4 A4 G4:2 E5 E5 D5 D5 C5:3'],
+    ['🚣 划船歌', 'C4:1.5 C4:1.5 C4 D4:.5 E4:1.5 E4 D4:.5 E4 F4:.5 G4:3 C5:.5 C5:.5 C5:.5 G4:.5 G4:.5 G4:.5 E4:.5 E4:.5 E4:.5 C4:.5 C4:.5 C4:.5 G4 F4:.5 E4 D4:.5 C4:3'],
+    ['🌙 搖籃曲', 'E4:.5 E4:.5 G4:2 E4:.5 E4:.5 G4:2 E4:.5 G4:.5 C5 B4:1.5 A4:.5 A4 G4 D4:.5 E4:.5 F4 D4 D4:.5 E4:.5 F4:2 D4:.5 F4:.5 B4:.5 A4:.5 G4 B4 C5:2'],
+    ['🔔 聖誕鈴聲', 'E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:.5 E4:4 F4 F4 F4:1.5 F4:.5 F4 E4 E4 E4:.5 E4:.5 E4 D4 D4 E4 D4:2 G4:2 E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:.5 E4:4 F4 F4 F4 F4 F4 E4 E4 E4:.5 E4:.5 G4 G4 F4 D4 C4:4'],
+    ['🎄 平安夜', 'G4:1.5 A4:.5 G4 E4:3 G4:1.5 A4:.5 G4 E4:3 D5:2 D5 B4:3 C5:2 C5 G4:3 A4:2 A4 C5:1.5 B4:.5 A4 G4:1.5 A4:.5 G4 E4:3 A4:2 A4 C5:1.5 B4:.5 A4 G4:1.5 A4:.5 G4 E4:3 D5:2 D5 F5:1.5 D5:.5 B4 C5:3 E5:3 C5 G4 E4 G4:1.5 F4:.5 D4 C4:3'],
+  ].map(([name, s]) => ({ name, notes: s.split(' ').map(x => { const [n, b] = x.split(':'); return { n, b: b ? +b : 1 }; }) }));
+  let pnCtx = null;
+  function pnTone(n, dur = .5, when = 0) {
+    try {
+      pnCtx = pnCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (pnCtx.state === 'suspended') pnCtx.resume();
+      const t = pnCtx.currentTime + when, f = PN_FREQ(n);
+      const g = pnCtx.createGain(); g.connect(pnCtx.destination);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(.35, dur));
+      [[f, 'triangle', 1], [f * 2, 'sine', .25]].forEach(([fr, type, v]) => { const o = pnCtx.createOscillator(), og = pnCtx.createGain(); o.type = type; o.frequency.value = fr; og.gain.value = v; o.connect(og); og.connect(g); o.start(t); o.stop(t + Math.max(.4, dur) + .05); });
+    } catch (e) {}
+  }
+  function pianoMenu() {
+    mg = { k: 'piano', song: null };
+    $('mg-title').textContent = '🎹 彈鋼琴';
+    mgCoach('inspect'); mgSay('選一首歌！🎧 可以先試聽');
+    const best = S.pianoBest || {};
+    $('mg-body').innerHTML = `<div class="pn-songs">${PN_SONGS.map((sg, i) => `<div class="pn-s"><button type="button" onclick="App.pianoPlay(${i})">${sg.name}<small>${sg.notes.length} 個音${best[i] != null ? `・最佳 ${best[i]}%` : ''}</small></button><button type="button" onclick="App.pianoListen(${i})" aria-label="試聽">🎧</button></div>`).join('')}</div>
+      <button class="btn ghost" style="margin-top:10px" onclick="App.openGames()">◀ 換遊戲</button>`;
+  }
+  function pianoListen(i) {
+    const sg = PN_SONGS[i]; let t = 0; const beat = .42;
+    sg.notes.forEach(x => { pnTone(x.n, x.b * beat, t); t += x.b * beat; });
+    mgSay(`🎧 ${sg.name}……`);
+  }
+  function pianoStart(i) {
+    mg = { k: 'piano', song: i, idx: 0, ok: 0, bad: 0 };
+    const sg = PN_SONGS[i];
+    $('mg-title').textContent = '🎹 ' + sg.name.replace(/^\S+\s/, '');
+    mgCoach('goforit'); mgSay('照發光的琴鍵彈！');
+    $('mg-body').innerHTML = `<div class="mg-stat"><span>進度 <b id="pn-prog">0</b> / ${sg.notes.length}</span><span>✅ <b id="pn-ok">0</b>　❌ <b id="pn-bad">0</b></span></div>
+      <div class="pn-seq" id="pn-seq"></div>
+      <div class="pn-kb">${PN_KEYS.map(n => `<button type="button" id="pk-${n}" onpointerdown="event.preventDefault();App.pianoKey('${n}')"><b>${pnLabel(n)}</b>${n[0]}</button>`).join('')}</div>
+      <button class="btn ghost" style="margin-top:10px" onclick="App.gameStart('piano')">◀ 換歌</button>`;
+    pianoDraw();
+  }
+  function pianoDraw() {
+    const sg = PN_SONGS[mg.song], i = mg.idx;
+    const from = Math.max(0, i - 1);
+    $('pn-seq').innerHTML = sg.notes.slice(from, from + 8).map((x, k) => `<span class="${from + k < i ? 'done' : from + k === i ? 'cur' : ''}">${pnLabel(x.n)}</span>`).join('');
+    document.querySelectorAll('.pn-kb button').forEach(b => b.classList.remove('target'));
+    const cur = sg.notes[i]; if (cur) { const k = $('pk-' + cur.n); if (k) k.classList.add('target'); }
+    $('pn-prog').textContent = i; $('pn-ok').textContent = mg.ok; $('pn-bad').textContent = mg.bad;
+  }
+  function pianoKey(n) {
+    const me = mg; if (!me || me.k !== 'piano' || me.song == null || me.dead) return;
+    const sg = PN_SONGS[me.song], cur = sg.notes[me.idx]; if (!cur) return;
+    pnTone(n, .45);
+    const el = $('pk-' + n);
+    if (n === cur.n) {
+      me.ok++; me.idx++; el.classList.add('ok'); setTimeout(() => el.classList.remove('ok'), 180);
+      if (me.idx % 10 === 0) mgSay(pick(['好聽！', '呀哈～音樂家！', '繼續！']));
+    } else { me.bad++; el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad'); mgCoach('angry'); mgSay(`不對！是 ${pnLabel(cur.n)}`); setTimeout(() => mg === me && mgCoach('goforit'), 600); }
+    pianoDraw();
+    if (me.idx >= sg.notes.length) setTimeout(() => mg === me && pianoEnd(), 500);
+  }
+  function pianoEnd() {
+    const acc = Math.round(mg.ok / (mg.ok + mg.bad) * 100), ok = acc >= 80;
+    S.pianoBest = S.pianoBest || {}; S.pianoBest[mg.song] = Math.max(S.pianoBest[mg.song] || 0, acc); persist();
+    mgCoach(ok ? 'dance' : 'angry');
+    mgSay(ok ? `正確率 ${acc}%！太好聽了！${gameAward('piano')}` : `正確率 ${acc}%……要 80% 才過關喔！`);
+    if (ok) monAct('happy', 2600);
+    const i = mg.song;
+    $('mg-body').innerHTML = `<button class="btn" onclick="App.pianoPlay(${i})">🔁 再彈一次</button><button class="btn secondary" onclick="App.gameStart('piano')">🎵 換一首歌</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
+  }
+
   const RPS = { r: '✊', s: '✌️', p: '✋' }, BEATS = { r: 's', s: 'p', p: 'r' };
   function rpsDuel(myHand, coHand, shaking, result) {
     const m = S.monster;
@@ -3271,24 +3506,6 @@
     $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">你 <b>${mg.me}</b> ： <b>${mg.co}</b> 教練</p>
       <div class="mg-row">${Object.entries(RPS).map(([k, v]) => `<button onclick="App.rps('${k}')">${v}</button>`).join('')}</div>
       <button class="btn ghost" style="margin-top:10px" onclick="App.openGames()">◀ 換遊戲</button>`;
-  }
-  function boxRound() {
-    if (mg.round >= 5) {
-      const ok = mg.hits >= 4;
-      mgCoach(ok ? 'cheer' : 'angry'); mgSay(ok ? `呀哈！打中 ${mg.hits} 次，反應超快！${gameAward('box')}` : `只打中 ${mg.hits} 次……再練練！`);
-      if (ok) monAct('win', 2600);
-      $('mg-body').innerHTML = `<button class="btn" onclick="App.gameStart('box')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
-      return;
-    }
-    mg.round++; mg.ready = false;
-    mgCoach('inspect'); mgSay(`第 ${mg.round} 回合……等教練舉靶！`);
-    $('mg-body').innerHTML = `<button class="mg-big" id="mg-hit" onclick="App.boxHit()">✋ 還沒！</button><p class="muted" style="text-align:center">打中 ${mg.hits} / ${mg.round - 1}</p>`;
-    mg.timer = setTimeout(() => {
-      mg.ready = true; mg.t0 = Date.now();
-      mgCoach('goforit'); mgSay('🥊 打！！');
-      const b = $('mg-hit'); b.textContent = '🥊 打！'; b.classList.add('ready');
-      mg.timer = setTimeout(() => { if (mg && mg.ready) { mg.ready = false; mgSay('太慢了！'); setTimeout(boxRound, 700); } }, 750);
-    }, 900 + Math.random() * 1800);
   }
   function guideHTML() {
     const cn = esc(S.settings.coachName || '教練');
@@ -3319,7 +3536,7 @@
       <ul>
         <li><b>💬 問教練</b>：飲食、運動問題都可以問，教練會看你的紀錄回答（Gemini AI）</li>
         <li><b>💪 打氣</b>：教練和怪獸會有各種反應</li>
-        <li><b>🎮 和教練玩</b>：猜拳、反應拳擊、時機打擊、深蹲挑戰，每個遊戲每天贏一次 +${GAME_EXP} EXP</li>
+        <li><b>🎮 和教練玩</b>：猜拳、時機打擊、跳舞機、打地鼠、彈鋼琴，每個遊戲每天贏一次 +${GAME_EXP} EXP</li>
       </ul>`;
   }
 
@@ -3487,18 +3704,21 @@
     petMonster() { if (!S.monster) { App.switchTab('avatar'); return; } monAct(pick(['happy', 'win', 'eat']), 2400); emoBurst(['💗', '✨'], actorAt('player'), 3); dormSay(pick(['嘿嘿～好舒服！', '再摸一下！', '最喜歡你了！'])); },
     seeNewDecor() { App.closeLevelUp(true); App.switchTab('today'); if (S.room !== 'gym') App.goRoom('gym'); else renderGymBG(); },
     openGames() { $('games').classList.add('show'); mgMenu(); },
-    closeGames() { if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
+    closeGames() { if (mg) mg.dead = true; $('games').classList.remove('compact'); if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
     gameStart(k) {
-      if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv);
+      if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); if (mg) mg.dead = true;
+      $('games').classList.toggle('compact', ['dance', 'mole', 'piano'].includes(k));
+      if (k === 'dance') danceStart();
+      if (k === 'mole') moleStart();
+      if (k === 'piano') pianoMenu();
       if (k === 'rps') { mg = { k, me: 0, co: 0 }; $('mg-title').textContent = '✊ 猜拳三戰兩勝'; rpsDuel('❔', '❔', false); mgSay('選一個拳，跟教練同時出拳！'); rpsDraw(); }
       if (k === 'hit') { mg = { k, round: 0, score: 0 }; $('mg-title').textContent = '🎯 時機打擊'; hitRound(); }
-      if (k === 'box') { mg = { k, round: 0, hits: 0 }; $('mg-title').textContent = '🥊 反應拳擊'; boxRound(); }
-      if (k === 'squat') {
-        mg = { k, n: 0, left: 10, on: false }; $('mg-title').textContent = '🏋️ 10 秒深蹲挑戰';
-        mgCoach('goforit'); mgSay('按下開始，10 秒內狂按「蹲！」');
-        $('mg-body').innerHTML = `<button class="mg-big" id="mg-sq" style="touch-action:manipulation" onclick="App.squat()">▶ 開始！</button><p class="muted" style="text-align:center" id="mg-sqn">目標 40 下</p>`;
-      }
     },
+    danceTap(l) { danceTap(l); },
+    moleTap(i) { moleTap(i); },
+    pianoPlay(i) { pianoStart(i); },
+    pianoKey(n) { pianoKey(n); },
+    pianoListen(i) { pianoListen(i); },
     rps(k) {
       if (!mg || mg.k !== 'rps' || mg.busy) return;
       mg.busy = true;
@@ -3530,35 +3750,6 @@
       if (!mg || mg.k !== 'hit') return;
       if (!mg.live) { if (mg.x === 0 && $('tb-res') && $('tb-res').textContent === '準備……') { mgSay('還沒開始啦！'); } return; }
       mg.live = false; hitResult(mg.x);
-    },
-    boxHit() {
-      if (!mg || mg.k !== 'box') return;
-      clearTimeout(mg.timer);
-      if (!mg.ready) { mgCoach('angry'); mgSay('太早了！犯規！'); mg.timer = setTimeout(boxRound, 800); return; }
-      mg.ready = false; const ms = Date.now() - mg.t0; mg.hits++;
-      mgCoach('cry'); mgSay(`碰！${ms} 毫秒！`); fxAt('boom', '💥', { x: 50, y: 30 });
-      mg.timer = setTimeout(boxRound, 700);
-    },
-    squat() {
-      if (!mg || mg.k !== 'squat') return;
-      const b = $('mg-sq');
-      if (!mg.on) {
-        if (mg.left <= 0) return;
-        mg.on = true; b.textContent = '⬇️ 蹲！'; b.style.background = 'var(--ok)';
-        mg.iv = setInterval(() => {
-          mg.left--; mgSay(`還剩 ${mg.left} 秒！`);
-          if (mg.left <= 0) {
-            clearInterval(mg.iv); mg.on = false; b.style.background = ''; b.textContent = `${mg.n} 下！`;
-            const ok = mg.n >= 40; mgCoach(ok ? 'dance' : 'angry');
-            mgSay(ok ? `${mg.n} 下！腿力超強！${gameAward('squat')}` : `${mg.n} 下……還差 ${40 - mg.n} 下！`);
-            if (ok) monAct('win', 2600);
-            $('mg-body').insertAdjacentHTML('beforeend', `<button class="btn" onclick="App.gameStart('squat')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`);
-          }
-        }, 1000);
-        return;
-      }
-      mg.n++; $('mg-sqn').textContent = `${mg.n} 下`;
-      if (mg.n % 5 === 0) mgSay(pick(['嗶嗶！', '好！', '再快！', '燃燒吧！']) + ` ${mg.n}！`);
     },
     openGuide() { $('guide-body').innerHTML = guideHTML(); $('guide-ov').classList.add('show'); },
     closeGuide() { $('guide-ov').classList.remove('show'); },
@@ -4068,7 +4259,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.21-2';
+  const APP_VERSION = '2026.11.22-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
