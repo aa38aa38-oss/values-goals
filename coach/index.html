@@ -303,7 +303,8 @@
   .pn-songs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .pn-songs .pn-s { display: flex; gap: 4px; }
   .pn-songs .pn-s button:first-child { flex: 1; text-align: left; border: 2px solid var(--line); background: var(--card); border-radius: 12px; padding: 8px; font: inherit; font-size: .88rem; color: var(--ink); }
-  .pn-songs .pn-s button:last-child { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 0 8px; font-size: 1rem; }
+  .pn-songs .pn-s button:last-child { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 0 8px; font-size: 1rem; min-width: 42px; }
+  .pn-songs .pn-s button.on { background: #e8505b; border-color: #e8505b; color: #fff; animation: pump .8s ease-in-out infinite; }
   .pn-songs small { display: block; color: var(--muted); font-size: .72rem; }
   .pn-seq { display: flex; gap: 4px; overflow: hidden; margin-bottom: 8px; min-height: 44px; align-items: center; }
   .pn-seq span { flex: none; min-width: 40px; padding: 6px 4px; text-align: center; border-radius: 10px; background: var(--card); border: 2px solid var(--line); font-weight: 800; font-size: .9rem; }
@@ -3477,6 +3478,7 @@
   function mgCoach(state) { $('mg-coach').innerHTML = coachMarkup(state); const el = $('mg-coach').firstElementChild; if (el) el.classList.add('a-' + state); }
   function mgSay(t) { $('mg-say').textContent = t; }
   function mgMenu() {
+    pianoStopListen(true);
     $('games').classList.remove('compact'); if (mg) mg.dead = true;
     if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null;
     $('mg-title').textContent = '🎮 和教練玩';
@@ -3847,12 +3849,12 @@
     ['🎄 平安夜', 'G4:1.5 A4:.5 G4 E4:3 G4:1.5 A4:.5 G4 E4:3 D5:2 D5 B4:3 C5:2 C5 G4:3 A4:2 A4 C5:1.5 B4:.5 A4 G4:1.5 A4:.5 G4 E4:3 A4:2 A4 C5:1.5 B4:.5 A4 G4:1.5 A4:.5 G4 E4:3 D5:2 D5 F5:1.5 D5:.5 B4 C5:3 E5:3 C5 G4 E4 G4:1.5 F4:.5 D4 C4:3'],
   ].map(([name, s]) => ({ name, notes: s.split(' ').map(x => { const [n, b] = x.split(':'); return { n, b: b ? +b : 1 }; }) }));
   let pnCtx = null;
-  function pnTone(n, dur = .5, when = 0) {
+  function pnTone(n, dur = .5, when = 0, dest) {
     try {
       pnCtx = pnCtx || new (window.AudioContext || window.webkitAudioContext)();
       if (pnCtx.state === 'suspended') pnCtx.resume();
       const t = pnCtx.currentTime + when, f = PN_FREQ(n);
-      const g = pnCtx.createGain(); g.connect(pnCtx.destination);
+      const g = pnCtx.createGain(); g.connect(dest || pnCtx.destination);
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(.35, dur));
       [[f, 'triangle', 1], [f * 2, 'sine', .25]].forEach(([fr, type, v]) => { const o = pnCtx.createOscillator(), og = pnCtx.createGain(); o.type = type; o.frequency.value = fr; og.gain.value = v; o.connect(og); og.connect(g); o.start(t); o.stop(t + Math.max(.4, dur) + .05); });
     } catch (e) {}
@@ -3862,15 +3864,31 @@
     $('mg-title').textContent = '🎹 彈鋼琴';
     mgCoach('inspect'); mgSay('選一首歌！🎧 可以先試聽');
     const best = S.pianoBest || {};
-    $('mg-body').innerHTML = `<div class="pn-songs">${PN_SONGS.map((sg, i) => `<div class="pn-s"><button type="button" onclick="App.pianoPlay(${i})">${sg.name}<small>${sg.notes.length} 個音${best[i] != null ? `・最佳 ${best[i]}%` : ''}</small></button><button type="button" onclick="App.pianoListen(${i})" aria-label="試聽">🎧</button></div>`).join('')}</div>
+    $('mg-body').innerHTML = `<div class="pn-songs">${PN_SONGS.map((sg, i) => `<div class="pn-s"><button type="button" onclick="App.pianoPlay(${i})">${sg.name}<small>${sg.notes.length} 個音${best[i] != null ? `・最佳 ${best[i]}%` : ''}</small></button><button type="button" id="pn-l${i}" onclick="App.pianoListen(${i})" aria-label="試聽">🎧</button></div>`).join('')}</div>
       <button class="btn ghost" style="margin-top:10px" onclick="App.openGames()">◀ 換遊戲</button>`;
   }
+  let pnListen = null; // 正在試聽：{ i, bus, timer }
+  function pianoStopListen(quiet) {
+    if (!pnListen) return;
+    const { bus, timer, i } = pnListen; pnListen = null; clearTimeout(timer);
+    try { bus.gain.cancelScheduledValues(pnCtx.currentTime); bus.gain.setValueAtTime(bus.gain.value, pnCtx.currentTime); bus.gain.linearRampToValueAtTime(0, pnCtx.currentTime + .05); setTimeout(() => { try { bus.disconnect(); } catch (e) {} }, 120); } catch (e) {}
+    const b = $('pn-l' + i); if (b) { b.textContent = '🎧'; b.classList.remove('on'); b.setAttribute('aria-label', '試聽'); }
+    if (!quiet && mg && mg.k === 'piano') mgSay('⏹ 停止試聽');
+  }
   function pianoListen(i) {
+    const same = pnListen && pnListen.i === i;
+    pianoStopListen(true);
+    if (same) { mgSay('⏹ 停止試聽'); return; }
+    try { pnCtx = pnCtx || new (window.AudioContext || window.webkitAudioContext)(); if (pnCtx.state === 'suspended') pnCtx.resume(); } catch (e) { return; }
+    const bus = pnCtx.createGain(); bus.gain.value = 1; bus.connect(pnCtx.destination);
     const sg = PN_SONGS[i]; let t = 0; const beat = .42;
-    sg.notes.forEach(x => { pnTone(x.n, x.b * beat, t); t += x.b * beat; });
-    mgSay(`🎧 ${sg.name}……`);
+    sg.notes.forEach(x => { pnTone(x.n, x.b * beat, t, bus); t += x.b * beat; });
+    pnListen = { i, bus, timer: setTimeout(() => { if (pnListen && pnListen.i === i) pianoStopListen(true); }, (t + .6) * 1000) };
+    const b = $('pn-l' + i); if (b) { b.textContent = '⏹'; b.classList.add('on'); b.setAttribute('aria-label', '停止試聽'); }
+    mgSay(`🎧 ${sg.name}……（再按 ⏹ 停止）`);
   }
   function pianoStart(i) {
+    pianoStopListen(true);
     mg = { k: 'piano', song: i, idx: 0, ok: 0, bad: 0 };
     const sg = PN_SONGS[i];
     $('mg-title').textContent = '🎹 ' + sg.name.replace(/^\S+\s/, '');
@@ -4261,8 +4279,9 @@
     petMonster() { if (!S.monster) { App.switchTab('avatar'); return; } monAct(pick(['happy', 'win', 'eat']), 2400); emoBurst(['💗', '✨'], actorAt('player'), 3); dormSay(pick(['嘿嘿～好舒服！', '再摸一下！', '最喜歡你了！'])); },
     seeNewDecor() { App.closeLevelUp(true); App.switchTab('today'); renderGymBG(); scheduleNewClear(); },
     openGames() { $('games').classList.add('show'); mgMenu(); },
-    closeGames() { if (mg) mg.dead = true; $('games').classList.remove('compact'); if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
+    closeGames() { pianoStopListen(true); if (mg) mg.dead = true; $('games').classList.remove('compact'); if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
     gameStart(k) {
+      pianoStopListen(true);
       if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); if (mg) mg.dead = true;
       $('games').classList.toggle('compact', ['dance', 'mole', 'piano', 'stairs'].includes(k));
       if (k === 'stairs') stairsStart();
@@ -4874,7 +4893,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.22-7';
+  const APP_VERSION = '2026.11.22-8';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
