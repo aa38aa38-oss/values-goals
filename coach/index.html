@@ -3005,7 +3005,7 @@
     if (!items.length) {
       st.textContent = '✅ 近 14 天都已經登記過了'; st.className = 'sync-status ok';
       // 沒有新項目也取得一個連結（今天那一列），方便直接打開檢查
-      if (!(S.sheetLast && S.sheetLast[kind])) cloudCall('locate', { kind, date: today() }).then(d => { if (d.link) { S.sheetLast = S.sheetLast || {}; S.sheetLast[kind] = { link: d.link, date: today(), name: '', at: Date.now() }; persist(); renderSheetLinks(); } }).catch(() => {});
+      sheetLocate(kind);
       return;
     }
     if (syncBusy[kind]) { st.textContent = '還在登記中，請稍等……'; return; }
@@ -3048,13 +3048,26 @@
     if (ok) toast(`☁️ 已登記 ${ok} 筆到試算表`);
     renderSheetLinks();
   }
+  // 沒有新項目時，跟 Apps Script 要「今天那一列」的連結；失敗就把原因顯示出來
+  const sheetErr = {};
+  async function sheetLocate(kind) {
+    try {
+      const d = await cloudCall('locate', { kind, date: today() });
+      if (d.link) { S.sheetLast = S.sheetLast || {}; S.sheetLast[kind] = Object.assign({}, S.sheetLast[kind] || {}, { link: d.link, at: Date.now() }, S.sheetLast[kind] && S.sheetLast[kind].date === today() ? {} : { date: today(), name: '' }); delete sheetErr[kind]; persist(); }
+      else sheetErr[kind] = kind === 'food' ? '找不到「健康26」分頁' : `找不到「${expenseTab(today())}」分頁`;
+    } catch (e) { sheetErr[kind] = e.message; }
+    renderSheetLinks();
+  }
   // 「打開試算表看剛登記的」按鈕
   function renderSheetLinks() {
     const L = S.sheetLast || {}, md = d => d ? d.slice(5).replace('-', '/') : '';
     const a = (k, icon, label) => L[k] && L[k].link
       ? `<a class="btn sheet-link" href="${esc(L[k].link)}" target="_blank" rel="noopener">${icon} 打開${label}看剛登記的<small>${md(L[k].date)}${L[k].name ? '・' + esc(L[k].name) : ''}</small></a>` : '';
     const html = a('expense', '💰', '記帳（' + expenseTab(today()) + '）') + a('food', '🍱', '健康26');
-    const hint = cloudOn() && !html && (S.expenses && Object.values(S.expenses).flat().some(x => x.synced)) ? '<p class="muted" style="margin:6px 0 0;font-size:.78rem">按一次「同步登記」就會出現直接打開試算表的按鈕（Apps Script 要更新成新版 Sync.gs）</p>' : '';
+    const errs = Object.entries(sheetErr).filter(([k]) => !(L[k] && L[k].link));
+    const why = m => /未知的 action/.test(m) ? '遊戲連到的 Apps Script 還是舊版。請到「部署 → 管理部署作業」，確認是「編輯」原本那個部署並選「新版本」；如果是按「新增部署作業」，網址會變，要把新的 /exec 網址貼到遊戲「設定 → 試算表連線」。' : '';
+    const hint = errs.length ? `<p class="sync-status err" style="margin:6px 0 0;font-size:.8rem">⚠️ 取得試算表連結失敗：${errs.map(([k, m]) => `${k === 'food' ? '健康26' : '記帳'}：${esc(m)}`).join('；')}<br>${why(errs.map(x => x[1]).join(' '))}</p>`
+      : cloudOn() && !html ? '<p class="muted" style="margin:6px 0 0;font-size:.78rem">按一次「同步登記」就會出現直接打開試算表的按鈕（Apps Script 要更新成新版 Sync.gs）</p>' : '';
     ['sheet-links-money', 'sheet-links-food'].forEach(id => { const el = $(id); if (el) el.innerHTML = html + hint; });
   }
   const expenseTab = d => { const p = d.split('-').map(Number); return (p[0] % 100) + 'H' + (p[1] <= 6 ? 1 : 2); };
@@ -5112,7 +5125,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.23-8';
+  const APP_VERSION = '2026.11.23-9';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
