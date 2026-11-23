@@ -43,6 +43,15 @@
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
   .stat { background: var(--card); border-radius: 14px; padding: 6px; text-align: center; box-shadow: var(--shadow); border: none; font: inherit; color: var(--ink); width: 100%; cursor: pointer; }
   .stat:active { transform: scale(.96); }
+  .mon-stage-img { position: relative; }
+  .mon-tap-hint { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: rgba(59,42,32,.72); color: #fff; font-size: .74rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
+  .mon-exp { margin-top: 10px; text-align: left; }
+  .mon-log { max-height: 320px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; }
+  .mon-log > div { display: grid; grid-template-columns: 1.6fr 1fr 1fr; padding: 6px 10px; font-size: .85rem; border-bottom: 1px dashed var(--line); }
+  .mon-log > div span:not(:first-child) { text-align: right; }
+  .mon-log .mon-log-h { position: sticky; top: 0; background: #fff4d6; font-weight: 800; font-size: .78rem; }
+  .mon-log .cur { background: #fffaf0; } .mon-log .skip { color: var(--muted); }
+  .mon-log small { color: var(--muted); font-size: .7rem; }
   .sheet-links { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
   .sheet-links .sheet-link { display: flex; flex-direction: column; align-items: center; text-decoration: none; background: #2f7d4f; color: #fff; margin: 0; padding: 10px 8px; }
   .sheet-links .sheet-link small { font-size: .75rem; font-weight: 600; opacity: .85; }
@@ -1152,9 +1161,9 @@
 </div>
 
 <nav class="tabs">
-  <button class="active" data-tab="food" onclick="App.switchTab('food')"><span class="ic">🍱</span>飲食</button>
-  <button data-tab="money" onclick="App.switchTab('money')"><span class="ic">💰</span>記帳</button>
   <button data-tab="exercise" onclick="App.switchTab('exercise')"><span class="ic">🏃</span>運動</button>
+  <button data-tab="money" onclick="App.switchTab('money')"><span class="ic">💰</span>記帳</button>
+  <button class="active" data-tab="food" onclick="App.switchTab('food')"><span class="ic">🍱</span>飲食</button>
   <button data-tab="today" onclick="App.switchTab('today')"><span class="ic">🏋️</span>健身房</button>
   <button data-tab="history" onclick="App.switchTab('history')"><span class="ic">📈</span>紀錄</button>
   <button data-tab="avatar" onclick="App.switchTab('avatar')"><span class="ic">🐣</span>怪獸</button>
@@ -2967,7 +2976,7 @@
   }
   // ---------- 記帳 ----------
   const MONEY_CATS = [['auto_meal', '🍽️ 餐費（依時間）'], ['早餐', '🍳 早餐'], ['午餐', '🍱 午餐'], ['晚餐', '🍲 晚餐'], ['auto_trans', '🚌 交通（依時間）'],
-    ['運動', '🏃 運動'], ['買菜', '🥬 買菜'], ['電話費', '📱 電話費‧app'], ['交際娛樂', '🎉 交際娛樂'], ['媽媽費', '👩 媽媽費'], ['其他', '📦 其他']];
+    ['運動', '🏃 運動'], ['買菜', '🥬 買菜'], ['電話費', '📱 電話費‧app'], ['交際娛樂', '🎉 交際娛樂'], ['媽媽費', '👩 費用'], ['其他', '📦 其他']];
   let moneyDate = today(), moneyCat = 'auto_meal';
   function resolveCat(cat, time) {
     const [h, m] = String(time || nowTime()).split(':').map(Number); const hr = (h || 0) + (m || 0) / 60;
@@ -2991,7 +3000,7 @@
     $('money-cats').innerHTML = MONEY_CATS.map(([k, l]) => `<button class="${moneyCat === k ? 'sel' : ''}" onclick="App.moneyCat('${k}')">${l}</button>`).join('');
     const arr = (S.expenses || {})[d] || [];
     $('money-list').innerHTML = arr.length ? arr.slice().sort((a, b) => String(a.time).localeCompare(String(b.time))).map(x =>
-      `<div class="food-item"><div class="nm">💰 ${esc(x.name || x.cat)}${syncTag(x)}<small>${esc(x.cat)} · ${esc(x.time || '')}</small></div><div class="kc">${x.amount} 元</div><button onclick="App.moneyDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
+      `<div class="food-item"><div class="nm">💰 ${esc(x.name || x.cat)}${syncTag(x)}<small>${esc(x.cat === '媽媽費' ? '費用' : x.cat)} · ${esc(x.time || '')}</small></div><div class="kc">${x.amount} 元</div><button onclick="App.moneyDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
       + `<div class="food-total"><span>這天合計</span><span>${sumMoney(d, d)} 元</span></div>`
       : '<p class="muted" style="margin:4px 0 0">這天還沒有記帳。</p>';
   }
@@ -3450,6 +3459,34 @@
     if (m.form === '3-elite') return `Lv.${EVO_LV[3]} 進化成完全體（目前 Lv.${lv}）`;
     return '已經是完全體了！🎉';
   }
+  // 怪獸的等級進度（和玩家等級分開算）
+  function monExpBlock(m) {
+    if (m.form === '0-egg') return '';
+    const e = monExpOf(m), lv = monLevelOf(m), into = e - (lv - 1) * LEVEL_PTS;
+    return `<div class="mon-exp"><div class="patience-label"><span>🐾 怪獸 Lv.${lv} → Lv.${lv + 1}</span><span>${into} / ${LEVEL_PTS} EXP（還差 ${LEVEL_PTS - into}）</span></div>
+      <div class="bar"><i style="width:${Math.min(100, into / LEVEL_PTS * 100)}%;background:linear-gradient(90deg,#4fbfa6,#f2b134)"></i></div>
+      <p class="muted" style="margin:6px 0 0;font-size:.78rem;text-align:left">💡 經驗值來源是同一份「每日得分」：每天的得分會同時加到<b>你的等級</b>（目前 Lv.${C.level}）和<b>當天上場的怪獸</b>。但怪獸的等級是自己算的，只累積牠上場那些天的分數，所以會比你的等級低；換下來休息的日子不會加。怪獸累計 ${e} EXP，每 ${LEVEL_PTS} EXP 升一級。</p></div>`;
+  }
+  // 怪獸的分數紀錄：牠上場過、有算分的每一天
+  function monScoreLog(m) {
+    const t = today(), rows = [];
+    for (let d = t; d >= m.born; d = addDays(d, -1)) {
+      if (!ownedBy(d, m.line)) continue;
+      if (d === t && loggedCount(rec(d)) === 0) { rows.push({ d, skip: true }); continue; }
+      rows.push({ d, sc: dailyScore(d), cur: d >= m.stageStart, pts: (C.perDay[d] || {}).pts || 0 });
+    }
+    const cur = rows.filter(r => r.cur && !r.skip), sum = cur.reduce((a, r) => a + r.sc, 0);
+    const avg = cur.length ? Math.round(sum / cur.length) : 0;
+    const stg = STAGE_LABEL[monStage(m.form)];
+    return `<div class="card"><h2>📊 ${esc(m.nick || monName())} 的分數紀錄</h2>
+      <p class="muted" style="margin:0 0 6px;font-size:.82rem">只列出牠上場、有算分的日子（換下來休息的日子不算）。<b>紀律分</b>（0～100）決定進化型態；<b>得分</b>是加到經驗值的分數。</p>
+      ${m.form === '0-egg' ? '' : `<div class="si-note" style="margin-bottom:8px">目前「${stg}」從 ${nice(m.stageStart)} 開始，共 <b>${cur.length}</b> 天：<br>紀律分加總 <b>${sum}</b> ÷ ${cur.length || 1} 天 ＝ 平均 <b>${avg}</b> 分 → ${cur.length ? TIER_LABEL[tierOf(avg)] : '還沒有紀錄'}（80↑菁英、50↑普通）</div>`}
+      <div class="mon-log"><div class="mon-log-h"><span>日期</span><span>紀律分</span><span>得分 EXP</span></div>
+        ${rows.length ? rows.map(r => r.skip ? `<div class="skip"><span>${nice(r.d)}</span><span>今天還沒記錄</span><span>—</span></div>`
+          : `<div class="${r.cur ? 'cur' : ''}"><span>${nice(r.d)}${r.cur ? '' : ' <small>（前一階段）</small>'}</span><span><b style="color:${r.sc >= 80 ? '#3fa86b' : r.sc >= 50 ? '#c98a10' : '#e8505b'}">${r.sc}</b></span><span>+${r.pts}</span></div>`).join('') : '<p class="muted">還沒有紀錄</p>'}
+      </div></div>`;
+  }
+
   let monSub = 'mine';
   function renderMonsterTab() {
     const box = $('mon-view'); if (!box) return;
@@ -3467,14 +3504,16 @@
     const seen = (m.seen && m.seen[m.line]) || [m.form];
     const node = f => `<div class="node ${seen.includes(f) ? '' : 'unseen'} ${f === m.form ? 'cur' : ''}"><img src="${monImg(m.line, f, 'idle')}" alt=""><div>${seen.includes(f) ? MON_NAMES[m.line][f] : '？？？'}</div></div>`;
     box.innerHTML = tabs + `<div class="card mon-card">
-        <div class="mon-stage-img" onclick="App.monPoke()"><img id="mon-big" src="${monImg(m.line, m.form, st.away ? 'cry' : monPose())}" alt=""></div>
+        <div class="mon-stage-img" onclick="App.monPoke()"><img id="mon-big" src="${monImg(m.line, m.form, st.away ? 'cry' : monPose())}" alt=""><span class="mon-tap-hint">👆 點我換動作</span></div>
         <div class="mon-name">${esc(m.nick || monName())}</div>
         <div class="mon-sub">${MON_LINES[m.line].icon} ${monName()}・${STAGE_LABEL[stg]}${['lazy', 'normal', 'elite'].includes(monTier(m.form)) ? '・' + TIER_LABEL[monTier(m.form)] : ''}${m.form === '0-egg' ? '' : `・Lv.${monLevel()}`}</div>
         <p style="margin:8px 0 2px;font-size:.88rem">${status}</p>
         ${avg === null ? '' : `<p class="muted" style="margin:2px 0">這個階段平均紀律分 <b>${avg}</b> 分 → 現在進化會是 <b>${TIER_LABEL[tierOf(avg)]}</b>（80↑菁英、50↑普通）</p>`}
         <p class="muted" style="margin:2px 0 0">下一步：${nextEvoText()}</p>
+        ${monExpBlock(m)}
         <div class="btn-row" style="margin-top:10px"><button class="btn secondary" onclick="App.monRename()">✏️ 取暱稱</button><button class="btn ghost" onclick="App.monSub('hut')">🏠 換別隻怪獸</button></div>
       </div>
+      ${monScoreLog(m)}
       <div class="card"><h2>📖 進化圖鑑</h2>
         <div class="mon-tree">
           <div class="row-label">蛋・幼年期</div>${node('0-egg')}${node('1-baby')}<div></div>
@@ -5125,7 +5164,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.23-9';
+  const APP_VERSION = '2026.11.24-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
