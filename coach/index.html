@@ -341,7 +341,10 @@
   @keyframes mlBoom { 0%,100% { transform: none; } 25% { transform: translate(-5px, 3px); } 50% { transform: translate(5px, -3px); } 75% { transform: translate(-3px, 2px); } }
   @keyframes mlBoomM { to { transform: scale(2.2); opacity: 0; } }
   .st-wrap { position: relative; }
-  .st-cv { display: block; width: 100%; border-radius: 16px; background: #1f1d2e; touch-action: none; }
+  #st-go.st-go { position: absolute; left: 50%; top: 62%; transform: translateX(-50%); width: auto; padding: 12px 34px; margin: 0; font-size: 1.15rem; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+  #games.st-mode .mg-coach { display: none; }
+  #games.st-mode .mg-say { margin: 2px 0 6px; font-size: .9rem; }
+  .st-cv { display: block; max-height: calc(100dvh - 330px); width: auto; max-width: 100%; aspect-ratio: 300 / 420; margin: 0 auto; border-radius: 16px; background: #1f1d2e; touch-action: none; }
   .st-hud { display: flex; justify-content: space-between; align-items: center; font-size: .9rem; margin-bottom: 6px; }
   .st-hp { display: flex; gap: 2px; } .st-hp i { width: 12px; height: 14px; border-radius: 3px; background: #e8505b; } .st-hp i.off { background: #d8cfc2; }
   .st-pads { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
@@ -765,7 +768,7 @@
       <div class="patience-label"><span>🍱 今日熱量 <b id="food-kcal">0</b> / <span id="food-kmax">2100</span> kcal</span><span>💪 蛋白質 <b id="food-pro">0</b> / <span id="food-pgoal">90</span> g</span></div>
       <div class="bar"><i id="food-bar"></i></div>
     </div>
-    <div class="patience">
+    <div class="patience" style="display:none">
       <div class="patience-label"><span>教練耐心值</span><span id="pat-text">80 / 100</span></div>
       <div class="bar"><i id="pat-bar"></i></div>
     </div>
@@ -3656,7 +3659,7 @@
   function mgSay(t) { $('mg-say').textContent = t; }
   function mgMenu() {
     pianoStopListen(true);
-    $('games').classList.remove('compact'); if (mg) mg.dead = true;
+    $('games').classList.remove('compact', 'st-mode'); if (mg) mg.dead = true;
     if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null;
     $('mg-title').textContent = '🎮 和教練玩';
     mgCoach('goforit'); mgSay(`${S.settings.coachName || '教練'}：來比一場吧！每個遊戲每天贏一次 +${GAME_EXP} EXP`);
@@ -3866,9 +3869,9 @@
     $('mg-title').textContent = '🪜 怪獸下樓梯';
     mgCoach('goforit'); mgSay('按住 ◀ ▶ 讓怪獸往下跳！小心尖刺！');
     $('mg-body').innerHTML = `<div class="st-hud"><span>HP <span class="st-hp" id="st-hp"></span></span><b id="st-floor">地下 0 樓</b></div>
-      <div class="st-wrap"><canvas class="st-cv" id="st-cv"></canvas></div>
+      <div class="st-wrap"><canvas class="st-cv" id="st-cv"></canvas><button class="btn st-go" id="st-go" onclick="App.stairsGo()">▶ 開始！</button></div>
       <div class="st-pads"><button type="button" id="st-l">◀</button><button type="button" id="st-r">▶</button></div>
-      <button class="btn" id="st-go" style="margin-top:8px" onclick="App.stairsGo()">▶ 開始！</button>`;
+`;
     const me = mg;
     for (let y = 130; y < ST_H + ST_GAP; y += ST_GAP) me.plats.push(stairsPlat(y, y === 130 ? 'normal' : null));
     me.plats[0].x = ST_W / 2 - 40; me.plats[0].w = 80; me.py = me.plats[0].y; me.stand = me.plats[0]; me.plats[0].touched = true;
@@ -4003,7 +4006,7 @@
     mgCoach(ok ? 'dance' : 'cry');
     mgSay(ok ? `到達地下 ${fl} 樓！勇者！${gameAward('stairs')}` : `在地下 ${fl} 樓倒下了……要到 ${ST_PASS} 樓才過關！`);
     if (ok) monAct('win', 2600); else monAct('cry', 2000);
-    $('st-go').outerHTML = `<p style="text-align:center;margin:8px 0">地下 <b>${fl}</b> 樓・最高紀錄 <b>${S.stairsBest}</b> 樓</p><button class="btn" onclick="App.gameStart('stairs')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
+    $('st-go').remove(); document.querySelector('.st-pads').insertAdjacentHTML('afterend', `<p style="text-align:center;margin:8px 0">地下 <b>${fl}</b> 樓・最高紀錄 <b>${S.stairsBest}</b> 樓</p><button class="btn" onclick="App.gameStart('stairs')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`);
   }
 
   // ---------- 🎹 彈鋼琴 ----------
@@ -4531,11 +4534,12 @@
     petMonster() { if (!S.monster) { App.switchTab('avatar'); return; } monAct(pick(['happy', 'win', 'eat']), 2400); emoBurst(['💗', '✨'], actorAt('player'), 3); dormSay(pick(['嘿嘿～好舒服！', '再摸一下！', '最喜歡你了！'])); },
     seeNewDecor() { App.closeLevelUp(true); App.switchTab('today'); renderGymBG(); scheduleNewClear(); },
     openGames() { $('games').classList.add('show'); mgMenu(); },
-    closeGames() { pianoStopListen(true); if (mg) mg.dead = true; $('games').classList.remove('compact'); if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
+    closeGames() { pianoStopListen(true); if (mg) mg.dead = true; $('games').classList.remove('compact', 'st-mode'); if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); mg = null; $('games').classList.remove('show'); sceneMood(); },
     gameStart(k) {
       pianoStopListen(true);
       if (mg && mg.timer) clearTimeout(mg.timer); if (mg && mg.iv) clearInterval(mg.iv); if (mg) mg.dead = true;
       $('games').classList.toggle('compact', ['dance', 'mole', 'piano', 'stairs'].includes(k));
+      $('games').classList.toggle('st-mode', k === 'stairs');
       if (k === 'stairs') stairsStart();
       if (k === 'dance') danceStart();
       if (k === 'mole') moleStart();
@@ -5255,7 +5259,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.24-3';
+  const APP_VERSION = '2026.11.24-4';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
