@@ -21,6 +21,8 @@ function doPost(e) {
       case 'syncFood': return syncJson_({ ok: true, results: syncFood_(body.items || []) });
       case 'syncExpense': return syncJson_({ ok: true, results: syncExpense_(body.items || []) });
       case 'locate': return syncJson_({ ok: true, link: locate_(body.kind, body.date) });
+      case 'removeFood': return syncJson_({ ok: true, results: removeEntries_('food', body.items || []) });
+      case 'removeExpense': return syncJson_({ ok: true, results: removeEntries_('expense', body.items || []) });
       case 'save': return syncJson_({ ok: true, saved: gameSave_(body.records || []) });
       case 'list': return syncJson_({ ok: true, records: gameList_() });
       case 'ask': return syncJson_({ ok: true, answer: gameAsk_(body) });
@@ -59,6 +61,48 @@ function locate_(kind, dateStr) {
     if (found.targetRow > 0) return sheetLink_(sheet, 'A' + found.targetRow + ':' + columnToLetter(Math.min(sheet.getLastColumn(), 26)) + (found.targetRow + (kind === 'food' ? 0 : 1)));
   } catch (e) {}
   return sheetLink_(sheet, '');
+}
+
+// ---------- 修改已登記的項目：先把舊的那一筆從格子裡扣掉（名稱拿掉、數字相減），再由遊戲重新登記 ----------
+function letterToColumn_(s) { let n = 0; String(s).toUpperCase().replace(/[^A-Z]/g, '').split('').forEach(ch => { n = n * 26 + ch.charCodeAt(0) - 64; }); return n; }
+function removeEntries_(kind, items) {
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet(), results = [];
+    const sep = kind === 'food' ? '+' : '、', rows = kind === 'food' ? 3 : 2;
+    items.forEach(it => {
+      try {
+        const sheet = kind === 'food' ? foodSheet_() : ss.getSheetByName(expenseSheetName_(it.date));
+        if (!sheet) throw new Error('找不到分頁');
+        const found = findTargetRow(sheet, it.date);
+        if (found.targetRow === -1) throw new Error('找不到日期 ' + found.formattedTarget);
+        const row = found.targetRow;
+        const m = String(it.where || '').split('!').pop().match(/^([A-Z]+)\d+/); // 'I10:I12' 或 '26H2!G100' → 欄位字母
+        let cols = m ? [letterToColumn_(m[1])] : [];
+        const more = kind === 'food' ? Array.from({ length: 18 }, (_, i) => i + 5) : expenseColumns_(sheet, it.cat);
+        more.forEach(c => { if (cols.indexOf(c) < 0) cols.push(c); });
+        const name = String(it.name || '').trim(); let done = false;
+        for (const c of cols) {
+          const v = sheet.getRange(row, c, rows, 1).getValues().map(r => r[0]);
+          const names = String(v[0] || '').split(sep).map(x => x.trim()).filter(Boolean);
+          const idx = names.indexOf(name); if (idx < 0) continue;
+          names.splice(idx, 1);
+          let out;
+          if (kind === 'food') {
+            const cal = Math.max(0, (Number(v[1]) || 0) - (Number(it.kcal) || 0)), pro = Math.max(0, Math.round(((Number(v[2]) || 0) - (Number(it.protein) || 0)) * 100) / 100);
+            out = names.length ? [[names.join(sep)], [cal], [pro]] : [[''], [''], ['']];
+          } else {
+            const amt = Math.max(0, (Number(v[1]) || 0) - (Number(it.amount) || 0));
+            out = names.length ? [[names.join(sep)], [amt]] : [[''], ['']];
+          }
+          sheet.getRange(row, c, rows, 1).setValues(out); done = true; break;
+        }
+        results.push({ key: it.key, ok: true, found: done }); // 找不到舊資料（例如已手動改過）也當作完成
+      } catch (e) { results.push({ key: it.key, ok: false, error: String(e.message || e) }); }
+    });
+    SpreadsheetApp.flush();
+    return results;
+  } finally { lock.releaseLock(); }
 }
 
 // ---------- 1. 飲食 → 「健康26」：直接用健康26 原本的 saveFoodRecord（同一套欄位規則） ----------

@@ -43,8 +43,10 @@
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
   .stat { background: var(--card); border-radius: 14px; padding: 6px; text-align: center; box-shadow: var(--shadow); border: none; font: inherit; color: var(--ink); width: 100%; cursor: pointer; }
   .stat:active { transform: scale(.96); }
+  .food-item.editable .nm, .food-item.editable .kc { cursor: pointer; }
+  .food-item.editing { background: #fff1c9; border-radius: 10px; }
   .mon-stage-img { position: relative; }
-  .mon-tap-hint { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: rgba(59,42,32,.72); color: #fff; font-size: .74rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
+  .mon-tap-hint { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); background: rgba(59,42,32,.72); color: #fff; font-size: .74rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
   .mon-exp { margin-top: 10px; text-align: left; }
   .mon-log { max-height: 320px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; }
   .mon-log > div { display: grid; grid-template-columns: 1.6fr 1fr 1fr; padding: 6px 10px; font-size: .85rem; border-bottom: 1px dashed var(--line); }
@@ -721,7 +723,7 @@
         <button type="button" class="btn ghost" id="fd-reanalyze" style="margin-top:6px;display:none" onclick="App.foodReedit()">📝 修改補充說明，重新分析</button>
         <div class="btn-row" style="margin-top:8px">
           <button type="button" class="btn ghost" onclick="App.foodCancel()">取消</button>
-          <button type="button" class="btn" onclick="App.foodConfirm()">✅ 加入紀錄</button>
+          <button type="button" class="btn" id="fd-confirm" onclick="App.foodConfirm()">✅ 加入紀錄</button>
         </div>
       </div>
       <div id="food-list" style="margin-top:8px"></div>
@@ -822,7 +824,8 @@
       </div>
       <label class="f">🕒 時間</label>
       <input type="text" id="mn-time" inputmode="numeric" placeholder="自動">
-      <button class="btn" style="margin-top:10px" onclick="App.moneyAdd()">➕ 記下這筆</button>
+      <button class="btn" style="margin-top:10px" id="mn-add" onclick="App.moneyAdd()">➕ 記下這筆</button>
+      <button class="btn ghost" id="mn-cancel" style="display:none" onclick="App.moneyEditCancel()">取消修改</button>
       <div id="money-list" style="margin-top:8px"></div>
     </div>
     <div class="card">
@@ -2365,8 +2368,8 @@
     if (!f) { el.innerHTML = '<p class="muted" style="margin:4px 0 0">這天還沒有飲食紀錄。拍照或輸入食物，AI 幫你算熱量和蛋白質。</p>'; return; }
     const order = ['breakfast', 'brunch', 'lunch', 'afternoon', 'snack_afternoon', 'dinner', 'snack_evening'];
     const items = f.items.slice().sort((a, b) => (order.indexOf(a.slotKey) - order.indexOf(b.slotKey)) || String(a.time).localeCompare(String(b.time)));
-    el.innerHTML = items.map(x => `<div class="food-item"><div class="nm">${x.snack ? '🟣' : '🍽️'} ${esc(x.name)}${syncTag(x)}<small>${esc(x.slot)} · ${esc(x.time || '')}${x.details ? ' · ' + esc(x.details) : ''}</small></div>
-      <div class="kc">${x.kcal} kcal<small>蛋 ${x.protein} · 脂 ${x.fat ?? 0} · 碳 ${x.carbs ?? 0} g</small></div><button onclick="App.foodDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
+    el.innerHTML = `<p class="muted" style="margin:0 0 2px;font-size:.78rem">✏️ 點一筆就可以修改</p>` + items.map(x => `<div class="food-item editable ${x.id === foodEditId ? 'editing' : ''}"><div class="nm" onclick="App.foodEdit('${x.id}')">${x.snack ? '🟣' : '🍽️'} ${esc(x.name)}${syncTag(x)}<small>${esc(x.slot)} · ${esc(x.time || '')}${x.details ? ' · ' + esc(x.details) : ''}</small></div>
+      <div class="kc" onclick="App.foodEdit('${x.id}')">${x.kcal} kcal<small>蛋 ${x.protein} · 脂 ${x.fat ?? 0} · 碳 ${x.carbs ?? 0} g</small></div><button onclick="App.foodDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
       + `<div class="food-total"><span>合計</span><span>${f.kcal} kcal · 蛋 ${f.protein} · 脂 ${f.fat} · 碳 ${f.carbs} g</span></div>`;
   }
   // ---------- Gemini (direct from browser, key stays on this phone) ----------
@@ -2977,7 +2980,7 @@
   // ---------- 記帳 ----------
   const MONEY_CATS = [['auto_meal', '🍽️ 餐費（依時間）'], ['早餐', '🍳 早餐'], ['午餐', '🍱 午餐'], ['晚餐', '🍲 晚餐'], ['auto_trans', '🚌 交通（依時間）'],
     ['運動', '🏃 運動'], ['買菜', '🥬 買菜'], ['電話費', '📱 電話費‧app'], ['交際娛樂', '🎉 交際娛樂'], ['媽媽費', '👩 費用'], ['其他', '📦 其他']];
-  let moneyDate = today(), moneyCat = 'auto_meal';
+  let moneyDate = today(), moneyCat = 'auto_meal', moneyEditId = null, foodEditId = null;
   function resolveCat(cat, time) {
     const [h, m] = String(time || nowTime()).split(':').map(Number); const hr = (h || 0) + (m || 0) / 60;
     if (cat === 'auto_meal') return hr < 10.5 ? '早餐' : hr < 16 ? '午餐' : '晚餐';
@@ -2986,6 +2989,7 @@
   }
   function syncTag(x) {
     if (x.synced) return '<span class="sync-tag ok">☁️ 已登記</span>';
+    if (x.pendingRemove && cloudOn()) return '<span class="sync-tag wait">待更新</span>';
     if (x.syncErr) return `<span class="sync-tag err" title="${esc(x.syncErr)}">⚠️ 未登記</span>`;
     return cloudOn() ? '<span class="sync-tag wait">待登記</span>' : '';
   }
@@ -3000,7 +3004,7 @@
     $('money-cats').innerHTML = MONEY_CATS.map(([k, l]) => `<button class="${moneyCat === k ? 'sel' : ''}" onclick="App.moneyCat('${k}')">${l}</button>`).join('');
     const arr = (S.expenses || {})[d] || [];
     $('money-list').innerHTML = arr.length ? arr.slice().sort((a, b) => String(a.time).localeCompare(String(b.time))).map(x =>
-      `<div class="food-item"><div class="nm">💰 ${esc(x.name || x.cat)}${syncTag(x)}<small>${esc(x.cat === '媽媽費' ? '費用' : x.cat)} · ${esc(x.time || '')}</small></div><div class="kc">${x.amount} 元</div><button onclick="App.moneyDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
+      `<div class="food-item editable ${x.id === moneyEditId ? 'editing' : ''}"><div class="nm" onclick="App.moneyEdit('${x.id}')">💰 ${esc(x.name || x.cat)}${syncTag(x)}<small>${esc(x.cat === '媽媽費' ? '費用' : x.cat)} · ${esc(x.time || '')}</small></div><div class="kc" onclick="App.moneyEdit('${x.id}')">${x.amount} 元</div><button onclick="App.moneyDel('${x.id}')" aria-label="刪除">✕</button></div>`).join('')
       + `<div class="food-total"><span>這天合計</span><span>${sumMoney(d, d)} 元</span></div>`
       : '<p class="muted" style="margin:4px 0 0">這天還沒有記帳。</p>';
   }
@@ -3010,6 +3014,19 @@
     const st = $(kind === 'food' ? 'food-sync-status' : 'money-sync-status');
     if (!cloudOn()) { st.textContent = '請先到「⚙️ 設定 → ☁️ 試算表連線」填好網址和暗號'; st.className = 'sync-status err'; return; }
     const from = addDays(today(), -13), store = kind === 'food' ? S.foods : S.expenses, items = [];
+    // 先把「改過的已登記項目」在試算表上的舊資料扣掉
+    const rem = [];
+    Object.entries(store || {}).forEach(([d, arr]) => arr.forEach(x => { if (x.pendingRemove) rem.push(x); }));
+    if (rem.length && cloudOn()) {
+      try {
+        st.textContent = `更新試算表上改過的 ${rem.length} 筆……`;
+        const data = await cloudCall(kind === 'food' ? 'removeFood' : 'removeExpense', { items: rem.map(x => Object.assign({ key: x.id }, x.pendingRemove)) });
+        (data.results || []).forEach(r => { const x = rem.find(i => i.id === r.key); if (x && r.ok) delete x.pendingRemove; });
+        persist();
+      } catch (e) {
+        st.textContent = /未知的 action/.test(e.message) ? '❌ 要更新 Apps Script（新版 Sync.gs）才能更新已登記的項目' : '❌ ' + e.message; st.className = 'sync-status err'; return;
+      }
+    }
     Object.entries(store || {}).forEach(([d, arr]) => { if (d >= from && d <= today()) arr.forEach(x => { if (!x.synced) items.push(Object.assign({ date: d }, x)); }); });
     if (!items.length) {
       st.textContent = '✅ 近 14 天都已經登記過了'; st.className = 'sync-status ok';
@@ -3043,6 +3060,7 @@
         (data.results || []).forEach(r => {
           const it = batch.find(x => x.id === r.id); if (!it) return;
           const orig = (store[it.date] || []).find(x => x.id === r.id); if (!orig) return;
+          if (r.where && !r.dup) orig.sheetWhere = r.where;
           if (r.link) { orig.sheetLink = r.link; S.sheetLast = S.sheetLast || {}; S.sheetLast[kind] = { link: r.link, date: it.date, name: it.name || it.cat || '', at: Date.now() }; }
           if (r.ok) { orig.synced = true; delete orig.syncErr; ok++; } else { orig.syncErr = r.error; errs.push(`${it.date} ${it.name || it.cat}：${r.error}`); }
         });
@@ -4654,6 +4672,7 @@
       const m = S.monster; if (!m) return;
       const poses = m.form === '0-egg' ? ['wobble', 'crack', 'idle'] : ['happy', 'attack', 'win', 'eat', 'walk', 'idle'];
       const img = $('mon-big'); img.src = monImg(m.line, m.form, pick(poses));
+      const h = document.querySelector('.mon-tap-hint'); if (h) h.remove(); // 點過一次就收起來，下次進來再出現
     },
     monRename() {
       const v = prompt('幫牠取個暱稱（留空就用原本的名字）', S.monster.nick || '');
@@ -4815,7 +4834,17 @@
       finally { foodBusy = false; }
     },
     foodManual() { foodImgs = []; $('food-stage').classList.remove('show'); $('fd-reanalyze').style.display = 'none'; $('fd-time').value = ''; showDraft({ foodName: $('food-text').value.trim() }, []); setFoodStatus('自己填寫熱量與蛋白質'); },
-    foodCancel() { $('food-draft').classList.remove('show'); $('food-stage').classList.remove('show'); foodImgs = []; $('fd-note').value = ''; $('fd-reanalyze').style.display = 'none'; setFoodStatus(''); },
+    foodEdit(id) {
+      const x = (S.foods[curDate] || []).find(i => i.id === id); if (!x) return;
+      App.foodCancel(); foodEditId = id;
+      showDraft({ foodName: x.name, calories: x.kcal, protein: x.protein, fat: x.fat ?? 0, carbs: x.carbs ?? 0, isSnack: !!x.snack, details: x.details || '' }, []);
+      $('fd-time').value = x.time || ''; $('fd-slot').value = x.slot || 'auto';
+      $('fd-confirm').textContent = '✅ 儲存修改';
+      setFoodStatus(`✏️ 修改「${x.name}」${x.synced ? '\n已登記在健康26：存檔後按「同步登記」，會把試算表上的舊資料換成新的' : ''}`);
+      renderH26Box(curDate);
+      setTimeout(() => $('food-draft').scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    },
+    foodCancel() { if (foodEditId) { foodEditId = null; $('fd-confirm').textContent = '✅ 加入紀錄'; renderH26Box(curDate); } $('food-draft').classList.remove('show'); $('food-stage').classList.remove('show'); foodImgs = []; $('fd-note').value = ''; $('fd-reanalyze').style.display = 'none'; setFoodStatus(''); },
     foodConfirm() {
       const name = $('fd-name').value.trim();
       if (!name) { toast('請填食物名稱'); return; }
@@ -4823,6 +4852,17 @@
       const snack = $('fd-snack').checked;
       let slot = $('fd-slot').value; if (slot === 'auto') slot = autoSlot(time, snack);
       if (slot.startsWith('snack')) { /* 選了零食時段就算零食 */ }
+      if (foodEditId) {
+        const x = (S.foods[curDate] || []).find(i => i.id === foodEditId);
+        if (x) {
+          if (x.synced) { x.pendingRemove = x.pendingRemove || { date: curDate, where: x.sheetWhere || '', name: x.name, kcal: x.kcal, protein: x.protein }; x.synced = false; x.id = 'f' + Date.now().toString(36); }
+          Object.assign(x, { time, slot, name, kcal: Math.round(Number($('fd-kcal').value) || 0), protein: Math.round((Number($('fd-pro').value) || 0) * 10) / 10, fat: Math.round((Number($('fd-fat').value) || 0) * 10) / 10, carbs: Math.round((Number($('fd-carb').value) || 0) * 10) / 10, snack: snack || slot.startsWith('snack'), details: $('fd-details').textContent || x.details || '' });
+          delete x.syncErr; delete x.sheetWhere;
+        }
+        persist(); App.foodCancel(); refreshStats(); renderH26Box(curDate); updateHints();
+        toast(x && x.pendingRemove ? '✏️ 已修改，按「同步登記」更新試算表' : '✏️ 已修改');
+        return;
+      }
       const item = { id: 'f' + Date.now().toString(36), time, slot, name, kcal: Math.round(Number($('fd-kcal').value) || 0), protein: Math.round((Number($('fd-pro').value) || 0) * 10) / 10, fat: Math.round((Number($('fd-fat').value) || 0) * 10) / 10, carbs: Math.round((Number($('fd-carb').value) || 0) * 10) / 10, snack: snack || slot.startsWith('snack'), details: $('fd-details').textContent || '' };
       const before = C.perDay[curDate] ? C.perDay[curDate].pts : 0;
       (S.foods[curDate] = S.foods[curDate] || []).push(item);
@@ -4843,11 +4883,30 @@
     // ---- money ----
     moneyCat(k) { moneyCat = k; renderMoney(); },
     moneyShift(n) { const d = addDays(moneyDate, n); if (d > today()) return; moneyDate = d; renderMoney(); },
+    moneyEdit(id) {
+      const x = (S.expenses[moneyDate] || []).find(i => i.id === id); if (!x) return;
+      moneyEditId = id; moneyCat = x.cat;
+      renderMoney();
+      $('mn-name').value = x.name || ''; $('mn-amt').value = x.amount; $('mn-time').value = x.time || '';
+      $('mn-add').textContent = '✅ 儲存修改'; $('mn-cancel').style.display = '';
+      if (x.synced) toast('已登記在試算表：存檔後按「同步登記」會把舊資料換成新的');
+      setTimeout(() => $('mn-name').scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    },
+    moneyEditCancel() { moneyEditId = null; moneyCat = 'auto_meal'; $('mn-name').value = ''; $('mn-amt').value = ''; $('mn-time').value = ''; $('mn-add').textContent = '➕ 記下這筆'; $('mn-cancel').style.display = 'none'; renderMoney(); },
     moneyAdd() {
       const amt = Math.round(calcEval($('mn-amt').value) || 0);
       if (!amt) { toast('請填金額'); return; }
       const time = /^\d{1,2}:\d{2}$/.test($('mn-time').value.trim()) ? $('mn-time').value.trim() : (moneyDate === today() ? nowTime() : '12:00');
       const cat = resolveCat(moneyCat, time);
+      if (moneyEditId) {
+        const x = (S.expenses[moneyDate] || []).find(i => i.id === moneyEditId);
+        if (x) {
+          if (x.synced) { x.pendingRemove = x.pendingRemove || { date: moneyDate, where: x.sheetWhere || '', name: x.name, amount: x.amount, cat: x.cat }; x.synced = false; x.id = 'm' + Date.now().toString(36); }
+          Object.assign(x, { time, cat, name: $('mn-name').value.trim() || cat, amount: amt }); delete x.syncErr; delete x.sheetWhere;
+        }
+        persist(); const pend = x && x.pendingRemove; App.moneyEditCancel();
+        toast(pend ? '✏️ 已修改，按「同步登記」更新試算表' : '✏️ 已修改'); return;
+      }
       S.expenses = S.expenses || {};
       (S.expenses[moneyDate] = S.expenses[moneyDate] || []).push({ id: 'm' + Date.now().toString(36), time, cat, name: $('mn-name').value.trim() || cat, amount: amt });
       persist(); $('mn-name').value = ''; $('mn-amt').value = ''; $('mn-time').value = '';
@@ -5164,7 +5223,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.24-1';
+  const APP_VERSION = '2026.11.24-2';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
