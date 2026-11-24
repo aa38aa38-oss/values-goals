@@ -1143,7 +1143,6 @@
       <textarea id="note" placeholder="今天的感覺、嘴饞的時刻、做得好的地方…"></textarea>
       <button type="button" class="btn card-save" onclick="App.saveDay()">📮 交給教練</button>
     </div>
-    <div class="sheet-foot"><button class="btn" onclick="App.saveDay()">📮 交給教練（儲存全部）</button></div>
   </div></div>
 </div>
 
@@ -5259,7 +5258,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.24-4';
+  const APP_VERSION = '2026.11.24-5';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
