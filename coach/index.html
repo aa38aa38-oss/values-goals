@@ -65,6 +65,7 @@
   .hut-card img { width: 72px; height: 72px; object-fit: contain; flex: none; }
   .hut-card .hut-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .hut-card .hut-info small { color: var(--muted); font-size: .76rem; }
+  .hut-card { cursor: pointer; } .hut-card .hut-more { color: #c98a10 !important; font-weight: 700; }
   .hut-card .btn { width: auto; flex: none; padding: 9px 12px; font-size: .82rem; margin: 0; }
   .egg-pick[disabled] { opacity: .5; }
   .decor-btn.paint-btn { right: auto; left: 2.5%; display: none; }
@@ -755,6 +756,10 @@
     <div class="patience" onclick="App.statInfo('exp')" style="cursor:pointer">
       <div class="patience-label"><span id="exp-label">Lv.1 → Lv.2</span><span id="exp-text">0 / 300 EXP</span></div>
       <div class="bar"><i id="exp-bar" style="background:linear-gradient(90deg,#8b5bd6,#f2b134)"></i></div>
+    </div>
+    <div class="patience" id="mon-hud" onclick="App.monInfo()" style="cursor:pointer;display:none">
+      <div class="patience-label"><span id="mon-hud-label">🐾 怪獸 Lv.1 → Lv.2</span><span id="mon-hud-text">0 / 300 怪獸EXP</span></div>
+      <div class="bar"><i id="mon-hud-bar" style="background:linear-gradient(90deg,#4fbfa6,#f2b134)"></i></div>
     </div>
     <div class="patience" id="food-hud">
       <div class="patience-label"><span>🍱 今日熱量 <b id="food-kcal">0</b> / <span id="food-kmax">2100</span> kcal</span><span>💪 蛋白質 <b id="food-pro">0</b> / <span id="food-pgoal">90</span> g</span></div>
@@ -1939,7 +1944,8 @@
     bar.style.background = C.patience >= 60 ? 'var(--ok)' : C.patience >= 30 ? 'var(--warn)' : 'var(--primary)';
     $('lv-badge').textContent = `Lv.${C.level} ${C.title}`;
     const into = Math.max(0, C.score - (C.level - 1) * LEVEL_PTS);
-    $('exp-label').textContent = `Lv.${C.level} → Lv.${C.level + 1}`;
+    $('exp-label').textContent = `🧑 玩家 Lv.${C.level} → Lv.${C.level + 1}`;
+    renderMonHud();
     $('exp-text').textContent = `${into} / ${LEVEL_PTS} EXP`;
     $('exp-bar').style.width = Math.min(100, into / LEVEL_PTS * 100) + '%';
     renderFood();
@@ -3481,7 +3487,7 @@
   function monExpBlock(m) {
     if (m.form === '0-egg') return '';
     const e = monExpOf(m), lv = monLevelOf(m), into = e - (lv - 1) * LEVEL_PTS;
-    return `<div class="mon-exp"><div class="patience-label"><span>🐾 怪獸 Lv.${lv} → Lv.${lv + 1}</span><span>${into} / ${LEVEL_PTS} EXP（還差 ${LEVEL_PTS - into}）</span></div>
+    return `<div class="mon-exp"><div class="patience-label"><span>🐾 怪獸 Lv.${lv} → Lv.${lv + 1}</span><span>${into} / ${LEVEL_PTS} 怪獸EXP（還差 ${LEVEL_PTS - into}）</span></div>
       <div class="bar"><i style="width:${Math.min(100, into / LEVEL_PTS * 100)}%;background:linear-gradient(90deg,#4fbfa6,#f2b134)"></i></div>
       <p class="muted" style="margin:6px 0 0;font-size:.78rem;text-align:left">💡 經驗值來源是同一份「每日得分」：每天的得分會同時加到<b>你的等級</b>（目前 Lv.${C.level}）和<b>當天上場的怪獸</b>。但怪獸的等級是自己算的，只累積牠上場那些天的分數，所以會比你的等級低；換下來休息的日子不會加。怪獸累計 ${e} EXP，每 ${LEVEL_PTS} EXP 升一級。</p></div>`;
   }
@@ -3497,12 +3503,28 @@
     const avg = cur.length ? Math.round(sum / cur.length) : 0;
     const stg = STAGE_LABEL[monStage(m.form)];
     return `<div class="card"><h2>📊 ${esc(m.nick || monName())} 的分數紀錄</h2>
-      <p class="muted" style="margin:0 0 6px;font-size:.82rem">只列出牠上場、有算分的日子（換下來休息的日子不算）。<b>紀律分</b>（0～100）決定進化型態；<b>得分</b>是加到經驗值的分數。</p>
+      <p class="muted" style="margin:0 0 6px;font-size:.82rem">只列出牠上場、有算分的日子（換下來休息的日子不算）。<b>紀律分</b>（0～100）決定進化型態；<b>怪獸 EXP</b> 是那天加給牠的經驗值。</p>
       ${m.form === '0-egg' ? '' : `<div class="si-note" style="margin-bottom:8px">目前「${stg}」從 ${nice(m.stageStart)} 開始，共 <b>${cur.length}</b> 天：<br>紀律分加總 <b>${sum}</b> ÷ ${cur.length || 1} 天 ＝ 平均 <b>${avg}</b> 分 → ${cur.length ? TIER_LABEL[tierOf(avg)] : '還沒有紀錄'}（80↑菁英、50↑普通）</div>`}
-      <div class="mon-log"><div class="mon-log-h"><span>日期</span><span>紀律分</span><span>得分 EXP</span></div>
+      <div class="mon-log"><div class="mon-log-h"><span>日期</span><span>紀律分</span><span>怪獸 EXP</span></div>
         ${rows.length ? rows.map(r => r.skip ? `<div class="skip"><span>${nice(r.d)}</span><span>今天還沒記錄</span><span>—</span></div>`
           : `<div class="${r.cur ? 'cur' : ''}"><span>${nice(r.d)}${r.cur ? '' : ' <small>（前一階段）</small>'}</span><span><b style="color:${r.sc >= 80 ? '#3fa86b' : r.sc >= 50 ? '#c98a10' : '#e8505b'}">${r.sc}</b></span><span>+${r.pts}</span></div>`).join('') : '<p class="muted">還沒有紀錄</p>'}
       </div></div>`;
+  }
+
+  // 健身房的怪獸等級條
+  function renderMonHud() {
+    const el = $('mon-hud'), m = S.monster; if (!el) return;
+    el.style.display = m ? '' : 'none'; if (!m) return;
+    const nm = esc(m.nick || monName());
+    if (m.form === '0-egg') {
+      const n = Math.min(3, eggProgress());
+      $('mon-hud-label').innerHTML = `🥚 ${nm} 孵化中`; $('mon-hud-text').textContent = `${n} / 3 項紀錄`;
+      $('mon-hud-bar').style.width = n / 3 * 100 + '%'; return;
+    }
+    const e = monExpOf(m), lv = monLevelOf(m), into = e - (lv - 1) * LEVEL_PTS;
+    $('mon-hud-label').innerHTML = `🐾 ${nm} Lv.${lv} → Lv.${lv + 1}`;
+    $('mon-hud-text').textContent = `${into} / ${LEVEL_PTS} 怪獸EXP`;
+    $('mon-hud-bar').style.width = Math.min(100, into / LEVEL_PTS * 100) + '%';
   }
 
   let monSub = 'mine';
@@ -3566,11 +3588,11 @@
     const card = m => {
       const on = m.line === S.activeLine, stg = monStage(m.form), tr = monTier(m.form);
       const avg = m.form === '0-egg' ? null : avgScore(m.stageStart, t, m.line);
-      return `<div class="hut-card ${on ? 'on' : ''}"><img src="${monImg(m.line, m.form, on ? 'happy' : 'sleep')}" alt="" onerror="this.src='${monImg(m.line, m.form, 'idle')}'">
+      return `<div class="hut-card ${on ? 'on' : ''}" onclick="if(!event.target.closest('button'))App.monInfo('${m.line}')"><img src="${monImg(m.line, m.form, on ? 'happy' : 'sleep')}" alt="" onerror="this.src='${monImg(m.line, m.form, 'idle')}'">
         <div class="hut-info"><b>${esc(m.nick || MON_NAMES[m.line][m.form])}</b>
           <small>${MON_LINES[m.line].icon} ${MON_NAMES[m.line][m.form]}・${STAGE_LABEL[stg]}${['lazy', 'normal', 'elite'].includes(tr) ? '・' + TIER_LABEL[tr] : ''}${m.form === '0-egg' ? '' : `・Lv.${monLevelOf(m)}`}</small>
           <small>${m.form === '0-egg' ? `孵化進度 ${Math.min(3, m === S.monster ? eggProgress() : 0)} / 3` : ownedDays(m.stageStart, t, m.line) ? `這階段平均紀律分 ${avg} 分` : '這階段還沒有紀錄'}</small>
-          <small>${on ? '⭐ 上場中' : '💤 在小屋休息（完全暫停）'}</small></div>
+          <small>${on ? '⭐ 上場中' : '💤 在小屋休息（完全暫停）'}</small><small class="hut-more">📊 點我看分數紀錄</small></div>
         ${on ? '' : `<button class="btn ${can ? '' : 'ghost'}" ${can ? '' : 'disabled'} onclick="App.monSwitch('${m.line}')">換牠上場</button>`}</div>`;
     };
     const eggs = Object.keys(MON_LINES).filter(l => !ms[l]);
@@ -4656,6 +4678,16 @@
     },
     paintUndo() { const u = paint.undo.pop(); if (u) paintCtx().putImageData(u, 0, 0); renderPaintPanel(); },
     paintClear() { if (!confirm('把塗鴉全部擦掉？')) return; paintSnap(); const cv = $('paint-cv'); paintCtx().clearRect(0, 0, cv.width, cv.height); renderPaintPanel(); },
+    monInfo(line) {
+      const m = line ? (S.monsters || {})[line] : S.monster; if (!m) { App.switchTab('avatar'); return; }
+      C = C || compute();
+      $('stat-ov-title').textContent = `${MON_LINES[m.line].icon} ${m.nick || MON_NAMES[m.line][m.form]}`;
+      const stg = STAGE_LABEL[monStage(m.form)], tr = monTier(m.form);
+      $('stat-ov-body').innerHTML = `<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><img src="${monImg(m.line, m.form, 'idle')}" alt="" style="width:72px;height:72px;object-fit:contain">
+          <div><b>${MON_NAMES[m.line][m.form]}</b><br><small class="muted">${stg}${['lazy', 'normal', 'elite'].includes(tr) ? '・' + TIER_LABEL[tr] : ''}${m.line === S.activeLine ? '・⭐ 上場中' : '・💤 休息中'}</small></div></div>
+        ${monExpBlock(m)}${monScoreLog(m).replace('<div class="card">', '<div>')}`;
+      $('stat-ov').classList.add('show');
+    },
     statInfo(kind) { const [ti, html] = statInfoHTML(kind); $('stat-ov-title').textContent = ti; $('stat-ov-body').innerHTML = html; $('stat-ov').classList.add('show'); },
     closeStatInfo() { $('stat-ov').classList.remove('show'); },
     openGuide() { $('guide-body').innerHTML = guideHTML(); $('guide-ov').classList.add('show'); },
@@ -5223,7 +5255,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.24-2';
+  const APP_VERSION = '2026.11.24-3';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
