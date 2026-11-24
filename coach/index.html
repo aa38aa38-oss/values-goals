@@ -754,7 +754,7 @@
   <section class="view" id="view-today">
     <div class="stats">
       <button type="button" class="stat" onclick="App.statInfo('exp')"><b id="st-score">0</b><span>經驗值 EXP ⓘ</span></button>
-      <button type="button" class="stat" onclick="App.statInfo('today')"><b id="st-today">0</b><span>今日得分 ⓘ</span></button>
+      <button type="button" class="stat" onclick="App.statInfo('today')"><b id="st-today">0</b><span>今日EXP ⓘ</span></button>
       <button type="button" class="stat" onclick="App.statInfo('discipline')"><b id="st-disc">0</b><span>今日紀律分 ⓘ</span></button>
       <button type="button" class="stat" onclick="App.statInfo('streak')"><b id="st-streak">0</b><span>連續天數🔥 ⓘ</span></button>
     </div>
@@ -3686,7 +3686,7 @@
     mgCoach('goforit'); mgSay(`${S.settings.coachName || '教練'}：來比一場吧！每個遊戲每天贏一次 +${GAME_EXP} EXP`);
     const done = (S.gameBonus || {})[today()] || {};
     $('mg-body').innerHTML = `<div class="mg-menu">
-      <button onclick="App.gameStart('rps')"><b>✊ 猜拳三戰兩勝</b><small>先贏 2 場就勝利${done.rps ? '・今天已領獎 ✅' : ''}</small></button>
+      <button onclick="App.gameStart('rps')"><b>✊ 猜拳一決勝負</b><small>贏一次就勝利（平手再猜）${done.rps ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('hit')"><b>🎯 時機打擊</b><small>指標滑進金色打擊區時按「打擊！」，越靠近中心分數越高；速度忽快忽慢！5 回合 300 分過關${done.hit ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('dance')"><b>💃 跳舞機</b><small>箭頭掉到線上時按對的方向！24 拍命中 18 拍過關${done.dance ? '・今天已領獎 ✅' : ''}</small></button>
       <button onclick="App.gameStart('mole')"><b>🔨 打地鼠</b><small>20 秒內打 15 隻地鼠過關；🌟 金地鼠 +3，💣 別打！${done.mole ? '・今天已領獎 ✅' : ''}</small></button>
@@ -4387,7 +4387,7 @@
     if (kind === 'exp') {
       const into = C.score - (C.level - 1) * LEVEL_PTS, g = S.settings.goals;
       return [`⭐ 經驗值 EXP`, `<div class="si-big"><b>${C.score}</b><span>Lv.${C.level} ${esc(C.title)}・再 ${LEVEL_PTS - into} EXP 升 Lv.${C.level + 1}（每 ${LEVEL_PTS} EXP 升一級）</span></div>
-        <p style="margin:0 0 6px">每天的「今日得分」會加進經驗值。升級會解鎖健身房裝飾、衣服，怪獸也會跟著長大。</p>
+        <p style="margin:0 0 6px">每天的「今日EXP」會加進經驗值。升級會解鎖健身房裝飾、衣服，怪獸也會跟著長大。</p>
         <h3 class="si-h">📋 每天可以拿分的項目</h3><ul class="si-list">${earnRules().map(x => li(x, 'rule')).join('')}</ul>
         <h3 class="si-h">🏆 額外大獎</h3><ul class="si-list">
           ${g.weeklyExDays ? li([`一週運動 ${g.weeklyExDays} 天以上（每週結算）`, 100], 'rule') : ''}
@@ -4405,13 +4405,13 @@
         <ul class="si-list">
           <li><span>🧬 怪獸進化型態</span><b style="color:var(--ink)">這個階段平均 80↑菁英、50↑普通</b></li>
           <li><span>🤒 怪獸生病</span><b style="color:#e8505b">最近 3 天有 2 天低於 30</b></li>
-          <li><span>⭐ 經驗值</span><b style="color:var(--ink)">不會加 EXP（EXP 看「今日得分」）</b></li>
+          <li><span>⭐ 經驗值</span><b style="color:var(--ink)">不會加 EXP（EXP 看「今日EXP」）</b></li>
         </ul>
         ${m ? `<div class="si-note">今天的紀律分會算給上場中的 ${esc(m.nick || monName())}。<a href="#" onclick="App.closeStatInfo();App.monInfo();return false">📊 看牠的分數紀錄</a></div>` : ''}`];
     }
     if (kind === 'today') {
       const todo = todayTodo();
-      return [`📅 今日得分`, `<div class="si-big"><b>${pd.pts}</b><span>${nice(t)} 已經拿到的分數</span></div>
+      return [`📅 今日EXP`, `<div class="si-big"><b>${pd.pts}</b><span>${nice(t)} 已經拿到的分數</span></div>
         <h3 class="si-h">✅ 今天已經拿到</h3>${pd.items.length ? `<ul class="si-list">${pd.items.map(x => li(x)).join('')}</ul>` : '<p class="muted">今天還沒有得分，先記一筆吧！</p>'}
         ${todo.length ? `<h3 class="si-h">💡 今天還可以拿</h3><ul class="si-list">${todo.map(x => li(x, true)).join('')}</ul>` : '<p>🎉 今天能拿的都拿到了！</p>'}
         <h3 class="si-h">📈 每日得分會影響什麼？</h3>
@@ -4579,7 +4579,7 @@
       if (k === 'dance') danceStart();
       if (k === 'mole') moleStart();
       if (k === 'piano') pianoMenu();
-      if (k === 'rps') { mg = { k, me: 0, co: 0 }; $('mg-title').textContent = '✊ 猜拳三戰兩勝'; rpsDuel('❔', '❔', false); mgSay('選一個拳，跟教練同時出拳！'); rpsDraw(); }
+      if (k === 'rps') { mg = { k, me: 0, co: 0 }; $('mg-title').textContent = '✊ 猜拳一決勝負'; rpsDuel('❔', '❔', false); mgSay('選一個拳，跟教練同時出拳！'); rpsDraw(); }
       if (k === 'hit') { mg = { k, round: 0, score: 0 }; $('mg-title').textContent = '🎯 時機打擊'; hitRound(); }
     },
     danceTap(l) { danceTap(l); },
@@ -4607,8 +4607,8 @@
       rpsDuel(RPS[k], RPS[c], false, r === '你贏' ? 'win' : r === '教練贏' ? 'lose' : 'tie');
       mgSay(`你 ${RPS[k]} vs ${RPS[c]} 教練 → ${r}！`);
       mg.busy = false;
-      if (mg.me >= 2 || mg.co >= 2) {
-        const win = mg.me >= 2;
+      if (mg.me >= 1 || mg.co >= 1) {
+        const win = mg.me >= 1;
         mgSay(win ? `可惡……你贏了！${gameAward('rps')}` : '呀哈！教練贏了！再來挑戰吧！');
         if (win) monAct('win', 2600);
         $('mg-body').innerHTML = `<p style="text-align:center;margin:0 0 8px">你 <b>${mg.me}</b> ： <b>${mg.co}</b> 教練</p><button class="btn" onclick="App.gameStart('rps')">🔁 再玩一次</button><button class="btn ghost" onclick="App.openGames()">◀ 換遊戲</button>`;
@@ -5299,7 +5299,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.24-7';
+  const APP_VERSION = '2026.11.24-8';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
