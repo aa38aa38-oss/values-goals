@@ -7,7 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="紀律教練">
 <meta name="theme-color" content="#fff4e3">
-<link rel="apple-touch-icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png?v=2">
+<link rel="icon" href="icon.png?v=2">
 <title>紀律教練</title>
 <style>
   :root {
@@ -396,6 +397,15 @@
   .chips { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chips button { flex: none; border: 1.5px solid var(--line); background: #fff; border-radius: 99px; padding: 6px 11px; font: inherit; font-size: .8rem; color: var(--ink); }
+  #chat .chips { flex: none; }
+  .chips.local { padding-bottom: 2px; }
+  .chips.local button { border-color: #b9d3f2; background: #f2f8ff; }
+  .chips .chip-lbl { flex: none; align-self: center; font-size: .72rem; color: var(--muted); }
+  .qa-btns { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 8px 48px; }
+  .qa-btns button { border: 1.5px solid #b9d3f2; background: #f2f8ff; border-radius: 99px; padding: 5px 10px; font: inherit; font-size: .78rem; color: var(--ink); text-align: left; }
+  .qa-btns button.yes { border-color: var(--ok); background: var(--ok-soft); font-weight: 700; }
+  .qa-btns button.ai { border-color: #4a6fd6; background: #e8eefc; }
+  .qa-btns.done { opacity: .45; pointer-events: none; }
   .chat-input { display: flex; gap: 8px; }
   .chat-input textarea { min-height: 44px; height: 44px; flex: 1; }
   .chat-input .btn { width: auto; padding: 0 16px; margin: 0; }
@@ -1154,10 +1164,11 @@
   <div class="panel"><div class="panel-inner">
     <div class="sheet-head">
       <div class="mini" id="chat-coach"></div>
-      <div class="t"><span id="chat-title">問教練</span><small>教練會參考你近 7 天的紀錄回答（Gemini AI）</small></div>
+      <div class="t"><span id="chat-title">問教練</span><small>📚 藍色主題免 AI 直接回答；其他問題參考近 7 天紀錄（Gemini AI）</small></div>
       <button onclick="App.closeChat()" aria-label="關閉">✕</button>
     </div>
     <div class="chat-log" id="chat-log"></div>
+    <div class="chips local" id="qa-topics"></div>
     <div class="chips">
       <button onclick="App.ask('幫我點評今天的紀錄')">點評今天</button>
       <button onclick="App.ask('這週我做得怎麼樣？下週要調整什麼？')">本週檢討</button>
@@ -1279,6 +1290,8 @@
   </div>
 </div>
 
+<script src="coach-local-qa.js?v=1"></script>
+<script src="coach-local-engine.js?v=1"></script>
 <script>
 (() => {
   const KEY = 'coachGame.v1';
@@ -3188,6 +3201,71 @@
     return el;
   }
 
+  // ---------- 免 API 本地問答（coach-local-qa.js / coach-local-engine.js） ----------
+  const QA = window.CoachLocalEngine || null;
+  let qaPending = null; // { hook, box } 等使用者回答要不要套用個人數據
+  function qaCtx() {
+    const t = today(), ds = Object.keys(S.records || {}).filter(d => d <= t && num(S.records[d].weight) !== null).sort();
+    return { goals: S.settings.goals, todayRec: rec(t), todayFood: foodOf(t) || undefined, latestWeight: ds.length ? num(S.records[ds[ds.length - 1]].weight) : null };
+  }
+  function qaBtns(list) { // list: [{ label, cls, fn }]
+    const box = document.createElement('div'); box.className = 'qa-btns';
+    list.forEach(b => { const el = document.createElement('button'); el.type = 'button'; el.textContent = b.label; if (b.cls) el.className = b.cls; el.onclick = () => { box.classList.add('done'); b.fn(); }; box.appendChild(el); });
+    $('chat-log').appendChild(box); $('chat-log').scrollTop = $('chat-log').scrollHeight;
+    return box;
+  }
+  function qaLabelTarget(label) { // 決策樹選項文字 → 卡片或個人試算
+    for (const k in QA.trees) { const o = QA.trees[k].options.find(x => x.label === label); if (o) return o; }
+    const tp = QA.topics.find(x => x.label === label); return tp ? { nextTree: tp.id } : null;
+  }
+  function qaAskApply(hook) {
+    if (qaPending) qaPending.box.classList.add('done');
+    chatMsg('coach', QA.buildAskApplyPrompt(hook, QA.readPersonalSnapshot(qaCtx)));
+    const box = qaBtns([{ label: '✅ 套用', cls: 'yes', fn: () => qaApply(true) }, { label: '不用', fn: () => qaApply(false) }]);
+    qaPending = { hook, box };
+  }
+  function qaApply(yes) {
+    if (!qaPending) return;
+    const { hook, box } = qaPending; qaPending = null; box.classList.add('done');
+    if (yes) chatMsg('coach', QA.computeAppliedResult(hook, QA.readPersonalSnapshot(qaCtx)));
+    else chatMsg('coach', '好，先不套用！還有想問的可以點下面的主題 👇');
+  }
+  function qaShow(res, question) {
+    chatMsg('coach', res.text);
+    const btns = [];
+    (res.options || []).forEach(o => btns.push({ label: o.label, fn: () => qaRun(o.label, o) }));
+    if (res.personalHook) btns.push({ label: '📊 套用我的數據', cls: 'yes', fn: () => qaAskApply(res.personalHook) });
+    if (!res.options) (res.followUps || []).forEach(f => btns.push({ label: f, fn: () => qaRun(f) }));
+    if (question && (gmKey() || cloudOn())) btns.push({ label: '🤖 改問 AI 教練', cls: 'ai', fn: () => App.ask(question, true) });
+    if (btns.length) qaBtns(btns);
+  }
+  function qaRun(label, target) { // 點主題／選項
+    if (!QA) return;
+    if (!$('chat').classList.contains('show')) App.openChat();
+    chatMsg('me', label);
+    const t = target || qaLabelTarget(label);
+    if (t && t.personalHook && !t.nextCard) return qaAskApply(t.personalHook);
+    qaShow(QA.queryLocal(t ? (t.nextTree || t.nextCard) : label));
+  }
+  function qaTyped(question) { // 打字：先走本地，命中才回答，回傳 true
+    if (!QA) return false;
+    if (qaPending && QA.isApplyAffirmative(question)) { chatMsg('me', question); qaApply(true); return true; }
+    if (qaPending && QA.isApplyDecline(question)) { chatMsg('me', question); qaApply(false); return true; }
+    const t = qaLabelTarget(question);
+    const res = QA.queryLocal(t ? (t.nextTree || t.nextCard || question) : question);
+    const miss = !t && res.text.startsWith('免 API');
+    if (miss && (gmKey() || cloudOn())) return false; // 本地沒命中 → 交給 Gemini
+    chatMsg('me', question);
+    if (t && t.personalHook && !t.nextCard) qaAskApply(t.personalHook); else qaShow(res, miss ? '' : question);
+    return true;
+  }
+  function qaRenderTopics() {
+    const el = $('qa-topics'); if (!el) return;
+    if (!QA) { el.style.display = 'none'; return; }
+    el.innerHTML = '<span class="chip-lbl">📚 免AI</span>';
+    QA.topics.forEach(tp => { const b = document.createElement('button'); b.type = 'button'; b.textContent = tp.label; b.onclick = () => qaRun(tp.label, { nextTree: tp.id }); el.appendChild(b); });
+  }
+
   // ---------- coach life: wandering + interactions ----------
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   function emoBurst(list, p, n = 4, cls = 'emo') {
@@ -5095,18 +5173,20 @@
     openChat() {
       $('chat-coach').innerHTML = coachMarkup('goforit');
       $('chat-title').textContent = `問${S.settings.coachName || '教練'}`;
-      if (!$('chat-log').children.length) chatMsg('coach', (gmKey() || cloudOn()) ? `${S.avatar.name || '你'}！有什麼想問的？飲食、運動、減脂都可以問我！` : '要先到「設定 → 🤖 Gemini AI 設定」貼上 API key，我才能回答喔！');
+      if (!$('qa-topics').children.length) qaRenderTopics();
+      if (!$('chat-log').children.length) chatMsg('coach', (gmKey() || cloudOn()) ? `${S.avatar.name || '你'}！有什麼想問的？飲食、運動、減脂都可以問我！\n👇 藍色「📚 免AI」主題不用 AI 也能馬上回答。` : '藍色「📚 免AI」主題可以直接點來問！\n想自由打字問 AI 教練，要先到「設定 → 🤖 Gemini AI 設定」貼上 API key 喔！');
       $('chat').classList.add('show'); document.body.style.overflow = 'hidden';
     },
     closeChat() { $('chat').classList.remove('show'); document.body.style.overflow = ''; },
-    async ask(q) {
+    async ask(q, forceAI) {
       if (asking) return;
       const input = $('chat-input');
       const question = (q || input.value).trim();
       if (!question) return;
       if (!$('chat').classList.contains('show')) App.openChat();
       input.value = '';
-      chatMsg('me', question);
+      if (!q && !forceAI && qaTyped(question)) return; // 打字先走免 API 問答
+      if (!forceAI) chatMsg('me', question);
       if (!gmKey() && !cloudOn()) { chatMsg('coach', '還沒設定 Gemini！到「設定 → 🤖 Gemini AI 設定」貼上 API key 再來問我。'); return; }
       asking = true;
       const wait = chatMsg('coach', '嗯……讓我看看你的紀錄……', 'wait');
@@ -5299,7 +5379,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.24-8';
+  const APP_VERSION = '2026.11.25-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
