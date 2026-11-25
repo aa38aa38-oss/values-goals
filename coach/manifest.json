@@ -1,0 +1,13 @@
+{
+  "name": "紀律教練",
+  "short_name": "紀律教練",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff4e3",
+  "theme_color": "#fff4e3",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
