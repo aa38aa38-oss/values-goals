@@ -33,7 +33,9 @@
     40% { transform: translate(7px,-5px); } 60% { transform: translate(-6px,-3px); } 80% { transform: translate(5px,5px); }
   }
   header.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  header.top h1 { font-size: 1.1rem; margin: 0; }
+  header.top h1 { font-size: 1.1rem; margin: 0; min-width: 0; }
+  header.top h1 #top-name { font-size: .9rem; }
+  .ob-back { border: 0; background: none; font: inherit; color: var(--muted); padding: 4px 0; margin-bottom: 6px; }
   .lv-badge { background: var(--primary); color: #fff; border-radius: 99px; padding: 3px 10px; font-size: .78rem; font-weight: 700; }
 
   .card { background: var(--card); border-radius: 18px; padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
@@ -672,7 +674,7 @@
 <div id="scroller">
 <div id="app">
   <header class="top">
-    <h1>🏋️ 紀律健身房</h1>
+    <h1>🏋️ 紀律健身房<span id="top-name"></span></h1>
     <span class="lv-badge" id="lv-badge">Lv.1</span>
   </header>
 
@@ -1045,7 +1047,6 @@
       <button class="btn secondary" onclick="App.exportData()">⬇️ 匯出備份檔</button>
       <input type="file" accept="application/json,.json" id="import-file" style="display:none" onchange="App.importData(this)">
       <button class="btn secondary" onclick="document.getElementById('import-file').click()">⬆️ 匯入備份檔</button>
-      <button class="btn secondary" onclick="App.importCompass()">🧭 從「心智羅盤」匯入體重</button>
       <button class="btn ghost" onclick="App.obStart()">🔄 重新選擇主角與教練</button>
       <button class="btn ghost" onclick="App.resetAll()">🗑️ 清除全部資料</button>
     </div>
@@ -1235,6 +1236,7 @@
 
 <div id="onboard">
   <div class="ob-inner">
+    <button type="button" class="ob-back" id="ob-close" onclick="App.obClose()">✕ 返回，不修改</button>
     <div class="ob-steps"><i data-s="0"></i><i data-s="1"></i><i data-s="2"></i><i data-s="3"></i></div>
 
     <div class="ob-step" data-step="0">
@@ -1251,7 +1253,10 @@
       <label class="f">你的名字</label>
       <input type="text" id="ob-myname" placeholder="例：自律的我">
       <div style="display:none"><div class="preset-grid" id="preset-grid"></div><div class="creator" id="ob-creator"></div></div>
-      <button class="btn" style="margin-top:12px" onclick="App.obNext(2)">下一步 ▶</button>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn ghost" onclick="App.obNext(0)">◀ 上一步</button>
+        <button class="btn" onclick="App.obNext(2)">下一步 ▶</button>
+      </div>
     </div>
 
     <div class="ob-step" data-step="2">
@@ -1924,6 +1929,7 @@
   }
 
   let playerDoll = null;
+  const playerName = () => { const n = ((S.avatar && S.avatar.name) || '').trim(); return n && n !== '我' ? n : '玩家'; };
   function renderPlayer(extra = {}) {
     if (S.monster) { playerDoll = null; renderMonsterActor(); return; }
     const t = today();
@@ -1963,7 +1969,8 @@
     bar.style.background = C.patience >= 60 ? 'var(--ok)' : C.patience >= 30 ? 'var(--warn)' : 'var(--primary)';
     $('lv-badge').textContent = `Lv.${C.level} ${C.title}`;
     const into = Math.max(0, C.score - (C.level - 1) * LEVEL_PTS);
-    $('exp-label').textContent = `🧑 玩家 Lv.${C.level} → Lv.${C.level + 1}`;
+    $('exp-label').textContent = `🧑 ${playerName()} Lv.${C.level} → Lv.${C.level + 1}`;
+    $('top-name').textContent = playerName() === '玩家' ? '' : `（${playerName()}）`;
     renderMonHud();
     $('exp-text').textContent = `${into} / ${LEVEL_PTS} EXP`;
     $('exp-bar').style.width = Math.min(100, into / LEVEL_PTS * 100) + '%';
@@ -2824,7 +2831,7 @@
   function renderRewards() {
     C = compute();
     const lv = C.level, into = C.score - (lv - 1) * LEVEL_PTS;
-    $('rw-level').innerHTML = `<div style="font-size:1.4rem;font-weight:900">🧑 玩家 Lv.${lv} ${C.title}</div>
+    $('rw-level').innerHTML = `<div style="font-size:1.4rem;font-weight:900">🧑 ${esc(playerName())} Lv.${lv} ${C.title}</div>
       <div class="patience-label" style="margin-top:6px"><span>距離 Lv.${lv + 1}</span><span>${Math.max(0, into)} / ${LEVEL_PTS} EXP</span></div>
       <div class="bar"><i style="width:${Math.max(0, Math.min(100, into / LEVEL_PTS * 100))}%;background:linear-gradient(90deg,#8b5bd6,#f2b134)"></i></div>
       <p class="muted" style="margin:8px 0 0">下一級解鎖：${unlocksAt(lv + 1).join('、') || '更多稱號'}</p>`;
@@ -5294,7 +5301,7 @@
     },
     exportData() {
       const imgs = {}; allCoachImgKeys().forEach(k => { imgs[k.slice(IMG_KEY.length)] = safeGet(k); });
-      const blob = new Blob([JSON.stringify({ app: 'coach-game', exportedAt: new Date().toISOString(), state: S, images: imgs })], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify({ app: 'coach-game', exportedAt: new Date().toISOString(), state: S, images: imgs, paint: paintURL || '' })], { type: 'application/json' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `紀律教練備份-${today()}.json`;
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
     },
@@ -5308,21 +5315,11 @@
           if (!confirm('匯入會覆蓋目前的資料，確定嗎？')) return;
           safeSet(KEY, JSON.stringify(d.state));
           Object.entries(d.images || {}).forEach(([k, v]) => safeSet(IMG_KEY + k, v));
-          load(); monMigrate(); fillSettings(); refreshStats(); renderPlayer(); sceneMood(); toast('匯入完成！');
+          if ('paint' in d) { paintURL = d.paint || ''; if (paintURL) safeSet(PAINT_KEY, paintURL); else safeDel(PAINT_KEY); paintLoad(); }
+          load(); monMigrate(); ltrMigrate(); fillSettings(); refreshStats(); renderPlayer(); renderGymBG(); sceneMood(); toast('匯入完成！（含健身房擺設與塗鴉）');
         } catch (e) { toast('檔案格式不對'); }
       };
       rd.readAsText(f); input.value = '';
-    },
-    importCompass() {
-      let src; try { src = JSON.parse(safeGet('rl_daily_records') || 'null'); } catch (e) { src = null; }
-      if (!src) { toast('找不到心智羅盤的資料（需在同一個網站、同一個瀏覽器）'); return; }
-      let n = 0;
-      Object.entries(src).forEach(([d, r]) => {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !r || num(r.weight) === null) return;
-        const cur = rec(d); if (num(cur.weight) !== null) return;
-        cur.weight = String(r.weight); S.records[d] = cur; n++;
-      });
-      persist(); refreshStats(); toast(n ? `匯入了 ${n} 天的體重` : '沒有新的體重可以匯入');
     },
     resetAll() {
       if (!confirm('確定清除全部資料？（建議先匯出備份）')) return;
@@ -5338,11 +5335,13 @@
       $('ob-start').value = g.startWeight; $('ob-target').value = g.targetWeight;
       $('ob-ex').value = g.exMin; $('ob-water').value = g.water; $('ob-week').value = g.weeklyExDays;
       $('onboard').classList.add('show');
+      $('ob-close').style.display = S.onboarded ? '' : 'none';
       pickedEgg = S.monster ? S.monster.line : ''; $('ob-eggs').innerHTML = eggPickHTML(); $('ob-myname').value = S.avatar.name && S.avatar.name !== '我' ? S.avatar.name : '';
       renderObCoach();
       $('ob-guide').innerHTML = guideHTML();
       App.obNext(0);
     },
+    obClose() { pickedEgg = ''; $('onboard').classList.remove('show'); },
     obPick(i) {
       obPreset = i;
       const name = S.avatar.name;
@@ -5368,7 +5367,7 @@
       if (!S.avatar.name) S.avatar.name = '我';
       if (pickedEgg && (!S.monster || S.monster.line !== pickedEgg)) startMonster(pickedEgg);
       pickedEgg = '';
-      S.onboarded = true; persist(); renderPlayer();
+      S.onboarded = true; persist(); renderPlayer(); refreshStats();
       $('onboard').classList.remove('show');
       App.switchTab('today');
       setCoach('goforit', `${S.avatar.name}！好好照顧${monName()}！完成 3 項紀錄牠就會孵化！`);
@@ -5379,7 +5378,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.25-2';
+  const APP_VERSION = '2026.11.25-3';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
