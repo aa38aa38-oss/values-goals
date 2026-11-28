@@ -115,6 +115,11 @@
   .ya-ic { width: 26px; height: 26px; vertical-align: -6px; }
   #night-time { font-size: 1.6rem; font-weight: 800; padding: 10px 14px; min-height: 54px; width: 100%; box-sizing: border-box; border: 2px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); text-align: center; }
   #night-time-wrap.off { display: none; }
+  .pr-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+  .pr-row input[type=checkbox] { width: 22px; height: 22px; flex: none; }
+  .pr-row input[type=time] { width: 104px; flex: none; padding-left: 6px; padding-right: 6px; }
+  .pr-row input[type=text] { flex: 1; min-width: 0; }
+  .pr-row button { flex: none; border: 0; background: none; font-size: 1rem; color: var(--muted); padding: 4px; }
   .si-big { text-align: center; margin: 4px 0 10px; } .si-big b { font-size: 2rem; display: block; } .si-big span { color: var(--muted); font-size: .85rem; }
   .si-list { list-style: none; padding: 0; margin: 0 0 12px; }
   .si-list li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: .9rem; }
@@ -996,8 +1001,23 @@
     </div>
 
     <div class="card">
-      <h2>🔔 每日提醒（iPhone 捷徑）</h2>
-      <p class="muted">網頁沒辦法自己定時跳通知，用 iPhone 內建的「捷徑」App 設定最穩：</p>
+      <h2>📅 手機提醒（一鍵加入 iPhone 行事曆）</h2>
+      <p class="muted">網頁 app 沒辦法自己定時跳通知，所以改用手機內建的「行事曆」：每天固定時間會跳出手機通知（關掉 app 也會響），點通知可看到回遊戲的連結。</p>
+      <div id="pr-list"></div>
+      <button class="btn ghost" onclick="App.prAdd()">＋ 新增一個提醒時間</button>
+      <button class="btn" onclick="App.prCalendar()">📅 加入 iPhone 行事曆（每天提醒）</button>
+      <button class="btn secondary" onclick="App.prCalendar(true)">⬇️ 下載提醒檔（.ics）</button>
+      <ol class="steps">
+        <li>按「📅 加入 iPhone 行事曆」→ 出現行事曆畫面時按「<b>全部加入</b>」</li>
+        <li>如果沒出現行事曆畫面：改按「⬇️ 下載提醒檔」→ 到「檔案」App 的「下載項目」點那個檔案 → 「全部加入」</li>
+        <li>要改時間：先到「行事曆」App 刪掉舊的「💪」提醒（刪除時選「刪除所有未來的事件」），再重新加入，不然會重複</li>
+        <li>沒有跳通知的話：設定 → 通知 → 行事曆 → 允許通知</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>🔔 每日提醒（iPhone 捷徑，進階）</h2>
+      <p class="muted">另一種做法：用 iPhone 內建的「捷徑」App 自動化，時間到直接跳通知並打開 app：</p>
       <ol class="steps">
         <li>先在 Safari 打開這頁 → 分享 → <b>加入主畫面</b>（資料比較不會被清掉）</li>
         <li>打開「捷徑」App → 下方「<b>自動化</b>」→ 右上「＋」</li>
@@ -2336,6 +2356,38 @@
       + `<div class="copy-line"><b style="font-size:.8rem">網址</b><code id="nl-url">${esc(location.href.split('#')[0])}</code><button onclick="App.copy('nl-url')">複製</button></div>`;
   }
 
+  // ---------- 手機提醒（行事曆 .ics） ----------
+  const prDefault = () => [
+    { on: true, time: '08:00', text: '起床量體重，早餐要回報喔！' },
+    { on: true, time: '12:30', text: '午餐記錄了沒？水喝幾杯了？' },
+    { on: true, time: (S.settings.nightAsk && S.settings.nightAsk.time) || '21:00', text: '今天運動了嗎？還沒登記快來找我！' },
+  ];
+  const prList = () => (S.settings.phoneRemind = S.settings.phoneRemind || prDefault());
+  function renderPhoneRemind() {
+    const el = $('pr-list'); if (!el) return;
+    el.innerHTML = prList().map((r, i) => `<div class="pr-row">
+      <input type="checkbox" ${r.on ? 'checked' : ''} onchange="App.prSet(${i},'on',this.checked)" aria-label="開啟">
+      <input type="time" value="${esc(r.time)}" onchange="App.prSet(${i},'time',this.value)">
+      <input type="text" value="${esc(r.text)}" placeholder="提醒內容" onchange="App.prSet(${i},'text',this.value)">
+      <button type="button" onclick="App.prDel(${i})" aria-label="刪除">✕</button></div>`).join('') || '<p class="muted">還沒有提醒，按下面新增。</p>';
+  }
+  function icsText() {
+    const pad = n => String(n).padStart(2, '0'), now = new Date();
+    const stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}00Z`;
+    const day = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+    const escI = t => String(t).replace(/\\/g, '\\\\').replace(/[,;]/g, m => '\\' + m).replace(/\n/g, '\\n');
+    const url = location.href.split('#')[0].split('?')[0];
+    const coach = S.settings.coachName || '教練';
+    const ev = prList().filter(r => r.on && /^\d{2}:\d{2}$/.test(r.time)).map((r, i) => {
+      const hm = r.time.replace(':', '');
+      return ['BEGIN:VEVENT', `UID:coach-remind-${hm}-${i}@discipline-gym`, `DTSTAMP:${stamp}`, `DTSTART:${day}T${hm}00`, 'DURATION:PT5M', 'RRULE:FREQ=DAILY',
+        `SUMMARY:${escI('💪 ' + coach + '：' + (r.text || '記得登記！'))}`, `DESCRIPTION:${escI('打開紀律健身房：' + url)}`, `URL:${url}`,
+        'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:PT0M', `DESCRIPTION:${escI(r.text || '記得登記！')}`, 'END:VALARM', 'END:VEVENT'].join('\r\n');
+    });
+    if (!ev.length) return '';
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Discipline Gym//Coach//ZH-TW', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', ...ev, 'END:VCALENDAR'].join('\r\n') + '\r\n';
+  }
+
   function fillSettings() {
     const g = S.settings.goals;
     $('g-start').value = g.startWeight; $('g-target').value = g.targetWeight;
@@ -2349,7 +2401,7 @@
     $('cloud-url').value = S.settings.cloudUrl || '';
     $('cloud-token').value = S.settings.cloudToken || '';
     setCloudStatus(S.settings.lastSync ? '上次同步：' + new Date(S.settings.lastSync).toLocaleString() : '', '');
-    renderSlots(); renderNotifyLines();
+    renderSlots(); renderNotifyLines(); renderPhoneRemind();
     $('sc-name').value = S.settings.shortcutName || '';
   }
 
@@ -4736,6 +4788,16 @@
       toast(`💪 教練：收到！${after > before ? `今天又拿到 +${after - before} 分！` : '記下來了！'}早點睡！`);
       if (!busy) setCoach('cheer', '睡前也有乖乖登記，呀哈！晚安！');
     },
+    prSet(i, k, v) { const r = prList()[i]; if (!r) return; r[k] = k === 'text' ? String(v).trim() : v; persist(); },
+    prAdd() { prList().push({ on: true, time: '18:00', text: '記得登記喔！' }); persist(); renderPhoneRemind(); },
+    prDel(i) { prList().splice(i, 1); persist(); renderPhoneRemind(); },
+    prCalendar(download) {
+      const t = icsText(); if (!t) { toast('先勾選至少一個提醒時間'); return; }
+      const url = URL.createObjectURL(new Blob([t], { type: 'text/calendar;charset=utf-8' }));
+      if (download) { const a = document.createElement('a'); a.href = url; a.download = '紀律健身房提醒.ics'; document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 500); toast('已下載，到「檔案」App 點開它加入行事曆'); }
+      else location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    },
     saveNight(quiet) { S.settings.nightAsk = { on: $('night-on').checked, time: $('night-time').value || '21:00' }; persist(); toast(quiet ? `🌙 已儲存：${S.settings.nightAsk.on ? S.settings.nightAsk.time + ' 以後提醒' : '關閉提醒'}` : '🌙 晚間提醒已儲存'); },
     decorMode(on, quiet) {
       decorEdit = on === undefined ? !decorEdit : !!on;
@@ -5378,7 +5440,7 @@
   window.S_setShortcutName = v => { S.settings.shortcutName = v.trim(); persist(); toast('捷徑名稱已儲存'); };
 
   // ---------- auto update: 主畫面 App 可能一直用舊版快取，打開時檢查網站上的版本 ----------
-  const APP_VERSION = '2026.11.25-3';
+  const APP_VERSION = '2026.11.28-1';
   async function checkUpdate() {
     try {
       const res = await fetch(location.pathname + '?nocache=' + Date.now(), { cache: 'no-store' });
